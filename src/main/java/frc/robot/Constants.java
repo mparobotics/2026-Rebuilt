@@ -116,7 +116,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     };
       
     public static final double angleKP = 0.01; //to tune
-    public static final double angleKI = 0.0; //to tune
+    public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
     public static final double angleKD = 0.0; //to tune
     
   }
