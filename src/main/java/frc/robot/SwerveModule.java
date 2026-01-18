@@ -225,7 +225,12 @@ public class SwerveModule {
         driveMotor.enableVoltageCompensation(SwerveConstants.voltageComp);
 */
         //configuring pid, did not include feed forward
-        sparkFlexConfig.closedLoop.p(m_angleKP).i(m_angleKI).d(m_angleKD);
+        sparkFlexConfig.closedLoop
+            .p(SwerveConstants.driveKP)
+            .i(SwerveConstants.driveKI)
+            .d(SwerveConstants.driveKD);
+
+        //sparkFlexConfig.closedLoop.p(m_angleKP).i(m_angleKI).d(m_angleKD);
         //driveController.setFF(SwerveConstants.driveKFF);
         sparkFlexConfig.voltageCompensation(SwerveConstants.voltageComp);
         //burns to spark max

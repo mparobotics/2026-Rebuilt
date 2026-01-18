@@ -41,15 +41,16 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
     public static final double driveGearRatio = (8.14 / 1.0); // 6.75:1 L2 Mk4 Modules
     //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
-    public static final double angleGearRatio = (21.4 / 1.0); // 12.8:1 MK4 SDS Modules
+    public static final double angleGearRatio = (12.8 / 1.0); // 12.8:1 MK4 SDS Modules
     //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
     public static final SwerveDriveKinematics swerveKinematics =
     new SwerveDriveKinematics(
-        new Translation2d(halfTrackWidth, halfWheelBase), //translation 2d locates the swerve module in cords
-        new Translation2d(halfTrackWidth,-halfWheelBase),
-        new Translation2d(-halfTrackWidth,-halfWheelBase),
-        new Translation2d(-halfTrackWidth, halfWheelBase));
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
+        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
+        new Translation2d(halfTrackWidth,halfWheelBase), // Front Left
+        new Translation2d(-halfTrackWidth, halfWheelBase)); // Back Left
+    //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
     //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
     //which contains velocities and angles for each swerve module of a swerve drive robot.
@@ -72,7 +73,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     /* Drive Motor Characterization Values */
     //values to calculate the drive feedforward (KFF)
     public static final double driveKS = 0.667; //to calculate
-    public static final double driveKV = 2.44; //to calculate
+    public static final double driveKV = 2.4; //to calculate
     public static final double driveKA = 0.27; //to calculate
 
     /* Drive Motor Conversion Factors */
@@ -109,14 +110,14 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 12, 19, 158.02, FRONT_LEFT), //Mod 0
-      new ModuleData(17, 18, 22, 234.97, FRONT_RIGHT), //Mod 1
-      new ModuleData(15, 16, 21, 311.40, BACK_RIGHT), //Mod 2
-      new ModuleData(13, 14, 20, 299.80, BACK_LEFT) //Mod 3
+      new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0
+      new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1
+      new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2
+      new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3
     };
       
     public static final double angleKP = 0.01; //to tune
-    public static final double angleKI = 0.0; //to tune
+    public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
     public static final double angleKD = 0.0; //to tune
     
   }
