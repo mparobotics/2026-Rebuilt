@@ -19,45 +19,80 @@ import frc.robot.Subsystems.SwerveSubsystem;
 
 public class RobotContainer {
   
-  private final CommandXboxController driveController = new CommandXboxController(0);  
+  // Xbox controller configuration for drive controls
+  private final CommandXboxController driveController = new CommandXboxController(0); 
+  // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
+  // Left Stick X = Side-to-side motion
   private final int strafeAxis = XboxController.Axis.kLeftX.value;
+  // Right Stick X = Rotation/turning motion
   private final int rotationAxis = XboxController.Axis.kRightX.value;
-  
+  // Left Bumper = Toggle robot-oriented mode (default is field-oriented)
   private final Trigger robotCentric = new Trigger(driveController.leftBumper());
 
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
 
+  /**
+   * Constructs the RobotContainer and configures command bindings.
+   */
   public RobotContainer() {
-    configureBindings();}
+    configureBindings();
+  }
+
+  /**
+   * Configures command bindings for controller inputs.
+   * Maps buttons and triggers to commands and sets the default drive command.
+   */
   private void configureBindings() {
     //driveController.button(Button.kLeftBumper.value).whileTrue (m_ClimberSubsystem.InverseMotors().repeatedly());
     //driveController.button(Button.kRightBumper.value).whileTrue (m_ClimberSubsystem.RunMotors().repeatedly());
+
+    // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
     driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+    // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
+    // Right Trigger = Auto-align to right scoring position
     driveController.axisGreaterThan(Axis.kRightTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, false));
 
-
+    // Default command runs continuously when no other command requires the subsystem.
+    // It automatically pauses when commands like AutoAlign take control, then resumes
+    // when they finish.
     m_drive.setDefaultCommand(
-    new TeleopSwerve(
-        m_drive,
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5, // * to change drive speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5, // * to change drive speed
-        () -> -driveController.getRawAxis(rotationAxis) * 0.5, // * to change turn speed //put - infront of drivecontroller of take it away to tune the turning
-        () -> robotCentric.getAsBoolean(),
-        () -> driveController.getRightTriggerAxis() > 0.1
-        //() -> driveController.getHID().getRawButton(button.kX.value)
-        
-  ));
+        new TeleopSwerve(
+            // SwerveSubsystem - The drive subsystem to control
+            m_drive,
+            // translationSupplier - Forward/backward speed
+            () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
+            // strafeSupplier - Side-to-side speed
+            () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
+            // rotationSupplier - Rotation speed
+            () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+            // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
+            () -> robotCentric.getAsBoolean(),
+            // isAutoAlignSupplier - Auto-align active flag
+            () -> driveController.getRightTriggerAxis() > 0.1
+        ));
 
   }
 
-
+  /**
+   * Determines if the driver has requested speed reduction for precise positioning
+   * or delicate tasks.
+   * @return Speed multiplier
+   */
   private double getSpeedMultiplier(){
-    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1; //can change speed
+    // getHID() accesses the underlying XboxController to read button states directly.
+    // CommandXboxController doesn't provide a method for stick button presses, so we use
+    // the HID (Human Interface Device) object's getRawButton() method instead.
+    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1;
   }
-  
-    public Command getAutonomousCommand() {
+
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
+  public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
   }
 

@@ -72,6 +72,14 @@ This architecture makes the code modular, testable, and easier to maintain.
   - Creates the Xbox controller
   - Maps joystick inputs to commands
   - Sets up the default command (`TeleopSwerve`)
+- **Xbox Controller Mappings**:
+  - **Left Stick Y-axis** (`translationAxis`): Forward/backward motion
+  - **Left Stick X-axis** (`strafeAxis`): Side-to-side motion (strafe)
+  - **Right Stick X-axis** (`rotationAxis`): Rotation/turning motion
+  - **Left Bumper**: Toggle robot-centric mode (default is field-oriented)
+  - **Y Button**: Zero gyro (reset heading to 0° or 180° based on alliance)
+  - **Left/Right Triggers**: Activate auto-align command
+  - **Left Stick Button**: Reduce speed to 70% (speed multiplier)
 - **Key Features**:
   - Button bindings (Y button zeros gyro, triggers activate auto-align)
   - Speed multipliers (left stick button = 70% speed)
@@ -324,8 +332,17 @@ Here's the complete flow when you move the joystick:
 - **Current**: 3 m/s
 
 ### Adjust Joystick Sensitivity
-- **Location**: `RobotContainer.java` lines 41-43
+- **Location**: `RobotContainer.java` lines 48-50
 - **Current**: Multiplied by 0.5 (50% speed)
+
+### Change Xbox Controller Mappings
+- **Location**: `RobotContainer.java` lines 23-29
+- **What to change**: The axis constants (`translationAxis`, `strafeAxis`, `rotationAxis`)
+- **Example**: To use right stick for forward/backward instead of left stick:
+  ```java
+  private final int translationAxis = XboxController.Axis.kRightY.value;
+  ```
+- **Note**: Changing these constants automatically updates all references throughout the code
 
 ### Tune PID Values
 - **Drive Motor**: `Constants.SwerveConstants.driveKP/KI/KD`
