@@ -30,8 +30,8 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
     /* Drivetrain Constants */
-    public static final double halfTrackWidth = Units.inchesToMeters(22/2.0);//to find
-    public static final double halfWheelBase = Units.inchesToMeters(22/2.0);//to find
+    public static final double halfTrackWidth = Units.inchesToMeters(28/2.0);//to find
+    public static final double halfWheelBase = Units.inchesToMeters(28/2.0);//to find
     public static final double wheelDiameter = Units.inchesToMeters(4.0);
     public static final double wheelCircumference = wheelDiameter * Math.PI;
     public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
@@ -95,15 +95,12 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean angleInvert = true;
 
     //Location of modules
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfTrackWidth, halfWheelBase);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfTrackWidth, halfWheelBase);
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfTrackWidth, -halfWheelBase);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfTrackWidth, -halfWheelBase);
-    /* Angle Encoder Invert */
-    
+    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
-        /* Module Specific Constants */
-    /* Front Left Module - Module 0 */
+    /* Module Specific Constants */
     public record ModuleData(
       int driveMotorID, int angleMotorID, int encoderID, double angleOffset, Translation2d location
     ){}
