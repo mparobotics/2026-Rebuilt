@@ -8,6 +8,8 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -16,6 +18,7 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 public class RobotContainer {
+  
   private final CommandXboxController driveController = new CommandXboxController(0);  
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   private final int strafeAxis = XboxController.Axis.kLeftX.value;
@@ -53,6 +56,9 @@ public class RobotContainer {
   private double getSpeedMultiplier(){
     return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1; //can change speed
   }
-
   
+    public Command getAutonomousCommand() {
+    return Commands.print("No autonomous command configured");
+  }
+
 }
