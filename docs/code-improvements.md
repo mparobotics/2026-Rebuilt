@@ -57,9 +57,13 @@ driveController.axisGreaterThan(LEFT_TRIGGER_AXIS, 0.1).whileTrue(new AutoAlign(
 driveController.axisGreaterThan(RIGHT_TRIGGER_AXIS, 0.1).whileTrue(new AutoAlign(m_drive, false));
 ```
 
-In TeleopSwerve command creation
+In TeleopSwerve command creation and getIsAutoAlignSupplier()
 ```java
+// In TeleopSwerve command creation (line ~73)
 () -> driveController.getRawAxis(RIGHT_TRIGGER_AXIS) > 0.1
+
+// In getIsAutoAlignSupplier() method (line ~133)
+return () -> driveController.getRawAxis(RIGHT_TRIGGER_AXIS) > 0.1;
 ```
 
 And in getSpeedMultiplier()
@@ -86,9 +90,10 @@ return driveController.getHID().getRawButton(SPEED_MULTIPLIER_BUTTON)
   - Line 47: `Button.kY.value` → `ZERO_GYRO_BUTTON`
   - Line 88: `Button.kLeftStick.value` → `SPEED_MULTIPLIER_BUTTON`
 - **Triggers to convert**:
-  - Line 49: `Axis.kLeftTrigger.value` → `LEFT_TRIGGER_AXIS`
-  - Line 51: `Axis.kRightTrigger.value` → `RIGHT_TRIGGER_AXIS`
-  - Line 66: `driveController.getRightTriggerAxis()` → `driveController.getRawAxis(RIGHT_TRIGGER_AXIS)`
+  - Line 56: `Axis.kLeftTrigger.value` → `LEFT_TRIGGER_AXIS`
+  - Line 58: `Axis.kRightTrigger.value` → `RIGHT_TRIGGER_AXIS`
+  - Line 73: `driveController.getRightTriggerAxis()` in TeleopSwerve command creation → `driveController.getRawAxis(RIGHT_TRIGGER_AXIS)`
+  - Line 133: `driveController.getRightTriggerAxis()` in `getIsAutoAlignSupplier()` → `driveController.getRawAxis(RIGHT_TRIGGER_AXIS)`
 - **Speed multiplier values to convert**:
   - Line 88: `0.7` → `REDUCED_SPEED_MULTIPLIER`
   - Line 88: `1` → `FULL_SPEED_MULTIPLIER`
@@ -243,9 +248,14 @@ The `m_` prefix is currently used in the following files:
 - Lines 38, 40, 44, 47: References to `m_SwerveSubsystem` need updating
 
 #### `Robot.java`
-- Line 12: `m_autonomousCommand` → `autonomousCommand`
-- Line 14: `m_robotContainer` → `robotContainer`
-- Lines 17, 36, 38, 39, 51, 52: References need updating
+- Line 12: `m_autonomousCommand` → `autonomousCommand` (declaration)
+- Line 14: `m_robotContainer` → `robotContainer` (declaration)
+- Line 17: `m_robotContainer = new RobotContainer()` (constructor initialization)
+- Line 36: `m_autonomousCommand = m_robotContainer.getAutonomousCommand()` (autonomousInit)
+- Line 38: `if (m_autonomousCommand != null)` (autonomousInit)
+- Line 39: `CommandScheduler.getInstance().schedule(m_autonomousCommand)` (autonomousInit)
+- Line 51: `if (m_autonomousCommand != null)` (teleopInit)
+- Line 52: `m_autonomousCommand.cancel()` (teleopInit)
 
 #### `SwerveModule.java`
 - Lines 37-39: `m_angleKP`, `m_angleKI`, `m_angleKD` → remove `m_` prefix
@@ -376,6 +386,127 @@ The current `AutoAlign` command is obsolete for the new game. It needs to be rew
 - [ ] Approved
 - [ ] Rejected
 - [ ] In progress
+- [ ] Implemented
+
+---
+
+## 5. Extract Supplier Functions into Private Methods (Code Organization)
+
+### What
+Extract the inline lambda expressions used in `TeleopSwerve` command creation into well-named private methods that return suppliers. This improves readability, maintainability, and makes the code easier to understand.
+
+**Current code:**
+```java
+m_drive.setDefaultCommand(
+    new TeleopSwerve(
+        // SwerveSubsystem - The drive subsystem to control
+        m_drive,
+        // translationSupplier - Forward/backward speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
+        // strafeSupplier - Side-to-side speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
+        // rotationSupplier - Rotation speed
+        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
+        () -> robotCentric.getAsBoolean(),
+        // isAutoAlignSupplier - Auto-align active flag
+        () -> driveController.getRightTriggerAxis() > 0.1
+    ));
+```
+
+**Proposed code:**
+```java
+m_drive.setDefaultCommand(
+    new TeleopSwerve(
+        m_drive,
+        getTranslationSupplier(),
+        getStrafeSupplier(),
+        getRotationSupplier(),
+        getRobotCentricSupplier(),
+        getIsAutoAlignSupplier()
+    ));
+```
+
+With the following private methods added:
+
+```java
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
+/**
+ * Returns a supplier for forward/backward translation input from the controller.
+ * @return DoubleSupplier where the value represents percent of maximum robot speed.
+ *         Sign indicates direction (positive = forward, negative = backward).
+ *         Note: Current implementation limits the range to -0.5 to 0.5 (50% of max speed).
+ */
+private DoubleSupplier getTranslationSupplier() {
+  return () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5;
+}
+
+/**
+ * Returns a supplier for side-to-side strafe input from the controller.
+ * @return DoubleSupplier where the value represents percent of maximum robot speed.
+ *         Sign indicates direction (positive = right, negative = left).
+ *         Note: Current implementation limits the range to -0.5 to 0.5 (50% of max speed).
+ */
+private DoubleSupplier getStrafeSupplier() {
+  return () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5;
+}
+
+/**
+ * Returns a supplier for rotation input from the controller.
+ * @return DoubleSupplier where the value represents percent of maximum robot speed.
+ *         Sign indicates direction (positive = clockwise, negative = counterclockwise).
+ *         Note: Current implementation limits the range to -0.5 to 0.5 (50% of max speed).
+ */
+private DoubleSupplier getRotationSupplier() {
+  return () -> -driveController.getRawAxis(rotationAxis) * 0.5;
+}
+
+/**
+ * Returns a supplier indicating whether robot-oriented mode is active.
+ * @return BooleanSupplier true if robot-oriented, false if field-oriented
+ */
+private BooleanSupplier getRobotCentricSupplier() {
+  return () -> robotCentric.getAsBoolean();
+}
+
+/**
+ * Returns a supplier indicating whether auto-align is currently active.
+ * @return BooleanSupplier true if auto-align is active, false otherwise
+ */
+private BooleanSupplier getIsAutoAlignSupplier() {
+  // The right trigger is an analog input (not a digital button) that returns values
+  // between 0.0 (not pressed) and 1.0 (fully pressed) depending on how much it's pressed.
+  // The 0.1 threshold acts as a deadband to filter out noise and accidental contact.
+  return () -> driveController.getRightTriggerAxis() > 0.1;
+}
+```
+
+### Why
+- **Improved readability**: The `setDefaultCommand` call becomes much cleaner and easier to understand
+- **Better documentation**: Each supplier method can have JavaDoc explaining its purpose and behavior
+- **Easier maintenance**: Changes to supplier logic are isolated to a single method
+- **Testability**: Individual suppliers can be tested independently if needed
+- **Follows best practices**: Extracts complex expressions into well-named methods (Single Responsibility Principle)
+- **Self-documenting code**: Method names clearly describe what each supplier provides
+
+### Where
+- **File**: `src/main/java/frc/robot/RobotContainer.java`
+- **Location**: Lines 63-75 (the `setDefaultCommand` call in `configureBindings()`)
+- **New methods**: Add after `getSpeedMultiplier()` method (around line 85)
+- **Imports needed**: Add `import java.util.function.BooleanSupplier;` and `import java.util.function.DoubleSupplier;`
+
+### Impact
+- **Low risk change**: Purely organizational - no functional changes
+- **Improves code quality**: Makes the code more maintainable and easier to understand
+- **No breaking changes**: All existing functionality remains the same
+- **Better documentation**: JavaDoc comments can explain the purpose and behavior of each supplier
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
 - [ ] Implemented
 
 ---

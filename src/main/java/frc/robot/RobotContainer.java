@@ -30,10 +30,12 @@ public class RobotContainer {
   // Left Bumper = Toggle robot-oriented mode (default is field-oriented)
   private final Trigger robotCentric = new Trigger(driveController.leftBumper());
 
+  // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
 
   /**
-   * Constructs the RobotContainer and configures command bindings.
+   * Constructs the RobotContainer. Creates subsystems (which configure themselves)
+   * and sets up command bindings to map controller inputs to commands.
    */
   public RobotContainer() {
     configureBindings();
@@ -44,8 +46,6 @@ public class RobotContainer {
    * Maps buttons and triggers to commands and sets the default drive command.
    */
   private void configureBindings() {
-    //driveController.button(Button.kLeftBumper.value).whileTrue (m_ClimberSubsystem.InverseMotors().repeatedly());
-    //driveController.button(Button.kRightBumper.value).whileTrue (m_ClimberSubsystem.RunMotors().repeatedly());
 
     // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
     driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
