@@ -79,6 +79,13 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double angleKP = 0.01; //to tune
     public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
     public static final double angleKD = 0.0; //to tune
+    // Recommended starting values for voltage control with WPILib PIDController
+    // See docs/code-improvements.md recommendation #15 for tuning guidance
+    /*
+    public static final double angleKP = 0.5; // volts per degree of error (start conservative, increase if too slow)
+    public static final double angleKI = 0.0; // start with no integral (add only if persistent offset observed)
+    public static final double angleKD = 0.0; // start with no derivative (add if oscillation/overshoot after tuning P)
+    */
 
     /* Drive Motor Conversion Factors */
     public static final double driveConversionPositionFactor =

@@ -19,6 +19,8 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -50,7 +52,7 @@ public class SwerveModule {
     private CANcoder angleEncoder;
 
     private final SparkClosedLoopController driveController;
-    private final SparkClosedLoopController angleController;
+    private final PIDController angleController;
 
     private final SimpleMotorFeedforward feedforward =
     new SimpleMotorFeedforward(
@@ -104,9 +106,16 @@ public class SwerveModule {
         angleMotor = new SparkMax(moduleConstants.angleMotorID(), MotorType.kBrushless);
         // Get the integrated encoder (relative encoder) from the motor controller
         integratedAngleEncoder = angleMotor.getEncoder();
-        // Get the closed-loop controller for position control (PID controller)
-        angleController = angleMotor.getClosedLoopController();
-        // Configure motor settings (current limits, PID, encoder conversion, etc.)
+        // Create closed-loop controller for angle motor
+        // * WPILib PIDController is used because it supports enableContinuousInput(), which
+        //   is essential for handling angle wrapping (e.g., -179° and 179° are treated as close,
+        //   not far apart).
+        // * This prevents modules from taking long rotation paths when angles
+        //   wrap around.
+        angleController = new PIDController(m_angleKP, m_angleKI, m_angleKD);
+        // Configure WPILib PIDController settings (continuous input, tolerance, integrator range)
+        configureAngleController();
+        // Configure SparkMax hardware settings (current limits, encoder conversion, etc.)
         configAngleMotor();
 
         /* Drive Motor Configuration
@@ -312,8 +321,36 @@ public class SwerveModule {
         // This prevents jittery behavior and reduces wear when robot is barely moving
         Rotation2d angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.SwerveConstants.maxSpeed * 0.01))
             ? lastAngle : desiredState.angle;
-        // Set the angle motor to rotate to the target angle (position control)
-        angleController.setReference(angle.getDegrees(), ControlType.kPosition);
+        
+        // Get current and target angles in degrees
+        double currentAngleDegrees = getAngle().getDegrees();
+        double targetAngleDegrees = angle.getDegrees();
+        
+        // Calculate PID output using continuous input (handles wrapping automatically)
+        // Note: REV PID Controller and WPILib PIDController work differently:
+        // 
+        // Calculate & Set Motor Output
+        // * REV's setReference() combines two actions: (1) calculate PID output, (2) set motor output.
+        //   WPILib's PIDController only provides calculate() - we must call motor.setVoltage() separately
+        // * REV's setReference() requires ControlType.kPosition; WPILib's PIDController doesn't need this
+        //   (it's inherently a position controller - calculate() takes current and target positions)
+        //
+        // Limit Motor Output
+        // * REV's setReference() handles output clamping internally
+        // * WPILib's PIDController doesn't have setOutputRange(), so we clamp manually using MathUtil.clamp()
+        // * We use voltage control (setVoltage) instead of percent output (set) for better consistency
+        //   across battery voltage variations and more predictable behavior
+        double outputVolts = angleController.calculate(currentAngleDegrees, targetAngleDegrees);
+        
+        // Safety clamp to legal motor voltage range [-12V, 12V]
+        // * Prevents values outside valid range and potential integral windup
+        outputVolts = MathUtil.clamp(outputVolts, -12.0, 12.0);
+        
+        // Drive the motor using voltage control
+        // * Voltage control automatically compensates for battery voltage variations
+        //   and provides more predictable behavior than percent output control
+        angleMotor.setVoltage(outputVolts);
+        
         // Update lastAngle for next optimization cycle
         lastAngle = angle; 
     }
@@ -343,7 +380,18 @@ public class SwerveModule {
      * @param degrees The target wheel angle in degrees (0-360)
      */
     public void pointInDirection(double degrees){
-        angleController.setReference(degrees, ControlType.kPosition);
+        // Get current angle in degrees
+        double currentAngleDegrees = getAngle().getDegrees();
+        
+        // Calculate PID output using continuous input (handles wrapping automatically)
+        // Calculate PID output (in volts) - voltage control provides better consistency
+        double outputVolts = angleController.calculate(currentAngleDegrees, degrees);
+        
+        // Safety clamp to legal motor voltage range [-12V, 12V]
+        outputVolts = MathUtil.clamp(outputVolts, -12.0, 12.0);
+        
+        // Drive the motor using voltage control
+        angleMotor.setVoltage(outputVolts);
         lastAngle = Rotation2d.fromDegrees(degrees);
     }
     
@@ -369,9 +417,6 @@ public class SwerveModule {
         sparkMaxConfig.idleMode(SwerveConstants.angleNeutralMode);
         // Convert encoder counts to degrees so encoder position matches module rotation angle
         sparkMaxConfig.encoder.positionConversionFactor(SwerveConstants.angleConversionFactor);
-        // Configure PID controller for position control (no feedforward used)
-        sparkMaxConfig.closedLoop.p(m_angleKP).i(m_angleKI).d(m_angleKD);
-       // angleController.setFF(m_angleKFF);
         // Compensate for battery voltage variations to maintain consistent motor performance
         sparkMaxConfig.voltageCompensation(SwerveConstants.voltageComp);
         // Apply configuration to motor controller: reset safe parameters on hardware first,
@@ -400,7 +445,26 @@ public class SwerveModule {
         double absolutePosition = getCanCoder().getDegrees() - angleOffset.getDegrees();
         integratedAngleEncoder.setPosition(absolutePosition); //may need to change 
 
-      }
+    }
+
+    /**
+     * Configures the WPILib PIDController for angle control.
+     * Called once during module initialization in the constructor.
+     * Configures continuous input (for angle wrapping), tolerance, and integrator range.
+     */
+    private void configureAngleController() {
+        // Enable continuous input to handle angle wrapping
+        // This ensures angles like -179° and 179° are treated as close (20° apart), not far apart (358° apart)
+        angleController.enableContinuousInput(-180.0, 180.0);
+        
+        // Set tolerance: controller is "at setpoint" when error is within ±1.0 degrees
+        // Allows checking angleController.atSetpoint() to know when module has reached target angle
+        angleController.setTolerance(1.0); // degrees
+        
+        // Set integrator range: limits I term accumulation to [-0.1, 0.1] to prevent windup
+        // Prevents overshoot when module starts far from target (I term can't accumulate excessively)
+        angleController.setIntegratorRange(-0.1, 0.1);
+    }
 
     /**
      * Configures the drive motor (SparkFlex) with all necessary settings for velocity control.

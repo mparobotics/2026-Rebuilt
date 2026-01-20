@@ -1410,43 +1410,90 @@ private void setAngle(SwerveModuleState desiredState) {
 ```java
 // SwerveModule.java
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.MathUtil;
 
 // ANGLE motor: Use WPILib PIDController with continuous input support
-private final SparkClosedLoopController angleControllerREV; // Kept for compatibility (not used)
-private final PIDController angleController; // WPILib controller with continuous input
+private final PIDController angleController;
 
-// DRIVE motor: Keep REV's built-in controller (unchanged)
-private final SparkClosedLoopController driveController; // REV built-in controller (no changes)
+// DRIVE motor: Use REV's built-in controller - continuous input not required
+private final SparkClosedLoopController driveController;
 
 public SwerveModule(...) {
     // ...
-    // ANGLE motor: Switch to WPILib PIDController
-    angleControllerREV = angleMotor.getClosedLoopController();
-    // Create WPILib PIDController for angle control
+    // Create closed-loop controller for angle motor
+    // * WPILib PIDController is used because it supports enableContinuousInput(), which
+    //   is essential for handling angle wrapping (e.g., -179° and 179° are treated as close,
+    //   not far apart).
+    // * This prevents modules from taking long rotation paths when angles
+    //   wrap around.
     angleController = new PIDController(m_angleKP, m_angleKI, m_angleKD);
-    // Enable continuous input to handle angle wrapping
-    angleController.enableContinuousInput(-180.0, 180.0);
-    // Clamp output to reasonable percent output range
-    angleController.setOutputRange(-1.0, 1.0);
+    // Configure WPILib PIDController settings (continuous input, tolerance, integrator range)
+    configureAngleController();
+    // Configure SparkMax hardware settings (current limits, encoder conversion, etc.)
     configAngleMotor();
     
-    // DRIVE motor: Keep existing REV controller (no changes)
+    // DRIVE motor: Use REV's built-in velocity controller
+    // Get the closed-loop controller for velocity control (PID controller)
     driveController = driveMotor.getClosedLoopController();
     configDriveMotor(); // No changes needed here
 }
 
 private void setAngle(SwerveModuleState desiredState) {
-    // ...
+    // If speed is very low (≤1% of max), keep last angle to avoid unnecessary rotation
+    // This prevents jittery behavior and reduces wear when robot is barely moving
+    Rotation2d angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.SwerveConstants.maxSpeed * 0.01))
+        ? lastAngle : desiredState.angle;
+    
+    // Get current and target angles in degrees
     double currentAngleDegrees = getAngle().getDegrees();
     double targetAngleDegrees = angle.getDegrees();
     
     // Calculate PID output using continuous input (handles wrapping automatically)
-    double output = angleController.calculate(currentAngleDegrees, targetAngleDegrees);
+    // Note: REV PID Controller and WPILib PIDController work differently:
+    // 
+    // Calculate & Set Motor Output
+    // * REV's setReference() combines two actions: (1) calculate PID output, (2) set motor output.
+    //   WPILib's PIDController only provides calculate() - we must call motor.setVoltage() separately
+    // * REV's setReference() requires ControlType.kPosition; WPILib's PIDController doesn't need this
+    //   (it's inherently a position controller - calculate() takes current and target positions)
+    //
+    // Limit Motor Output
+    // * REV's setReference() handles output clamping internally
+    // * WPILib's PIDController doesn't have setOutputRange(), so we clamp manually using MathUtil.clamp()
+    // * We use voltage control (setVoltage) instead of percent output (set) for better consistency
+    //   across battery voltage variations and more predictable behavior
+    double outputVolts = angleController.calculate(currentAngleDegrees, targetAngleDegrees);
     
-    // Set ANGLE motor using percent output from PID controller
-    angleMotor.set(output);
-    // Now: If current is 350° and target is 10°, 
-    // continuous input treats them as 20° apart (shortest path)
+    // Safety clamp to legal motor voltage range [-12V, 12V]
+    // * Prevents values outside valid range and potential integral windup
+    outputVolts = MathUtil.clamp(outputVolts, -12.0, 12.0);
+    
+    // Drive the motor using voltage control
+    // * Voltage control automatically compensates for battery voltage variations
+    //   and provides more predictable behavior than percent output control
+    angleMotor.setVoltage(outputVolts);
+    
+    // Update lastAngle for next optimization cycle
+    lastAngle = angle;
+}
+
+/**
+ * Configures the WPILib PIDController for angle control.
+ * Called once during module initialization in the constructor.
+ * Configures continuous input (for angle wrapping), tolerance, and integrator range.
+ */
+private void configureAngleController() {
+    // Enable continuous input to handle angle wrapping
+    // This ensures angles like -179° and 179° are treated as close (20° apart), not far apart (358° apart)
+    angleController.enableContinuousInput(-180.0, 180.0);
+    
+    // Set tolerance: controller is "at setpoint" when error is within ±1.0 degrees
+    // Allows checking angleController.atSetpoint() to know when module has reached target angle
+    angleController.setTolerance(1.0); // degrees
+    
+    // Set integrator range: limits I term accumulation to [-0.1, 0.1] to prevent windup
+    // Prevents overshoot when module starts far from target (I term can't accumulate excessively)
+    angleController.setIntegratorRange(-0.1, 0.1);
 }
 
 // setSpeed() method remains unchanged - still uses REV's driveController
@@ -1464,8 +1511,9 @@ private void setAngle(SwerveModuleState desiredState) {
 - **File**: `src/main/java/frc/robot/SwerveModule.java`
 - **Changes needed (ANGLE motor only)**:
   - **Line ~22**: Add import for `edu.wpi.first.math.controller.PIDController`
-  - **Line ~53**: Replace `angleController` declaration with both REV and WPILib controllers
-  - **Lines ~108-114**: Create WPILib PIDController and enable continuous input in constructor
+  - **Line ~53**: Replace `angleController` declaration (remove REV controller, add WPILib PIDController)
+  - **Lines ~108-114**: Create WPILib PIDController in constructor, then call `configureAngleController()` method (remove REV controller assignment)
+  - **New method**: Add `configureAngleController()` method to configure continuous input and output range
   - **Lines ~310-338**: Update `setAngle()` method to use WPILib PIDController with percent output
   - **Lines ~345-348**: Update `pointInDirection()` method similarly
   - **Line ~373**: Remove PID configuration from `configAngleMotor()` (now handled by WPILib controller)
@@ -1476,11 +1524,12 @@ private void setAngle(SwerveModuleState desiredState) {
 ### Impact
 - **Medium priority**: Addresses performance and wear issues in swerve drive angle control
 - **Scope**: Only affects the **angle motor controller**. The drive motor controller remains unchanged and continues using REV's built-in velocity control with feedforward
-- **PID tuning may be needed**: Current `angleKP = 0.01` was tuned for REV's position control. With percent output control, gains may need adjustment:
+- **PID tuning may be needed**: Current `angleKP = 0.01` was tuned for REV's position control. With voltage control, gains may need adjustment:
   - Start with current values and test
   - If modules rotate too slowly, increase `angleKP`
   - If modules overshoot or oscillate, decrease `angleKP` or increase `angleKD`
-- **Control mode change**: Switches **angle motor** from position control (REV built-in) to percent output control (WPILib PID)
+  - **Note**: Voltage control typically requires different gain values than percent output control
+- **Control mode change**: Switches **angle motor** from position control (REV built-in) to voltage control (WPILib PID)
 - **Drive motor unchanged**: Drive motor continues using REV's velocity control with feedforward - no changes needed
 - **Active in all modes**: Once implemented, continuous input benefits teleop, autonomous, and any mode using swerve drive
 - **No breaking changes**: Existing functionality remains the same, just improved angle handling
@@ -1488,28 +1537,68 @@ private void setAngle(SwerveModuleState desiredState) {
 ### Implementation Considerations
 
 **PID Gain Tuning:**
-- The current `angleKP = 0.01` was tuned for REV's position control mode
-- With percent output control, gains typically need to be higher
-- Recommended starting point: Try `angleKP = 0.1` to `0.5` and tune from there
-- Test with modules at various angles, especially near ±180° boundaries
-- Verify modules take shortest rotation path (e.g., 350° → 10° should rotate 20°, not 340°)
 
-**Output Clamping:**
-- WPILib PIDController output should be clamped to ±1.0 (100% motor output)
-- Use `angleController.setOutputRange(-1.0, 1.0)` to prevent excessive motor commands
-- Consider adding velocity limiting if needed for smoother motion
+**Current values:** `angleKP = 0.01`, `angleKI = 0.0`, `angleKD = 0.0` (tuned for REV's position control)
+
+**Recommended starting points for voltage control:**
+- **angleKP**: Start with **0.5 to 1.0** volts per degree of error
+  - This means a 1° error produces 0.5-1.0V of motor output
+  - Conservative starting point: `angleKP = 0.5`
+  - If modules respond too slowly, increase gradually (try 0.75, 1.0, 1.5)
+  - If modules oscillate or overshoot, decrease
+  - **Note**: With voltage control, gains are typically 50-100x higher than percent output control
+  
+- **angleKI**: Start with **0.0** (no integral term)
+  - Only add integral if you see persistent steady-state error (module consistently stops short of target)
+  - If needed, start very small: `angleKI = 0.0001` to `0.001`
+  - Use `setIntegratorRange(-0.1, 0.1)` to prevent windup (already configured)
+  
+- **angleKD**: Start with **0.0** (no derivative term)
+  - Add derivative if modules oscillate or overshoot after tuning P
+  - If needed, start small: `angleKD = 0.01` to `0.05`
+  - Too much D can amplify sensor noise, so add gradually
+
+**Tuning process:**
+1. Start with P only: `angleKP = 0.5`, `angleKI = 0.0`, `angleKD = 0.0`
+2. Test module response - should turn toward target without excessive overshoot
+3. If too slow: Increase P gradually (0.75 → 1.0 → 1.5)
+4. If oscillates: Decrease P or add small D term
+5. If persistent offset: Add small I term (0.0001 to 0.001)
+6. Test with modules at various angles, especially near ±180° boundaries
+7. Verify modules take shortest rotation path (e.g., 350° → 10° should rotate 20°, not 340°)
+
+**Example starting configuration:**
+```java
+public static final double angleKP = 0.5;  // volts per degree of error
+public static final double angleKI = 0.0; // start with no integral
+public static final double angleKD = 0.0; // start with no derivative
+```
+
+**Output Clamping and Voltage Control:**
+- WPILib PIDController output should be clamped to ±12.0 volts (typical battery voltage range)
+- Use `MathUtil.clamp(outputVolts, -12.0, 12.0)` to prevent excessive motor commands
+- Use `motor.setVoltage()` instead of `motor.set()` for better consistency:
+  - Automatically compensates for battery voltage variations
+  - More predictable behavior across different battery states
+  - Better for PID tuning (output in physical units)
+- **Important**: When using voltage control, PID gains need to be tuned to produce voltage outputs
+  (typically higher gains than percent output control)
+
+**Additional Configuration:**
+- `setTolerance(1.0)` - Sets when controller considers itself "at setpoint" (useful for determining when module has reached target)
+- `setIntegratorRange(-0.1, 0.1)` - Limits integral term to prevent windup and overshoot
 
 **Testing Checklist:**
 - [ ] Verify modules rotate correctly at all angles
 - [ ] Test angle wrapping scenarios (350° → 10°, -179° → 179°)
 - [ ] Confirm modules take shortest rotation path
-- [ ] Check for oscillation or overshoot near target angles
-- [ ] Verify PID gains are appropriate for percent output control
+- [ ] Check for oscillation or overshoot near target angles (may need PID tuning)
+- [ ] Verify PID gains are appropriate for voltage control (currently using original REV values)
 - [ ] Test in both teleop and autonomous modes
 
 ### Related Code
 - **AutoAlign.java (line 46)**: Already uses `enableContinuousInput` for rotation controller
-- **SwerveConstants.angleKP/KI/KD**: PID gains that may need retuning after this change
+- **SwerveConstants.angleKP/KI/KD**: PID gains currently set to `0.01, 0.0, 0.0` (may need tuning for optimal voltage control)
 
 ### Status
 - [ ] Pending team review
@@ -1517,6 +1606,7 @@ private void setAngle(SwerveModuleState desiredState) {
 - [ ] Rejected
 - [ ] In progress
 - [ ] Implemented
+- [ ] PID tuning may be needed (currently using original REV values: `angleKP = 0.01`)
 
 ---
 
