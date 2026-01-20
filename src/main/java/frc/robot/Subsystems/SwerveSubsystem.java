@@ -35,9 +35,23 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private Field2d field;
 
+  /* NetworkTable Publishers for Swerve Module State Monitoring
+   * These publishers send swerve module state data to NetworkTables for visualization
+   * and debugging. The data can be viewed in tools like AdvantageScope, Shuffleboard,
+   * or custom dashboards. Publishing actual vs. desired states allows comparison to
+   * diagnose control issues, tuning problems, or mechanical issues.
+   */
+  // Publisher for actual/current swerve module states (speed and angle from encoders)
+  // * Get the default NetworkTable instance (shared across all NetworkTable operations)
+  // * Create a publisher for the "Swerve States" topic that sends arrays of SwerveModuleState
+  // * The struct format allows efficient serialization of the state data
   private final StructArrayPublisher<SwerveModuleState> swerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Swerve States", SwerveModuleState.struct).publish();
 
+  // Publisher for desired/target swerve module states (commanded speed and angle)
+  // * Get the default NetworkTable instance
+  // * Create a publisher for the "Desired Swerve States" topic that sends arrays of SwerveModuleState
+  // * This shows what the robot is trying to achieve, useful for comparing against actual states
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
 
