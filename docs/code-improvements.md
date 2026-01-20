@@ -999,6 +999,637 @@ public void periodic() {
 
 ---
 
+## 11. Eliminate Duplication in Swerve Module Position Constants (Code Organization)
+
+### What
+Refactor `swerveKinematics` to use the named module position constants (`FRONT_LEFT`, `FRONT_RIGHT`, `BACK_LEFT`, `BACK_RIGHT`) instead of duplicating the `Translation2d` calculations. This eliminates duplication and ensures consistency.
+
+**Current code:**
+```java
+// Lines 47-52: swerveKinematics uses inline values
+public static final SwerveDriveKinematics swerveKinematics =
+    new SwerveDriveKinematics(
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
+        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
+        new Translation2d(halfTrackWidth,halfWheelBase), // Front Left
+        new Translation2d(-halfTrackWidth, halfWheelBase)); // Back Left
+
+// Lines 99-102: Named constants defined separately
+public static final Translation2d FRONT_LEFT = new Translation2d(halfTrackWidth, halfWheelBase);
+public static final Translation2d BACK_LEFT = new Translation2d(-halfTrackWidth, halfWheelBase);
+public static final Translation2d BACK_RIGHT = new Translation2d(-halfTrackWidth, -halfWheelBase);
+public static final Translation2d FRONT_RIGHT = new Translation2d(halfTrackWidth, -halfWheelBase);
+
+// Lines 113-116: moduleData uses named constants
+public static ModuleData[] moduleData = {
+  new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0
+  new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1
+  new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2
+  new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3
+};
+```
+
+**Proposed code:**
+```java
+// Define named constants first (lines 98-102)
+public static final Translation2d FRONT_LEFT = new Translation2d(halfTrackWidth, halfWheelBase);
+public static final Translation2d BACK_LEFT = new Translation2d(-halfTrackWidth, halfWheelBase);
+public static final Translation2d BACK_RIGHT = new Translation2d(-halfTrackWidth, -halfWheelBase);
+public static final Translation2d FRONT_RIGHT = new Translation2d(halfTrackWidth, -halfWheelBase);
+
+// Use named constants in swerveKinematics (lines 47-52)
+// Order must match moduleData array: BACK_RIGHT (Mod 0), FRONT_RIGHT (Mod 1), FRONT_LEFT (Mod 2), BACK_LEFT (Mod 3)
+public static final SwerveDriveKinematics swerveKinematics =
+    new SwerveDriveKinematics(
+        BACK_RIGHT,   // Mod 0
+        FRONT_RIGHT,  // Mod 1
+        FRONT_LEFT,   // Mod 2
+        BACK_LEFT);    // Mod 3
+```
+
+**Alternative approach (more robust):**
+If you want to ensure `swerveKinematics` always matches `moduleData` order, you could derive it programmatically:
+```java
+// After moduleData is defined, extract locations in order
+public static final SwerveDriveKinematics swerveKinematics =
+    new SwerveDriveKinematics(
+        moduleData[0].location(),  // BACK_RIGHT (Mod 0)
+        moduleData[1].location(),   // FRONT_RIGHT (Mod 1)
+        moduleData[2].location(),  // FRONT_LEFT (Mod 2)
+        moduleData[3].location()); // BACK_LEFT (Mod 3)
+```
+
+### Why
+- **Eliminates duplication**: Module positions are defined once in named constants, used everywhere else
+- **Reduces maintenance burden**: If module positions need to change, only update the named constants
+- **Improves consistency**: Ensures `swerveKinematics` and `moduleData` always use the same positions
+- **Better readability**: Named constants (`BACK_RIGHT`) are more readable than inline calculations
+- **Reduces risk of errors**: No risk of accidentally having different values in `swerveKinematics` vs. named constants
+
+### Where
+- **File**: `src/main/java/frc/robot/Constants.java`
+- **Lines**: 47-52 (swerveKinematics), 98-102 (named constants), 112-117 (moduleData)
+
+### Impact
+- **Low risk**: This is a refactoring that doesn't change behavior, only improves code organization
+- **Testing**: Verify that swerve drive still works correctly after the change
+- **Order dependency**: The order of modules in `swerveKinematics` constructor **must match** the order in `moduleData` array:
+  - Index 0 = BACK_RIGHT (Mod 0)
+  - Index 1 = FRONT_RIGHT (Mod 1)
+  - Index 2 = FRONT_LEFT (Mod 2)
+  - Index 3 = BACK_LEFT (Mod 3)
+- **Note**: The comment on line 107 says "Front Left Module - Module 0" but Module 0 is actually BACK_RIGHT. Consider updating this comment for accuracy.
+
+### Additional Considerations
+- **Order verification**: Consider adding a comment or assertion to document that the order must match `moduleData`
+- **Alternative approach**: The programmatic approach (using `moduleData[i].location()`) ensures they always match, but is less readable and requires `moduleData` to be defined before `swerveKinematics`
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
+## 12. Fix Module Index Mapping and Add Position-Based Accessors (Code Safety)
+
+### What
+Fix the incorrect comment on line 107, add position-based constants for module indices, and improve documentation to prevent index confusion when accessing `moduleData`.
+
+**Current code:**
+```java
+// Line 107: INCORRECT COMMENT - says "Front Left Module - Module 0" but Module 0 is BACK_RIGHT
+/* Front Left Module - Module 0 */
+public record ModuleData(...){}
+
+public static ModuleData[] moduleData = {
+  new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0
+  new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1
+  new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2
+  new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3
+};
+```
+
+**Proposed code:**
+```java
+/* Module Specific Constants */
+/* Module Index Mapping:
+ * Index 0 = BACK_RIGHT
+ * Index 1 = FRONT_RIGHT
+ * Index 2 = FRONT_LEFT
+ * Index 3 = BACK_LEFT
+ * 
+ * The order in moduleData[] MUST match the order in swerveKinematics constructor.
+ */
+public record ModuleData(
+  int driveMotorID, int angleMotorID, int encoderID, double angleOffset, Translation2d location
+){}
+
+// Position-based index constants for safer access
+public static final int MODULE_INDEX_BACK_RIGHT = 0;
+public static final int MODULE_INDEX_FRONT_RIGHT = 1;
+public static final int MODULE_INDEX_FRONT_LEFT = 2;
+public static final int MODULE_INDEX_BACK_LEFT = 3;
+
+public static ModuleData[] moduleData = {
+  new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0 - BACK_RIGHT
+  new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1 - FRONT_RIGHT
+  new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2 - FRONT_LEFT
+  new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3 - BACK_LEFT
+};
+
+// Optional: Position-based accessor methods for safer access
+public static ModuleData getModuleDataBackRight() {
+  return moduleData[MODULE_INDEX_BACK_RIGHT];
+}
+public static ModuleData getModuleDataFrontRight() {
+  return moduleData[MODULE_INDEX_FRONT_RIGHT];
+}
+public static ModuleData getModuleDataFrontLeft() {
+  return moduleData[MODULE_INDEX_FRONT_LEFT];
+}
+public static ModuleData getModuleDataBackLeft() {
+  return moduleData[MODULE_INDEX_BACK_LEFT];
+}
+```
+
+**Usage example:**
+```java
+// Instead of: moduleData[2]  // Unclear - what module is index 2?
+// Use: moduleData[MODULE_INDEX_FRONT_LEFT]  // Clear - FRONT_LEFT module
+// Or: getModuleDataFrontLeft()  // Even clearer
+```
+
+### Why
+- **Fixes incorrect documentation**: The comment on line 107 is wrong and misleading
+- **Prevents index confusion**: If someone wants FRONT_LEFT module data, they might incorrectly use `moduleData[0]` (thinking "first module") when they should use `moduleData[2]`
+- **Improves code readability**: Named constants (`MODULE_INDEX_FRONT_LEFT`) are self-documenting
+- **Reduces maintenance risk**: If module order changes, update constants in one place
+- **Enables safer access**: Position-based accessor methods eliminate index errors entirely
+
+### Where
+- **File**: `src/main/java/frc/robot/Constants.java`
+- **Lines**: 107 (incorrect comment), 112-117 (moduleData array)
+
+### Impact
+- **Low risk**: Adding constants and accessors doesn't change existing behavior
+- **Current usage is safe**: `moduleData` is only accessed in a loop in `SwerveSubsystem` constructor, so current code is safe
+- **Future-proofing**: Makes it safer if someone later needs to access a specific module by position
+- **Backward compatible**: Existing code using `moduleData[i]` continues to work
+
+### Additional Considerations
+- **Accessor methods are optional**: The position-based constants (`MODULE_INDEX_FRONT_LEFT`) may be sufficient. Accessor methods provide additional safety but add code.
+- **Order dependency**: The module index constants document the critical order dependency between `moduleData` and `swerveKinematics`
+- **Consider enum**: An alternative approach could use an enum for module positions, but constants are simpler and more consistent with existing code style
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
+## 13. Move SwerveModule to Subsystem Package (Code Organization)
+
+### What
+Move `SwerveModule.java` from the `frc.robot` package to the `frc.robot.subsystem` package (after Recommendation #14 renames `Subsystems` to `subsystem`) to keep all swerve-related code together and improve code organization.
+
+**Current structure:**
+```
+src/main/java/frc/robot/
+  ├── SwerveModule.java          ← Currently here
+  └── Subsystems/
+      └── SwerveSubsystem.java   ← Uses SwerveModule
+```
+
+**Proposed structure (after package rename):**
+```
+src/main/java/frc/robot/
+  └── subsystem/
+      ├── SwerveModule.java      ← Move here
+      └── SwerveSubsystem.java
+```
+
+**Required changes:**
+1. Move file: `src/main/java/frc/robot/SwerveModule.java` → `src/main/java/frc/robot/subsystem/SwerveModule.java`
+   - **Note**: This should be done after Recommendation #14 renames `Subsystems` to `subsystem`
+2. Update package declaration in `SwerveModule.java`:
+   ```java
+   // Change from:
+   package frc.robot;
+   
+   // To:
+   package frc.robot.subsystem;  // Note: singular, lowercase
+   ```
+3. Update import in `SwerveSubsystem.java`:
+   ```java
+   // Change from:
+   import frc.robot.SwerveModule;
+   
+   // To:
+   import frc.robot.subsystem.SwerveModule;
+   // Or simply remove the import since it's in the same package
+   ```
+
+### Why
+- **Better organization**: Keeps all swerve-related code (subsystem and its components) in one location
+- **Improved maintainability**: Easier to find and modify related code when it's grouped together
+- **Follows Java best practices**: Related classes should be in the same package
+- **Reduces coupling**: Since `SwerveModule` is only used by `SwerveSubsystem`, they should be in the same package
+- **Clearer structure**: Makes it obvious that `SwerveModule` is a component of the swerve subsystem, not a standalone class
+
+### Where
+- **File to move**: `src/main/java/frc/robot/SwerveModule.java`
+- **Target location**: `src/main/java/frc/robot/subsystem/SwerveModule.java` (after Recommendation #14 renames the package)
+- **File to update**: `src/main/java/frc/robot/subsystem/SwerveSubsystem.java` (line 28: import statement)
+- **Implementation order**: Should be done after Recommendation #14 (package naming fix) is completed
+
+### Impact
+- **Low risk**: `SwerveModule` is only used by `SwerveSubsystem`, so only one import needs to be updated
+- **No functional changes**: This is purely a code organization change
+- **Build system**: May need to refresh/rebuild the project after moving the file
+- **IDE**: Most IDEs can handle this refactoring automatically (e.g., "Move" refactoring in IntelliJ/VS Code)
+
+### Additional Considerations
+- **Future subsystems**: If other subsystems are added that have component classes, they should follow the same pattern (component classes in the same package as the subsystem)
+- **Shared components**: If `SwerveModule` were to be used by multiple subsystems in the future, it might make sense to keep it in a shared location, but currently it's only used by `SwerveSubsystem`
+- **Implementation order**: This recommendation should be implemented **after** Recommendation #14 (package naming fix), since the package will be renamed from `Subsystems` to `subsystem` first
+- **Package naming**: After Recommendation #14, the package will be `frc.robot.subsystem` (lowercase, singular), which aligns with Java conventions
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
+## 14. Fix Package Naming Convention (Java Standards Compliance)
+
+### What
+Rename all package directories and package declarations to use lowercase letters and singular form, following the official Java naming convention (JLS §6). Package names should be all lowercase ASCII letters, and should use singular form for consistency with Java standard library conventions.
+
+**Current packages (incorrect):**
+- `frc.robot.Command` → Should be `frc.robot.command` (lowercase, singular)
+- `frc.robot.Subsystems` → Should be `frc.robot.subsystem` (lowercase, singular - note: changed from plural to singular for consistency)
+- `frc.lib.TunableControllers` → Should be `frc.lib.tunablecontroller` (lowercase, singular)
+
+**Proposed packages (correct):**
+- `frc.robot.command` (singular - each class represents one command)
+- `frc.robot.subsystem` (singular - each class represents one subsystem)
+- `frc.lib.tunablecontroller` (singular - each class represents one controller type)
+
+**Required changes:**
+
+1. **Rename directories:**
+   - `src/main/java/frc/robot/Command/` → `src/main/java/frc/robot/command/`
+   - `src/main/java/frc/robot/Subsystems/` → `src/main/java/frc/robot/subsystem/` (note: singular, not plural)
+   - `src/main/java/frc/lib/TunableControllers/` → `src/main/java/frc/lib/tunablecontroller/` (note: singular, not plural)
+
+2. **Update package declarations in all affected files:**
+   ```java
+   // Command package files:
+   // Change from: package frc.robot.Command;
+   // To: package frc.robot.command;
+   
+   // Subsystems package files:
+   // Change from: package frc.robot.Subsystems;
+   // To: package frc.robot.subsystem;  // Note: singular, not "subsystems"
+   
+   // TunableControllers package files:
+   // Change from: package frc.lib.TunableControllers;
+   // To: package frc.lib.tunablecontroller;  // Note: singular, not "tunablecontrollers"
+   ```
+
+3. **Update all import statements:**
+   ```java
+   // Change from: import frc.robot.Command.TeleopSwerve;
+   // To: import frc.robot.command.TeleopSwerve;
+   
+   // Change from: import frc.robot.Subsystems.SwerveSubsystem;
+   // To: import frc.robot.subsystem.SwerveSubsystem;  // Note: singular
+   
+   // Change from: import frc.lib.TunableControllers.TunablePID;
+   // To: import frc.lib.tunablecontroller.TunablePID;  // Note: singular
+   ```
+
+**Files affected:**
+- `src/main/java/frc/robot/Command/TeleopSwerve.java`
+- `src/main/java/frc/robot/Command/AutoAlign.java`
+- `src/main/java/frc/robot/Subsystems/SwerveSubsystem.java`
+- `src/main/java/frc/lib/TunableControllers/*.java` (5 files)
+- Any files that import from these packages (e.g., `RobotContainer.java`, `SwerveModule.java`)
+
+### Why
+- **Java Language Specification compliance**: JLS §6 specifies package names should be all lowercase ASCII letters
+- **Industry standard**: Oracle's Code Conventions and most Java style guides require lowercase package names
+- **Singular form convention**: Java standard library uses singular package names (`java.util`, `java.lang`, `java.io`), and WPILib follows this pattern (`edu.wpi.first.wpilibj2.command`). Each class represents one command or one subsystem, so singular is more appropriate
+- **Consistency**: Using singular for both `command` and `subsystem` creates a consistent naming pattern across the codebase
+- **Tool compatibility**: Many build tools, IDEs, and documentation generators assume lowercase package names
+- **Cross-platform compatibility**: Case-sensitive filesystems (Linux) can cause issues with mixed-case package names
+- **Professional code quality**: Following established conventions makes code more maintainable and easier for new developers to understand
+- **Alignment with WPILib**: WPILib uses `edu.wpi.first.wpilibj2.command` (singular), so using `frc.robot.command` and `frc.robot.subsystem` aligns with this pattern
+
+### Where
+- **Directories to rename:**
+  - `src/main/java/frc/robot/Command/` → `src/main/java/frc/robot/command/`
+  - `src/main/java/frc/robot/Subsystems/` → `src/main/java/frc/robot/subsystem/` (singular)
+  - `src/main/java/frc/lib/TunableControllers/` → `src/main/java/frc/lib/tunablecontroller/` (singular)
+- **Files to update**: All Java files in these packages plus any files that import from them
+
+### Impact
+- **Medium risk**: This is a refactoring that affects multiple files and imports
+- **Build system**: May need to clean and rebuild the project after renaming
+- **Version control**: Git should track the renames, but verify that file history is preserved
+- **IDE**: Most IDEs (IntelliJ, VS Code, Eclipse) can handle package renaming automatically via refactoring tools
+- **Testing**: Verify that all imports resolve correctly and the project builds successfully
+
+### Additional Considerations
+- **Singular vs. plural**: The recommendation uses **singular** form (`subsystem`, not `subsystems`) to match Java standard library conventions and WPILib patterns. Each class represents one subsystem or one command, so singular is semantically correct
+- **Refactoring tools**: Use IDE refactoring features (e.g., "Rename Package" in IntelliJ) to automatically update all references
+- **Git handling**: Git typically handles directory renames well, but verify file history is preserved
+- **Case-sensitive filesystems**: On Linux/Mac, the directory rename is case-sensitive and may require special handling
+- **Build.gradle**: Verify that build configuration files don't have hardcoded package paths
+- **Documentation**: Update any documentation that references the old package names
+
+### Implementation Steps
+1. Use IDE refactoring tool to rename packages (recommended - automatically updates all references)
+2. Or manually:
+   - Rename directories
+   - Update package declarations in all files
+   - Update all import statements
+   - Clean and rebuild project
+   - Verify all tests pass
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
+## 15. Use enableContinuousInput for Swerve Module Angle Control (Performance Improvement)
+
+### What
+Replace REV SparkMax's built-in position controller with WPILib's `PIDController` for **the angle motor only** (not the drive motor), and enable continuous input to handle angle wrapping correctly. This prevents modules from taking long rotation paths when angles wrap around (e.g., rotating 340° instead of 20° when going from 350° to 10°).
+
+**Important**: Only the **angle motor controller** should be changed. The drive motor controller should remain unchanged and continue using REV's built-in velocity control.
+
+**Current code:**
+```java
+// SwerveModule.java
+private final SparkClosedLoopController angleController; // REV built-in controller for ANGLE motor
+private final SparkClosedLoopController driveController; // REV built-in controller for DRIVE motor (unchanged)
+
+public SwerveModule(...) {
+    // ...
+    angleController = angleMotor.getClosedLoopController(); // ANGLE motor controller
+    // REV controller doesn't support continuous input
+    configAngleMotor();
+    
+    driveController = driveMotor.getClosedLoopController(); // DRIVE motor controller (stays as-is)
+    configDriveMotor();
+}
+
+private void setAngle(SwerveModuleState desiredState) {
+    // ...
+    angleController.setReference(angle.getDegrees(), ControlType.kPosition);
+    // Problem: If current angle is 350° and target is 10°, 
+    // controller sees error of -340° and rotates the long way
+}
+```
+
+**Proposed code:**
+```java
+// SwerveModule.java
+import edu.wpi.first.math.controller.PIDController;
+
+// ANGLE motor: Use WPILib PIDController with continuous input support
+private final SparkClosedLoopController angleControllerREV; // Kept for compatibility (not used)
+private final PIDController angleController; // WPILib controller with continuous input
+
+// DRIVE motor: Keep REV's built-in controller (unchanged)
+private final SparkClosedLoopController driveController; // REV built-in controller (no changes)
+
+public SwerveModule(...) {
+    // ...
+    // ANGLE motor: Switch to WPILib PIDController
+    angleControllerREV = angleMotor.getClosedLoopController();
+    // Create WPILib PIDController for angle control
+    angleController = new PIDController(m_angleKP, m_angleKI, m_angleKD);
+    // Enable continuous input to handle angle wrapping
+    angleController.enableContinuousInput(-180.0, 180.0);
+    // Clamp output to reasonable percent output range
+    angleController.setOutputRange(-1.0, 1.0);
+    configAngleMotor();
+    
+    // DRIVE motor: Keep existing REV controller (no changes)
+    driveController = driveMotor.getClosedLoopController();
+    configDriveMotor(); // No changes needed here
+}
+
+private void setAngle(SwerveModuleState desiredState) {
+    // ...
+    double currentAngleDegrees = getAngle().getDegrees();
+    double targetAngleDegrees = angle.getDegrees();
+    
+    // Calculate PID output using continuous input (handles wrapping automatically)
+    double output = angleController.calculate(currentAngleDegrees, targetAngleDegrees);
+    
+    // Set ANGLE motor using percent output from PID controller
+    angleMotor.set(output);
+    // Now: If current is 350° and target is 10°, 
+    // continuous input treats them as 20° apart (shortest path)
+}
+
+// setSpeed() method remains unchanged - still uses REV's driveController
+```
+
+### Why
+- **Prevents inefficient rotations**: Without continuous input, modules may rotate 340° instead of 20° when angles wrap around (e.g., 350° → 10°)
+- **Reduces wear**: Shorter rotation paths reduce mechanical wear on swerve modules
+- **Improves responsiveness**: Modules reach target angles faster by taking the shortest path
+- **Eliminates oscillation**: Prevents modules from oscillating near ±180° boundaries
+- **Standard practice**: Many FRC teams use continuous input for swerve angle control to handle circular angle space correctly
+- **Currently only used in AutoAlign**: The codebase already uses `enableContinuousInput` in `AutoAlign.java` (line 46), but standard teleop mode doesn't benefit from it
+
+### Where
+- **File**: `src/main/java/frc/robot/SwerveModule.java`
+- **Changes needed (ANGLE motor only)**:
+  - **Line ~22**: Add import for `edu.wpi.first.math.controller.PIDController`
+  - **Line ~53**: Replace `angleController` declaration with both REV and WPILib controllers
+  - **Lines ~108-114**: Create WPILib PIDController and enable continuous input in constructor
+  - **Lines ~310-338**: Update `setAngle()` method to use WPILib PIDController with percent output
+  - **Lines ~345-348**: Update `pointInDirection()` method similarly
+  - **Line ~373**: Remove PID configuration from `configAngleMotor()` (now handled by WPILib controller)
+- **No changes needed**:
+  - **Drive motor controller**: Keep `driveController` and `setSpeed()` method unchanged
+  - **configDriveMotor()**: No modifications needed - drive motor continues using REV's built-in velocity control
+
+### Impact
+- **Medium priority**: Addresses performance and wear issues in swerve drive angle control
+- **Scope**: Only affects the **angle motor controller**. The drive motor controller remains unchanged and continues using REV's built-in velocity control with feedforward
+- **PID tuning may be needed**: Current `angleKP = 0.01` was tuned for REV's position control. With percent output control, gains may need adjustment:
+  - Start with current values and test
+  - If modules rotate too slowly, increase `angleKP`
+  - If modules overshoot or oscillate, decrease `angleKP` or increase `angleKD`
+- **Control mode change**: Switches **angle motor** from position control (REV built-in) to percent output control (WPILib PID)
+- **Drive motor unchanged**: Drive motor continues using REV's velocity control with feedforward - no changes needed
+- **Active in all modes**: Once implemented, continuous input benefits teleop, autonomous, and any mode using swerve drive
+- **No breaking changes**: Existing functionality remains the same, just improved angle handling
+
+### Implementation Considerations
+
+**PID Gain Tuning:**
+- The current `angleKP = 0.01` was tuned for REV's position control mode
+- With percent output control, gains typically need to be higher
+- Recommended starting point: Try `angleKP = 0.1` to `0.5` and tune from there
+- Test with modules at various angles, especially near ±180° boundaries
+- Verify modules take shortest rotation path (e.g., 350° → 10° should rotate 20°, not 340°)
+
+**Output Clamping:**
+- WPILib PIDController output should be clamped to ±1.0 (100% motor output)
+- Use `angleController.setOutputRange(-1.0, 1.0)` to prevent excessive motor commands
+- Consider adding velocity limiting if needed for smoother motion
+
+**Testing Checklist:**
+- [ ] Verify modules rotate correctly at all angles
+- [ ] Test angle wrapping scenarios (350° → 10°, -179° → 179°)
+- [ ] Confirm modules take shortest rotation path
+- [ ] Check for oscillation or overshoot near target angles
+- [ ] Verify PID gains are appropriate for percent output control
+- [ ] Test in both teleop and autonomous modes
+
+### Related Code
+- **AutoAlign.java (line 46)**: Already uses `enableContinuousInput` for rotation controller
+- **SwerveConstants.angleKP/KI/KD**: PID gains that may need retuning after this change
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
+## 16. Use WPILib's SwerveModuleState.optimize() Instead of Custom Implementation (Code Standardization)
+
+### What
+Replace the custom `optimize()` method in `SwerveModule.java` with WPILib's built-in `SwerveModuleState.optimize()` static method. This ensures consistency with WPILib's standard swerve drive implementations and trajectory-following commands.
+
+**Current code:**
+```java
+// SwerveModule.java (lines 239-262)
+private SwerveModuleState optimize(SwerveModuleState desiredState, Rotation2d currentAngle){
+    // Calculate the angular difference between desired and current angle
+    double difference = desiredState.angle.getDegrees() - currentAngle.getDegrees();
+    // Normalize to -180° to +180° range (shortest rotation path)
+    double turnAmount = Math.IEEEremainder(difference,360);
+
+    double speed = desiredState.speedMetersPerSecond;
+
+    // If rotation needed is more than 90°, flip wheel 180° and reverse speed
+    if (turnAmount > 90){
+        turnAmount -= 180;
+        speed *= -1;
+    }
+    // Same optimization for negative rotation angles
+    if (turnAmount < -90){
+        turnAmount += 180;
+        speed *= -1;
+    }
+
+    // Calculate final optimized angle by adding adjusted turn amount to current angle
+    double direction = currentAngle.getDegrees() + turnAmount;
+    return new SwerveModuleState (speed, Rotation2d.fromDegrees(direction)); 
+}
+
+// Usage in setDesiredState() (line 140)
+SwerveModuleState optimizedState = optimize(desiredState, getAngle());
+```
+
+**Proposed code:**
+```java
+// Remove the custom optimize() method entirely
+
+// Update setDesiredState() to use WPILib's static method
+public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
+    // Use WPILib's standard optimize method
+    SwerveModuleState optimizedState = SwerveModuleState.optimize(desiredState, getAngle());
+    // Set the wheel angle to the optimized direction
+    setAngle(optimizedState);
+    // Set the drive motor speed (open loop or closed loop based on parameter)
+    setSpeed(optimizedState, isOpenLoop);      
+}
+```
+
+### Why
+- **Standard WPILib implementation**: `SwerveModuleState.optimize()` is the official WPILib utility method designed specifically for swerve module optimization. It's part of the standard kinematics library and is used throughout WPILib's own swerve drive examples
+- **Battle-tested**: WPILib's method has been tested extensively by thousands of FRC teams and is used in official WPILib trajectory-following commands like `SwerveControllerCommand` and `HolonomicDriveController`
+- **Consistency with autonomous**: When using WPILib's trajectory following or holonomic drive controller for autonomous, those classes output `SwerveModuleState[]` arrays that are designed to work with `SwerveModuleState.optimize()`. Using the same method ensures consistent behavior between teleop and autonomous
+- **Reduces maintenance burden**: Custom implementations add technical debt and potential bugs. Using the standard library method:
+  - Eliminates custom code to maintain
+  - Benefits from WPILib's bug fixes and improvements
+  - Is easier for new team members to understand
+- **Handles edge cases properly**: WPILib's implementation handles angle wrapping and edge cases that may not be obvious in a custom implementation
+- **Potential bug source**: Custom implementations can have subtle bugs (e.g., angle wrapping edge cases, precision issues) that WPILib's version has already solved
+- **Works with enableContinuousInput**: This change complements Recommendation #15 (using `enableContinuousInput`). Both work together to ensure proper angle handling:
+  - `SwerveModuleState.optimize()` minimizes rotation distance at the state level
+  - `enableContinuousInput()` ensures the PID controller handles angle wrapping correctly
+
+### Where
+- **File**: `src/main/java/frc/robot/SwerveModule.java`
+- **Lines to remove**: 226-262 (entire custom `optimize()` method)
+- **Line to update**: 140 (change `optimize(desiredState, getAngle())` to `SwerveModuleState.optimize(desiredState, getAngle())`)
+
+### Impact
+- **Low risk change**: WPILib's `optimize()` method performs the same optimization logic (minimizes rotation by potentially flipping wheel 180° and reversing speed)
+- **No functional changes expected**: The behavior should be identical or very similar to the custom implementation
+- **Reduces code complexity**: Removes ~37 lines of custom code
+- **Improves maintainability**: One less custom method to maintain and debug
+- **Better compatibility**: Ensures compatibility with WPILib's trajectory-following features if used in the future
+
+### Implementation Considerations
+
+**Method Signature:**
+- WPILib's method: `SwerveModuleState.optimize(SwerveModuleState desiredState, Rotation2d currentAngle)`
+- Your current method: `optimize(SwerveModuleState desiredState, Rotation2d currentAngle)`
+- The signatures match, so the change is straightforward
+
+**Testing Checklist:**
+- [ ] Verify modules still optimize correctly (take shortest rotation path)
+- [ ] Test angle wrapping scenarios (350° → 10°, -179° → 179°)
+- [ ] Confirm modules flip wheel 180° when appropriate (>90° rotation)
+- [ ] Test in both teleop and autonomous modes
+- [ ] Verify no regressions in module behavior
+
+**Related to Recommendation #15:**
+- This change works well with implementing `enableContinuousInput()` for angle PID control
+- Both changes address angle handling: `optimize()` at the state level, `enableContinuousInput()` at the PID level
+- Consider implementing both recommendations together for comprehensive angle handling improvements
+
+### Additional Notes
+- **Why custom implementation might exist**: Custom implementations are sometimes created before teams discover WPILib's built-in method, or to address specific edge cases. However, WPILib's version is generally preferred
+- **If custom logic is needed**: If there's a specific reason the custom implementation differs from WPILib's (e.g., different optimization criteria), document why and consider whether the custom logic is actually necessary
+- **WPILib examples**: All official WPILib swerve drive examples use `SwerveModuleState.optimize()`, reinforcing that it's the standard approach
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
 ## Future Recommendations
 
 _Additional code improvement recommendations will be added here as they are identified._
