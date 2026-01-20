@@ -1630,6 +1630,95 @@ public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) 
 
 ---
 
+## 17. Remove C++ Dependencies from WPILibNewCommands Vendordeps (Java-Only Project Configuration)
+
+### What
+Remove the `cppDependencies` section (including `binaryPlatforms`) from `WPILibNewCommands.json` vendordeps file since this is a Java-only project and doesn't need C++ dependencies.
+
+**Current code:**
+```json
+{
+  "javaDependencies": [
+    {
+      "groupId": "edu.wpi.first.wpilibNewCommands",
+      "artifactId": "wpilibNewCommands-java",
+      "version": "wpilib"
+    }
+  ],
+  "jniDependencies": [],
+  "cppDependencies": [
+    {
+      "groupId": "edu.wpi.first.wpilibNewCommands",
+      "artifactId": "wpilibNewCommands-cpp",
+      "version": "wpilib",
+      "libName": "wpilibNewCommands",
+      "headerClassifier": "headers",
+      "sourcesClassifier": "sources",
+      "sharedLibrary": true,
+      "skipInvalidPlatforms": true,
+      "binaryPlatforms": [
+        "linuxsystemcore",
+        "linuxathena",
+        "linuxarm32",
+        "linuxarm64",
+        "windowsx86-64",
+        "windowsx86",
+        "linuxx86-64",
+        "osxuniversal"
+      ]
+    }
+  ]
+}
+```
+
+**Proposed code:**
+```json
+{
+  "javaDependencies": [
+    {
+      "groupId": "edu.wpi.first.wpilibNewCommands",
+      "artifactId": "wpilibNewCommands-java",
+      "version": "wpilib"
+    }
+  ],
+  "jniDependencies": []
+}
+```
+
+### Why
+- **Java-only project**: Since this project uses Java and not C++, the `cppDependencies` section is unnecessary
+- **Reduces confusion**: Removing C++ dependencies makes it clear this is a Java-only configuration
+- **Cleaner configuration**: Only includes dependencies that are actually used
+- **Faster builds**: Gradle won't attempt to download C++ binaries that aren't needed
+- **Consistency**: Other vendordeps files (like `REVLib.json` and `Phoenix6-frc2026-latest.json`) include both `cppDependencies` and `jniDependencies` because they provide native libraries for Java via JNI. However, `WPILibNewCommands` doesn't need JNI (as indicated by empty `jniDependencies`), so it also doesn't need C++ dependencies
+- **No functional impact**: Removing unused C++ dependencies doesn't affect Java functionality
+
+### Where
+- **File**: `vendordeps/WPILibNewCommands.json`
+- **Lines to remove**: 17-37 (entire `cppDependencies` section including `binaryPlatforms` array)
+
+### Impact
+- **Low risk change**: Purely removes unused configuration
+- **No functional changes**: Java dependencies remain unchanged
+- **Build system**: Gradle will no longer attempt to download C++ binaries for WPILib New Commands
+- **Cleaner configuration**: File only contains dependencies relevant to Java project
+
+### Additional Notes
+- **When C++ dependencies are needed**: If the project later adds C++ code, the `cppDependencies` section can be re-added
+- **JNI vs C++ dependencies**: 
+  - `jniDependencies`: Native libraries used by Java via JNI (Java Native Interface) - needed for Java projects that use native code
+  - `cppDependencies`: C++ libraries and headers - only needed for C++ projects
+  - Since `jniDependencies` is empty for WPILib New Commands, it's a pure Java library and doesn't need C++ dependencies either
+- **Other vendordeps**: Files like `REVLib.json` include both because they provide native drivers that Java accesses via JNI, but WPILib New Commands is a pure Java library
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
+- [ ] Implemented
+
+---
+
 ## Future Recommendations
 
 _Additional code improvement recommendations will be added here as they are identified._
