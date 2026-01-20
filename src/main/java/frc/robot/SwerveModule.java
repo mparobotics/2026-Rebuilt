@@ -146,7 +146,8 @@ public class SwerveModule {
      */
     public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
         // Optimize the desired state to minimize rotation (flip wheel 180° if needed)
-        SwerveModuleState optimizedState = optimize(desiredState, getAngle());
+        // Use WPILib's standard optimize method for consistency with trajectory-following commands
+        SwerveModuleState optimizedState = SwerveModuleState.optimize(desiredState, getAngle());
         // Set the wheel angle to the optimized direction
         setAngle(optimizedState);
         // Set the drive motor speed (open loop or closed loop based on parameter)
@@ -232,44 +233,6 @@ public class SwerveModule {
         return driveMotor.getLastError() == REVLibError.kOk && angleMotor.getLastError() == REVLibError.kOk;
     }
     
-    /**
-     * Optimizes the desired module state to minimize rotation distance.
-     * <p>
-     * Swerve modules can achieve the same direction of travel by rotating the wheel
-     * 180 degrees and reversing the drive speed. This method checks if the required
-     * rotation is greater than 90 degrees, and if so, flips the wheel direction
-     * and reverses speed to reduce the rotation needed. This minimizes wear and
-     * improves response time.
-     * 
-     * @param desiredState The target module state (speed and angle)
-     * @param currentAngle The current module wheel angle
-     * @return Optimized module state that achieves the same direction with minimal rotation
-     */
-    private SwerveModuleState optimize(SwerveModuleState desiredState, Rotation2d currentAngle){
-        // Calculate the angular difference between desired and current angle
-        double difference = desiredState.angle.getDegrees() - currentAngle.getDegrees();
-        // Normalize to -180° to +180° range (shortest rotation path)
-        double turnAmount = Math.IEEEremainder(difference,360);
-
-        double speed = desiredState.speedMetersPerSecond;
-
-        // If rotation needed is more than 90°, flip wheel 180° and reverse speed
-        // This reduces rotation distance (e.g., 120° turn becomes 60° turn)
-        if (turnAmount > 90){
-            turnAmount -= 180;
-            speed *= -1;
-        }
-        // Same optimization for negative rotation angles
-        if (turnAmount < -90){
-            turnAmount += 180;
-            speed *= -1;
-        }
-
-        // Calculate final optimized angle by adding adjusted turn amount to current angle
-        double direction = currentAngle.getDegrees() + turnAmount;
-        return new SwerveModuleState (speed, Rotation2d.fromDegrees(direction)); 
-    }
-
     /**
      * Sets the drive motor speed to achieve the desired velocity.
      * <p>

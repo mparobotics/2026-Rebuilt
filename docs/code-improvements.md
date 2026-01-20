@@ -1677,8 +1677,9 @@ public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) 
 
 ### Where
 - **File**: `src/main/java/frc/robot/SwerveModule.java`
-- **Lines to remove**: 226-262 (entire custom `optimize()` method)
-- **Line to update**: 140 (change `optimize(desiredState, getAngle())` to `SwerveModuleState.optimize(desiredState, getAngle())`)
+- **Changes implemented**:
+  - **Lines 235-271**: Removed entire custom `optimize()` method
+  - **Line 150**: Updated `setDesiredState()` to use `SwerveModuleState.optimize(desiredState, getAngle())` instead of local `optimize()` method
 
 ### Impact
 - **Low risk change**: WPILib's `optimize()` method performs the same optimization logic (minimizes rotation by potentially flipping wheel 180° and reversing speed)
