@@ -68,13 +68,17 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double driveKP = 0.1; //to tune
     public static final double driveKI = 0.0; //to tune
     public static final double driveKD = 0.0; //to tune
-    public static final double driveKFF = 0.0; //to tune
-
+  
     /* Drive Motor Characterization Values */
     //values to calculate the drive feedforward (KFF)
     public static final double driveKS = 0.667; //to calculate
     public static final double driveKV = 2.4; //to calculate
-    public static final double driveKA = 0.27; //to calculate
+    public static final double driveKA = 0.5; //to calculate
+
+    /* Angle Motor PID Values */
+    public static final double angleKP = 0.01; //to tune
+    public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
+    public static final double angleKD = 0.0; //to tune
 
     /* Drive Motor Conversion Factors */
     public static final double driveConversionPositionFactor =
@@ -107,15 +111,11 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0
-      new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1
-      new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2
-      new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3
+      new ModuleData(11, 14, 19, 159.87, BACK_RIGHT), //Mod 0
+      new ModuleData(17, 18, 22, 232.39, FRONT_RIGHT), //Mod 1
+      new ModuleData(15, 16, 21, 311.67, FRONT_LEFT), //Mod 2
+      new ModuleData(13, 12, 20, 299.45, BACK_LEFT) //Mod 3
     };
-      
-    public static final double angleKP = 0.01; //to tune
-    public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
-    public static final double angleKD = 0.0; //to tune
     
   }
 
