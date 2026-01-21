@@ -151,5 +151,7 @@ public class FieldConstants {
           return new Pose2d(flipForAlliance(pose.getTranslation()), flipForAlliance(pose.getRotation()));
       }
   }
-  
+  public class IntakeConstants {
+    public static int INTAKE_ID = 15;
+  }
 }
