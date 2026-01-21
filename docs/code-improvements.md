@@ -1580,6 +1580,12 @@ public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) 
   - Benefits from WPILib's bug fixes and improvements
   - Is easier for new team members to understand
 - **Simpler implementation**: WPILib's version is more concise (~5 lines vs ~23 lines) with fewer branches, reducing the chance of logic errors. While both implementations are functionally equivalent, WPILib's version uses `Rotation2d` arithmetic throughout (staying in rotation space) rather than converting to/from degrees, which is more robust and consistent with WPILib's design patterns
+- **Reduces numerical precision issues**: The custom implementation converts `Rotation2d` → degrees (via `getDegrees()`) → arithmetic in degrees → back to `Rotation2d` (via `fromDegrees()`). This conversion chain happens every 20ms (~50 times/second, ~6000-9000 times per match). Each conversion introduces small rounding errors:
+  - `getDegrees()` uses `atan2(sin, cos) * 180/π` (finite precision)
+  - `fromDegrees()` converts back using `degrees * π/180` then recomputes sin/cos
+  - These errors are small (~1e-15 radians typically), but over thousands of iterations could theoretically accumulate or cause jitter near threshold boundaries (especially around ±90°)
+  - WPILib's version stays in `Rotation2d` space (sin/cos representation) throughout the optimization, avoiding unnecessary conversions and reducing numerical drift
+  - **Note**: The system still has necessary conversions at boundaries (encoder → `Rotation2d` in `getAngle()`, `Rotation2d` → degrees in `setAngle()` for motor controller), but eliminating the extra conversions in the optimization loop reduces potential error accumulation
 - **Works with enableContinuousInput**: This change complements Recommendation #15 (using `enableContinuousInput`). Both work together to ensure proper angle handling:
   - `SwerveModuleState.optimize()` minimizes rotation distance at the state level
   - `enableContinuousInput()` ensures the PID controller handles angle wrapping correctly
