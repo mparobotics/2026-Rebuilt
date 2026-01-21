@@ -1600,6 +1600,75 @@ public static final double angleKD = 0.0; // start with no derivative
 - **AutoAlign.java (line 46)**: Already uses `enableContinuousInput` for rotation controller
 - **SwerveConstants.angleKP/KI/KD**: PID gains currently set to `0.01, 0.0, 0.0` (may need tuning for optimal voltage control)
 
+### References
+
+> Note: These references provide the **WPILib rationale for continuous input + output clamping + integrator limiting** when the process variable is an **angle** (circular/wrapping). WPILib does **not** explicitly state that teams must prefer WPILib PID over a vendor (REV) onboard controller; our motivation for using WPILib here is that we needed **continuous input** (wrapping) behavior that REV’s closed-loop position control does not provide in the same way.
+
+- **[WPILib PIDController: Setting Continuous Input](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/controllers/pidcontroller.html#setting-continuous-input)**
+  - **Summary**: WPILib explicitly calls out angles as a circular measurement and recommends enabling continuous input so the controller uses the smaller wraparound error (shortest path).
+  - **Supporting quotes**:
+    - “Some process variables (such as the angle of a turret) are measured on a circular scale, rather than a linear one… In such a configuration, there are two possible values for any given error… It is usually best to use the smaller of these errors.”
+    - “To configure a `PIDController` to automatically do this, use the `enableContinuousInput()` method…”
+
+- **[WPILib PIDController: Warning on Continuous Input Safety](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/controllers/pidcontroller.html#setting-continuous-input)**
+  - **Summary**: WPILib warns that continuous input should only be used when the mechanism can safely rotate continuously (or has additional safeguards). This is relevant when deciding whether continuous input is appropriate for your steering hardware limits.
+  - **Supporting quotes**:
+    - “If your mechanism is not capable of fully continuous rotational motion… _do not_ enable continuous input unless you have implemented an additional safety feature to prevent the mechanism from moving past its limit!”
+
+- **[WPILib PIDController: Clamping Controller Output](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/controllers/pidcontroller.html#clamping-controller-output)**
+  - **Summary**: WPILib shows clamping the PID output using `MathUtil.clamp(...)`. This matches our implementation where we clamp to the legal motor voltage range \([-12V, 12V]\).
+  - **Supporting quotes**:
+    - “Clamping Controller Output”
+    - “// Clamps the controller output to between -0.5 and 0.5  
+      `MathUtil.clamp(pid.calculate(encoder.getDistance(), setpoint), -0.5, 0.5);`”
+
+- **[WPILib PIDController: Setting a Max Integrator Value / setIntegratorRange](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/controllers/pidcontroller.html#setting-a-max-integrator-value)**
+  - **Summary**: WPILib documents integral windup and provides `setIntegratorRange()` as a built-in mitigation. This supports the `configureAngleController()` choice to limit integrator contribution.
+  - **Supporting quotes**:
+    - “A typical problem encountered when using integral feedback is excessive “wind-up” causing the system to wildly overshoot the setpoint.”
+    - “The range limits may be increased or decreased using the `setIntegratorRange()` method.”
+
+- **[WPILib PIDController: Specifying and Checking Tolerances / setTolerance + atSetpoint](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/controllers/pidcontroller.html#specifying-and-checking-tolerances)**
+  - **Summary**: WPILib explains how `setTolerance()` and `atSetpoint()` work. This supports our use of `setTolerance(1.0)` for “close enough” steering angle.
+  - **Supporting quotes**:
+    - “Occasionally, it is useful to know if a controller has tracked the setpoint to within a given tolerance…”
+    - “To do this, we first must specify the tolerances with the `setTolerance()` method; then, we can check it with the `atSetpoint()` method.”
+
+- **Independent / community references (non-WPILib)**
+  - **Note**: We specifically looked for posts where an OP reported “encoder drift” + PID tuning struggles and later confirmed “that worked.” We found several strong discussions on **angle wrapping / continuous input** and on **why to avoid stacking motor-controller PID with a rio PID**; however, explicit “confirmed fix” replies are uncommon and may require deeper thread-by-thread review.
+
+- **[ChiefDelphi: “Swerve Rotation PID Problems”](https://www.chiefdelphi.com/t/swerve-rotation-pid-problems/396535)**
+  - **Summary**: Team discussion of swerve rotation PID behavior, including advice to use “continuous input” (angle wrap) and the OP acknowledging they hadn’t enabled it and adding it.
+  - **Supporting quotes**:
+    - “I do not think the continuous mode is enabled… I still do not see anything set for continuous input… Therefore I thought it wasn’t necessary… Just added the necessary lines.”
+    - “Will try out and report back in a couple of days. Thanks!”
+    - (Also note) “The 2020-2021 ProfiledPIDController’s continuous mode support is broken (PIDController had the same bug). It’s fixed for 2022…”
+
+- **[ChiefDelphi: “Is it possible to EnableContinuousInput on Falcon Internal PID controller”](https://www.chiefdelphi.com/t/is-it-possible-to-enablecontinuousinput-on-falcon-internal-pid-controller/419978)**
+  - **Summary**: Discussion centered on a key limitation of vendor “internal PID” for steering: teams want wrap-around behavior “like the WPILib PID controllers do,” implying why teams often implement angle loops on the roboRIO with WPILib controllers when they need continuous input.
+  - **Supporting quotes**:
+    - “Is there a way to enable Continuous input on the PID controller that is onboard the Falcon FX to wrap at custom values. Like the WPILib PID controllers do.”
+    - “We use the internal PID controller inside the Falcon 500 on the steering of swerve modules.”
+
+- **[ChiefDelphi: “Tune Internal PID Loop for Drive/Angle Motor Swerve Drive Train”](https://www.chiefdelphi.com/t/tune-internal-pid-loop-for-drive-angle-motor-swerve-drive-train/454364)**
+  - **Summary**: A knowledgeable response explains that if you already run a `PIDController` on the roboRIO for azimuth (steering), you generally should **not** also run the motor controller’s internal PID for the same axis (i.e., treat it as a “dumb” controller and command outputs directly).
+  - **Supporting quotes**:
+    - “If you have a PIDController on the robot for module azimuth, then you don’t want to use the SparkMAX PID for the angle motor— you’ll treat it like a “dumb” motor controller, only calling ‘set()’.”
+
+- **[YAGSL: “How to tune PIDF”](https://docs.yagsl.com/configuring-yagsl/how-to-tune-pidf)**
+  - **Summary**: Community-maintained swerve documentation that explicitly mentions **PID wrapping** for steering/azimuth and provides a practical manual tuning process (P-first until oscillation, then add D carefully).
+  - **Supporting quotes**:
+    - “Swerve steering/angle/azimuth motors have PID wrapping enabled…”
+    - “Manual tuning typically follows this process: Set P… I… and D… to zero. Increase P… until the output starts to oscillate around the setpoint. Increase D… as much as possible without introducing jittering to the response.”
+
+- **[REVLib: “Getting Started with PID Tuning”](https://docs.revrobotics.com/revlib/spark/closed-loop/getting-started-with-pid-tuning)**
+  - **Summary**: REV’s tuning guidance supports a P-and-D-first approach and cautions against integral in typical FRC use, aligning with our “start with P, add D if needed, keep I small/limited” recommendations while tuning steering behavior.
+  - **Supporting quotes**:
+    - “Most teams find success using controllers tuned primarily with P and D…”
+    - “I… is not often recommended in FRC.”
+    - “The derivative gain, D, is used to tune out oscillation and dampen the motion… A good balance of P and D is needed to make a smooth motion with no oscillation.”
+    - “Set P to a very small number… Gradually increase P until you see movement…”
+
 ### Status
 - [ ] Pending team review
 - [ ] Approved
