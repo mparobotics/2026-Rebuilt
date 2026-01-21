@@ -1575,12 +1575,11 @@ public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) 
 - **Standard WPILib implementation**: `SwerveModuleState.optimize()` is the official WPILib utility method designed specifically for swerve module optimization. It's part of the standard kinematics library and is used throughout WPILib's own swerve drive examples
 - **Battle-tested**: WPILib's method has been tested extensively by thousands of FRC teams and is used in official WPILib trajectory-following commands like `SwerveControllerCommand` and `HolonomicDriveController`
 - **Consistency with autonomous**: When using WPILib's trajectory following or holonomic drive controller for autonomous, those classes output `SwerveModuleState[]` arrays that are designed to work with `SwerveModuleState.optimize()`. Using the same method ensures consistent behavior between teleop and autonomous
-- **Reduces maintenance burden**: Custom implementations add technical debt and potential bugs. Using the standard library method:
+- **Reduces maintenance burden**: Custom implementations add technical debt. Using the standard library method:
   - Eliminates custom code to maintain
   - Benefits from WPILib's bug fixes and improvements
   - Is easier for new team members to understand
-- **Handles edge cases properly**: WPILib's implementation handles angle wrapping and edge cases that may not be obvious in a custom implementation
-- **Potential bug source**: Custom implementations can have subtle bugs (e.g., angle wrapping edge cases, precision issues) that WPILib's version has already solved
+- **Simpler implementation**: WPILib's version is more concise (~5 lines vs ~23 lines) with fewer branches, reducing the chance of logic errors. While both implementations are functionally equivalent, WPILib's version uses `Rotation2d` arithmetic throughout (staying in rotation space) rather than converting to/from degrees, which is more robust and consistent with WPILib's design patterns
 - **Works with enableContinuousInput**: This change complements Recommendation #15 (using `enableContinuousInput`). Both work together to ensure proper angle handling:
   - `SwerveModuleState.optimize()` minimizes rotation distance at the state level
   - `enableContinuousInput()` ensures the PID controller handles angle wrapping correctly
