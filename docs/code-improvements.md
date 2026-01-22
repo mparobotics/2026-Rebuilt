@@ -1001,188 +1001,242 @@ public void periodic() {
 
 ## 11. Eliminate Duplication in Swerve Module Position Constants (Code Organization)
 
-### What
-Refactor `swerveKinematics` to use the named module position constants (`FRONT_LEFT`, `FRONT_RIGHT`, `BACK_LEFT`, `BACK_RIGHT`) instead of duplicating the `Translation2d` calculations. This eliminates duplication and ensures consistency.
-
-**Current code:**
-```java
-// Lines 47-52: swerveKinematics uses inline values
-public static final SwerveDriveKinematics swerveKinematics =
-    new SwerveDriveKinematics(
-        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
-        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
-        new Translation2d(halfTrackWidth,halfWheelBase), // Front Left
-        new Translation2d(-halfTrackWidth, halfWheelBase)); // Back Left
-
-// Lines 99-102: Named constants defined separately
-public static final Translation2d FRONT_LEFT = new Translation2d(halfTrackWidth, halfWheelBase);
-public static final Translation2d BACK_LEFT = new Translation2d(-halfTrackWidth, halfWheelBase);
-public static final Translation2d BACK_RIGHT = new Translation2d(-halfTrackWidth, -halfWheelBase);
-public static final Translation2d FRONT_RIGHT = new Translation2d(halfTrackWidth, -halfWheelBase);
-
-// Lines 113-116: moduleData uses named constants
-public static ModuleData[] moduleData = {
-  new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0
-  new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1
-  new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2
-  new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3
-};
-```
-
-**Proposed code:**
-```java
-// Define named constants first (lines 98-102)
-public static final Translation2d FRONT_LEFT = new Translation2d(halfTrackWidth, halfWheelBase);
-public static final Translation2d BACK_LEFT = new Translation2d(-halfTrackWidth, halfWheelBase);
-public static final Translation2d BACK_RIGHT = new Translation2d(-halfTrackWidth, -halfWheelBase);
-public static final Translation2d FRONT_RIGHT = new Translation2d(halfTrackWidth, -halfWheelBase);
-
-// Use named constants in swerveKinematics (lines 47-52)
-// Order must match moduleData array: BACK_RIGHT (Mod 0), FRONT_RIGHT (Mod 1), FRONT_LEFT (Mod 2), BACK_LEFT (Mod 3)
-public static final SwerveDriveKinematics swerveKinematics =
-    new SwerveDriveKinematics(
-        BACK_RIGHT,   // Mod 0
-        FRONT_RIGHT,  // Mod 1
-        FRONT_LEFT,   // Mod 2
-        BACK_LEFT);    // Mod 3
-```
-
-**Alternative approach (more robust):**
-If you want to ensure `swerveKinematics` always matches `moduleData` order, you could derive it programmatically:
-```java
-// After moduleData is defined, extract locations in order
-public static final SwerveDriveKinematics swerveKinematics =
-    new SwerveDriveKinematics(
-        moduleData[0].location(),  // BACK_RIGHT (Mod 0)
-        moduleData[1].location(),   // FRONT_RIGHT (Mod 1)
-        moduleData[2].location(),  // FRONT_LEFT (Mod 2)
-        moduleData[3].location()); // BACK_LEFT (Mod 3)
-```
-
-### Why
-- **Eliminates duplication**: Module positions are defined once in named constants, used everywhere else
-- **Reduces maintenance burden**: If module positions need to change, only update the named constants
-- **Improves consistency**: Ensures `swerveKinematics` and `moduleData` always use the same positions
-- **Better readability**: Named constants (`BACK_RIGHT`) are more readable than inline calculations
-- **Reduces risk of errors**: No risk of accidentally having different values in `swerveKinematics` vs. named constants
-
-### Where
-- **File**: `src/main/java/frc/robot/Constants.java`
-- **Lines**: 47-52 (swerveKinematics), 98-102 (named constants), 112-117 (moduleData)
-
-### Impact
-- **Low risk**: This is a refactoring that doesn't change behavior, only improves code organization
-- **Testing**: Verify that swerve drive still works correctly after the change
-- **Order dependency**: The order of modules in `swerveKinematics` constructor **must match** the order in `moduleData` array:
-  - Index 0 = BACK_RIGHT (Mod 0)
-  - Index 1 = FRONT_RIGHT (Mod 1)
-  - Index 2 = FRONT_LEFT (Mod 2)
-  - Index 3 = BACK_LEFT (Mod 3)
-- **Note**: The comment on line 107 says "Front Left Module - Module 0" but Module 0 is actually BACK_RIGHT. Consider updating this comment for accuracy.
-
-### Additional Considerations
-- **Order verification**: Consider adding a comment or assertion to document that the order must match `moduleData`
-- **Alternative approach**: The programmatic approach (using `moduleData[i].location()`) ensures they always match, but is less readable and requires `moduleData` to be defined before `swerveKinematics`
-
-### Status
-- [ ] Pending team review
-- [ ] Approved
-- [ ] Rejected
-- [ ] In progress
-- [ ] Implemented
+**Note**: This recommendation has been merged with Recommendation #12. See Recommendation #12 for the comprehensive solution that addresses both module position duplication and index mapping issues.
 
 ---
 
-## 12. Fix Module Index Mapping and Add Position-Based Accessors (Code Safety)
+## 12. Eliminate Order Dependency and Improve Module Configuration Safety (Code Safety & Organization)
 
 ### What
-Fix the incorrect comment on line 107, add position-based constants for module indices, and improve documentation to prevent index confusion when accessing `moduleData`.
+Refactor the swerve module configuration to use a `SwerveModuleIndex` enum for type-safe indexing, move `swerveKinematics` to `SwerveSubsystem` (derived from `moduleData`), and encapsulate array creation/access to eliminate implicit ordering dependencies. This addresses both the duplication issue from Recommendation #11 and the index mapping issues.
 
-**Current code:**
+**Current problems:**
+1. **Order dependency**: `swerveKinematics` and `moduleData` must be in the same order, but this is only enforced by comments
+2. **Duplication**: `swerveKinematics` uses inline `Translation2d` calculations instead of deriving from `moduleData`
+3. **Index confusion**: No type-safe way to access modules by position (must use magic numbers like `moduleData[2]`)
+4. **Array ordering risks**: Multiple places create arrays that must match module order (getStates, getPositions, driveFromChassisSpeeds)
+
+**Proposed solution:**
+- Create `SwerveModuleIndex` enum for type-safe module indexing
+- Move `swerveKinematics` from `Constants` to `SwerveSubsystem` and derive it from `moduleData` locations
+- Use enum throughout for all module indexing operations
+- Encapsulate array creation as private methods using enum iteration
+- Make array-returning methods private (implementation detail for WPILib APIs)
+
+### Changes to `Constants.java`
+
+**1. Rename location constants to avoid confusion with enum** (update lines 103-106):
 ```java
-// Line 107: INCORRECT COMMENT - says "Front Left Module - Module 0" but Module 0 is BACK_RIGHT
-/* Front Left Module - Module 0 */
-public record ModuleData(...){}
-
-public static ModuleData[] moduleData = {
-  new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0
-  new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1
-  new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2
-  new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3
-};
+//Location of modules - renamed with _LOCATION suffix to avoid confusion with SwerveModuleIndex enum
+public static final Translation2d BACK_RIGHT_LOCATION  = new Translation2d(-halfWheelBase, -halfTrackWidth);
+public static final Translation2d FRONT_RIGHT_LOCATION = new Translation2d(halfWheelBase, -halfTrackWidth);
+public static final Translation2d FRONT_LEFT_LOCATION  = new Translation2d(halfWheelBase, halfTrackWidth);
+public static final Translation2d BACK_LEFT_LOCATION   = new Translation2d(-halfWheelBase, halfTrackWidth);
 ```
 
-**Proposed code:**
+**2. Add `SwerveModuleIndex` enum** (after line 106, before `ModuleData` record):
 ```java
-/* Module Specific Constants */
-/* Module Index Mapping:
- * Index 0 = BACK_RIGHT
- * Index 1 = FRONT_RIGHT
- * Index 2 = FRONT_LEFT
- * Index 3 = BACK_LEFT
- * 
- * The order in moduleData[] MUST match the order in swerveKinematics constructor.
+/* Module Index Enum
+ * Provides type-safe indexing for swerve modules, eliminating order dependency risks.
+ * The enum order defines the canonical module ordering used throughout the codebase.
+ */
+public enum SwerveModuleIndex {
+  BACK_RIGHT(0),
+  FRONT_RIGHT(1),
+  FRONT_LEFT(2),
+  BACK_LEFT(3);
+  
+  public final int index;
+  
+  SwerveModuleIndex(int index) {
+    this.index = index;
+  }
+}
+```
+
+**3. Refactor `moduleData` with explicit documentation** (replace lines 113-118):
+```java
+/* Module Specific Constants
+ * Module order is defined by SwerveModuleIndex enum.
+ * The order in moduleData[] MUST match the enum order.
  */
 public record ModuleData(
   int driveMotorID, int angleMotorID, int encoderID, double angleOffset, Translation2d location
 ){}
 
-// Position-based index constants for safer access
-public static final int MODULE_INDEX_BACK_RIGHT = 0;
-public static final int MODULE_INDEX_FRONT_RIGHT = 1;
-public static final int MODULE_INDEX_FRONT_LEFT = 2;
-public static final int MODULE_INDEX_BACK_LEFT = 3;
-
-public static ModuleData[] moduleData = {
-  new ModuleData(11, 12, 19, 159.25, BACK_RIGHT), //Mod 0 - BACK_RIGHT
-  new ModuleData(17, 18, 22, 231.60, FRONT_RIGHT), //Mod 1 - FRONT_RIGHT
-  new ModuleData(15, 16, 21, 313.42, FRONT_LEFT), //Mod 2 - FRONT_LEFT
-  new ModuleData(13, 14, 20, 307.71, BACK_LEFT) //Mod 3 - BACK_LEFT
-};
-
-// Optional: Position-based accessor methods for safer access
-public static ModuleData getModuleDataBackRight() {
-  return moduleData[MODULE_INDEX_BACK_RIGHT];
-}
-public static ModuleData getModuleDataFrontRight() {
-  return moduleData[MODULE_INDEX_FRONT_RIGHT];
-}
-public static ModuleData getModuleDataFrontLeft() {
-  return moduleData[MODULE_INDEX_FRONT_LEFT];
-}
-public static ModuleData getModuleDataBackLeft() {
-  return moduleData[MODULE_INDEX_BACK_LEFT];
+// Module configuration data - explicitly assigned using enum indices for type safety
+public static final ModuleData[] moduleData = new ModuleData[4];
+static {
+  moduleData[SwerveModuleIndex.BACK_RIGHT.index]  = new ModuleData(11, 14, 19, 159.87, BACK_RIGHT_LOCATION);
+  moduleData[SwerveModuleIndex.FRONT_RIGHT.index] = new ModuleData(17, 18, 22, 232.39, FRONT_RIGHT_LOCATION);
+  moduleData[SwerveModuleIndex.FRONT_LEFT.index]  = new ModuleData(15, 16, 21, 311.67, FRONT_LEFT_LOCATION);
+  moduleData[SwerveModuleIndex.BACK_LEFT.index]   = new ModuleData(13, 12, 20, 299.45, BACK_LEFT_LOCATION);
 }
 ```
 
-**Usage example:**
+**4. Remove `swerveKinematics` from Constants** (remove lines 47-56):
+- The `swerveKinematics` static field will be moved to `SwerveSubsystem` and created from `moduleData` locations
+
+### Changes to `SwerveSubsystem.java`
+
+**1. Add `swerveKinematics` as instance field** (after line 33):
 ```java
-// Instead of: moduleData[2]  // Unclear - what module is index 2?
-// Use: moduleData[MODULE_INDEX_FRONT_LEFT]  // Clear - FRONT_LEFT module
-// Or: getModuleDataFrontLeft()  // Even clearer
+private SwerveDrivePoseEstimator odometry;
+private SwerveDriveKinematics swerveKinematics;  // NEW: Instance field, derived from moduleData
+private SwerveModule[] mSwerveMods;
 ```
+
+**3. Update constructor to accept `moduleData` as parameter and use enum** (replace lines 59-78):
+```java
+/**
+ * Creates a new SwerveSubsystem.
+ * @param moduleData Array of module configuration data (one per module)
+ */
+public SwerveSubsystem(ModuleData[] moduleData) { 
+  //instantiates new pigeon gyro, wipes it, and zeros it
+  pigeon = new Pigeon2(SwerveConstants.PIGEON_ID);
+  pigeon.getConfigurator().apply(new Pigeon2Configuration()); 
+  zeroGyro();
+
+  // Creates all four swerve modules using enum for type-safe indexing
+  mSwerveMods = new SwerveModule[4];
+  Translation2d[] moduleLocations = new Translation2d[4];
+  
+  for (SwerveModuleIndex moduleIndex : SwerveModuleIndex.values()) {
+    ModuleData data = moduleData[moduleIndex.index];  // Use parameter instead of global constant
+    mSwerveMods[moduleIndex.index] = new SwerveModule(moduleIndex.index, data);
+    moduleLocations[moduleIndex.index] = data.location();
+  }
+
+  // Create SwerveDriveKinematics from module locations (ensures alignment with moduleData order)
+  // Order is guaranteed by enum iteration order
+  swerveKinematics = new SwerveDriveKinematics(moduleLocations);
+
+  //creates new swerve odometry (odometry is where the robot is on the field)
+  odometry = new SwerveDrivePoseEstimator(swerveKinematics, getYaw(), getPositions(), new Pose2d());
+
+  //puts out the field
+  field = new Field2d();
+  SmartDashboard.putData("Field", field);
+}
+```
+
+**3a. Update `RobotContainer` to pass `moduleData`** (update line 34 in `RobotContainer.java`):
+```java
+// SwerveSubsystem instance for the drive subsystem
+private final SwerveSubsystem m_drive = new SwerveSubsystem(SwerveConstants.moduleData);
+```
+
+**4. Update `driveFromChassisSpeeds()` to use enum** (replace lines 119-128):
+```java
+public void driveFromChassisSpeeds(ChassisSpeeds driveSpeeds, boolean isOpenLoop){
+  SwerveModuleState[] desiredStates = swerveKinematics.toSwerveModuleStates(driveSpeeds);
+  SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.maxSpeed);
+
+  desiredSwerveDataPublisher.set(desiredStates);
+
+  // Use enum for type-safe indexing - ensures correct module-to-state mapping
+  for (SwerveModuleIndex moduleIndex : SwerveModuleIndex.values()) {
+    mSwerveMods[moduleIndex.index].setDesiredState(desiredStates[moduleIndex.index], false);
+  }
+}
+```
+
+**5. Update `getChassisSpeeds()` to use instance field** (replace line 131):
+```java
+public ChassisSpeeds getChassisSpeeds(){
+  return swerveKinematics.toChassisSpeeds(getStates());  // Changed: use instance field
+}
+```
+
+**6. Make `getStates()` private and use enum** (replace lines 143-149):
+```java
+/**
+ * Gets current states of all swerve modules as an array.
+ * Private method - array creation is an implementation detail for WPILib APIs.
+ * Uses enum to ensure correct ordering.
+ */
+private SwerveModuleState[] getStates() {
+  SwerveModuleState[] states = new SwerveModuleState[4];
+  for (SwerveModuleIndex moduleIndex : SwerveModuleIndex.values()) {
+    states[moduleIndex.index] = mSwerveMods[moduleIndex.index].getState();
+  }
+  return states;
+}
+```
+
+**7. Make `getPositions()` private and use enum** (replace lines 151-157):
+```java
+/**
+ * Gets current positions of all swerve modules as an array.
+ * Private method - array creation is an implementation detail for WPILib APIs.
+ * Uses enum to ensure correct ordering.
+ */
+private SwerveModulePosition[] getPositions(){
+  SwerveModulePosition[] positions = new SwerveModulePosition[4];
+  for (SwerveModuleIndex moduleIndex : SwerveModuleIndex.values()) {
+    positions[moduleIndex.index] = mSwerveMods[moduleIndex.index].getPosition();
+  }
+  return positions;
+}
+```
+
+**8. Remove `getEncoderRotations()` method** (delete lines 159-165):
+- This method is unused and should be removed
 
 ### Why
-- **Fixes incorrect documentation**: The comment on line 107 is wrong and misleading
-- **Prevents index confusion**: If someone wants FRONT_LEFT module data, they might incorrectly use `moduleData[0]` (thinking "first module") when they should use `moduleData[2]`
-- **Improves code readability**: Named constants (`MODULE_INDEX_FRONT_LEFT`) are self-documenting
-- **Reduces maintenance risk**: If module order changes, update constants in one place
-- **Enables safer access**: Position-based accessor methods eliminate index errors entirely
+- **Eliminates order dependency**: Enum defines canonical module ordering; `swerveKinematics` is derived from `moduleData`, ensuring they always match
+- **Type safety**: Enum prevents index errors (compiler catches `SwerveModuleIndex.FRONT_LEFT.index` vs magic number `2`)
+- **Single source of truth**: Enum order is the authoritative definition of module ordering
+- **Better encapsulation**: Arrays are private implementation details; external code doesn't need to know about ordering
+- **Guaranteed alignment**: `swerveKinematics` derived from `moduleData` locations ensures they're always in sync
+- **Clearer code**: Enum names (`SwerveModuleIndex.FRONT_LEFT`) are self-documenting
+- **Easier maintenance**: Change module order in one place (enum), everything else follows
+- **Eliminates duplication**: `swerveKinematics` no longer duplicates position calculations
+- **Dependency injection**: Passing `moduleData` as constructor parameter makes dependencies explicit, improves testability, and reduces coupling to `Constants` class
+- **Avoids naming confusion**: Location constants renamed with `_LOCATION` suffix to distinguish from `SwerveModuleIndex` enum values (e.g., `BACK_RIGHT_LOCATION` vs `SwerveModuleIndex.BACK_RIGHT`)
 
 ### Where
 - **File**: `src/main/java/frc/robot/Constants.java`
-- **Lines**: 107 (incorrect comment), 112-117 (moduleData array)
+  - Rename location constants to add `_LOCATION` suffix (lines 103-106)
+  - Add `SwerveModuleIndex` enum (after line 106)
+  - Update `moduleData` to use renamed location constants (lines 113-118)
+  - Remove `swerveKinematics` static field (lines 47-56)
+- **File**: `src/main/java/frc/robot/Subsystems/SwerveSubsystem.java`
+  - Add `swerveKinematics` instance field (after line 33)
+  - Update constructor to accept `moduleData` parameter (lines 59-78)
+  - Update `driveFromChassisSpeeds()` (lines 119-128)
+  - Update `getChassisSpeeds()` (line 131)
+  - Make `getStates()` private and use enum (lines 143-149)
+  - Make `getPositions()` private and use enum (lines 151-157)
+  - Remove `getEncoderRotations()` (lines 159-165)
+- **File**: `src/main/java/frc/robot/RobotContainer.java`
+  - Update `SwerveSubsystem` instantiation to pass `moduleData` (line 34)
 
 ### Impact
-- **Low risk**: Adding constants and accessors doesn't change existing behavior
-- **Current usage is safe**: `moduleData` is only accessed in a loop in `SwerveSubsystem` constructor, so current code is safe
-- **Future-proofing**: Makes it safer if someone later needs to access a specific module by position
-- **Backward compatible**: Existing code using `moduleData[i]` continues to work
+- **Medium risk**: Refactoring affects core swerve drive initialization and array creation
+- **No functional changes**: Behavior remains identical, only improves type safety and organization
+- **Testing required**: Verify swerve drive works correctly in all modes (teleop, autonomous, odometry)
+- **Breaking changes**: None - all changes are internal to the subsystem
+- **Maintainability**: Significantly improves code safety and reduces risk of ordering bugs
 
-### Additional Considerations
-- **Accessor methods are optional**: The position-based constants (`MODULE_INDEX_FRONT_LEFT`) may be sufficient. Accessor methods provide additional safety but add code.
-- **Order dependency**: The module index constants document the critical order dependency between `moduleData` and `swerveKinematics`
-- **Consider enum**: An alternative approach could use an enum for module positions, but constants are simpler and more consistent with existing code style
+### Testing Checklist
+- [ ] Robot drives correctly in teleop
+- [ ] Field-oriented drive works
+- [ ] Robot-centric drive works
+- [ ] Odometry updates correctly
+- [ ] Vision pose estimation works
+- [ ] NetworkTables publishers show correct data
+- [ ] SmartDashboard displays module data correctly
+- [ ] No compilation errors
+- [ ] No runtime errors
+
+### Implementation Notes
+1. The enum order defines the canonical module ordering used throughout the codebase
+2. `moduleData` array order must match enum order (enforced by comments and enum iteration)
+3. `swerveKinematics` is created from `moduleData` locations, ensuring alignment
+4. All array access uses enum indices for type safety
+5. Array-returning methods are private (implementation detail for WPILib APIs)
 
 ### Status
 - [ ] Pending team review
@@ -1631,6 +1685,95 @@ public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) 
 - [ ] Approved
 - [ ] Rejected
 - [ ] In progress
+- [ ] Implemented
+
+---
+
+## 17. Remove C++ Dependencies from WPILibNewCommands Vendordeps (Java-Only Project Configuration)
+
+### What
+Remove the `cppDependencies` section (including `binaryPlatforms`) from `WPILibNewCommands.json` vendordeps file since this is a Java-only project and doesn't need C++ dependencies.
+
+**Current code:**
+```json
+{
+  "javaDependencies": [
+    {
+      "groupId": "edu.wpi.first.wpilibNewCommands",
+      "artifactId": "wpilibNewCommands-java",
+      "version": "wpilib"
+    }
+  ],
+  "jniDependencies": [],
+  "cppDependencies": [
+    {
+      "groupId": "edu.wpi.first.wpilibNewCommands",
+      "artifactId": "wpilibNewCommands-cpp",
+      "version": "wpilib",
+      "libName": "wpilibNewCommands",
+      "headerClassifier": "headers",
+      "sourcesClassifier": "sources",
+      "sharedLibrary": true,
+      "skipInvalidPlatforms": true,
+      "binaryPlatforms": [
+        "linuxsystemcore",
+        "linuxathena",
+        "linuxarm32",
+        "linuxarm64",
+        "windowsx86-64",
+        "windowsx86",
+        "linuxx86-64",
+        "osxuniversal"
+      ]
+    }
+  ]
+}
+```
+
+**Proposed code:**
+```json
+{
+  "javaDependencies": [
+    {
+      "groupId": "edu.wpi.first.wpilibNewCommands",
+      "artifactId": "wpilibNewCommands-java",
+      "version": "wpilib"
+    }
+  ],
+  "jniDependencies": []
+}
+```
+
+### Why
+- **Java-only project**: Since this project uses Java and not C++, the `cppDependencies` section is unnecessary
+- **Reduces confusion**: Removing C++ dependencies makes it clear this is a Java-only configuration
+- **Cleaner configuration**: Only includes dependencies that are actually used
+- **Faster builds**: Gradle won't attempt to download C++ binaries that aren't needed
+- **Consistency**: Other vendordeps files (like `REVLib.json` and `Phoenix6-frc2026-latest.json`) include both `cppDependencies` and `jniDependencies` because they provide native libraries for Java via JNI. However, `WPILibNewCommands` doesn't need JNI (as indicated by empty `jniDependencies`), so it also doesn't need C++ dependencies
+- **No functional impact**: Removing unused C++ dependencies doesn't affect Java functionality
+
+### Where
+- **File**: `vendordeps/WPILibNewCommands.json`
+- **Lines to remove**: 17-37 (entire `cppDependencies` section including `binaryPlatforms` array)
+
+### Impact
+- **Low risk change**: Purely removes unused configuration
+- **No functional changes**: Java dependencies remain unchanged
+- **Build system**: Gradle will no longer attempt to download C++ binaries for WPILib New Commands
+- **Cleaner configuration**: File only contains dependencies relevant to Java project
+
+### Additional Notes
+- **When C++ dependencies are needed**: If the project later adds C++ code, the `cppDependencies` section can be re-added
+- **JNI vs C++ dependencies**: 
+  - `jniDependencies`: Native libraries used by Java via JNI (Java Native Interface) - needed for Java projects that use native code
+  - `cppDependencies`: C++ libraries and headers - only needed for C++ projects
+  - Since `jniDependencies` is empty for WPILib New Commands, it's a pure Java library and doesn't need C++ dependencies either
+- **Other vendordeps**: Files like `REVLib.json` include both because they provide native drivers that Java accesses via JNI, but WPILib New Commands is a pure Java library
+
+### Status
+- [ ] Pending team review
+- [ ] Approved
+- [ ] Rejected
 - [ ] Implemented
 
 ---
