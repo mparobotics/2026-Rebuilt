@@ -20,7 +20,6 @@ import frc.robot.Subsystems.ShooterSubsystem;
 
 public class RobotContainer {
 
- 
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
   // Left Stick Y = Forward/backward motion
@@ -51,6 +50,7 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
+    // X Button = Zero gyro (reset heading to 0° or 180° based on alliance)
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
     
     driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.toggleShooter(), m_shooter));
