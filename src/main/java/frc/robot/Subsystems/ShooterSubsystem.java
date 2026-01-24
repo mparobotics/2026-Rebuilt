@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+
 public class ShooterSubsystem extends SubsystemBase {
 
   public final int ID = 0; //Placeholder ID
@@ -16,11 +17,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
   SparkMax shooterMotor = new SparkMax((int) ID, MotorType.kBrushless);
 
+  lightSubsystem m_lightSubsystem = new lightSubsystem();
+
 
   public ShooterSubsystem() {}
 
 
     public Command ShootingControlCommand() {
+      m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
       return runOnce(
           () -> {
             shooterMotor.set(MathUtil.applyDeadband(motorSpeed, 0.1));
