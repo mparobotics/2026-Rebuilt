@@ -11,16 +11,16 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;;
 
-public class lightSubsystem extends SubsystemBase {
+public class LightSubsystem extends SubsystemBase {
   public final int ledCount = 1; // Placeholder LED count
 
   private final Timer timer = new Timer();
    private AddressableLEDBuffer m_buffer = new AddressableLEDBuffer(ledCount);
-   public AddressableLED m_led = new AddressableLED(0); // Placeholder PWM port
+   public AddressableLED m_led = new AddressableLED(1); // Placeholder PWM port
 
       
   /** Creates a new lightSubsystem. */
-  public lightSubsystem() {}
+  public LightSubsystem() {}
     public void setAll(int r, int g, int b){
             for(var i = 0; i < ledCount; i++){
                 m_buffer.setRGB(i,r,g,b);

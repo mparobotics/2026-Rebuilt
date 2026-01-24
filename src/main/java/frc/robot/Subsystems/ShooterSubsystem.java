@@ -6,18 +6,26 @@ package frc.robot.Subsystems;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  public final int ID = 62; //Placeholder ID
+  public final int ShooterID = 62; //Placeholder ID
+  public final int FeederID = 0; //Feeder ID
   public final double motorSpeed = 0.0; //Placeholder speed
+  public final int off = 0; //Off with the motors
 
-  SparkMax shooterMotor = new SparkMax((int) ID, MotorType.kBrushless);
+    private boolean isFeederActive = false; //Feeder True
 
-  lightSubsystem m_lightSubsystem = new lightSubsystem();
+  SparkMax shooterMotor = new SparkMax((int) ShooterID, MotorType.kBrushless);
+  SparkMax feederMotor = new SparkMax(FeederID, MotorType.kBrushless);
+
+  LightSubsystem m_lightSubsystem = new LightSubsystem();
 
 
   public ShooterSubsystem() {}
@@ -30,6 +38,27 @@ public class ShooterSubsystem extends SubsystemBase {
             shooterMotor.set(MathUtil.applyDeadband(motorSpeed, 0.1));
           });
     }
+
+    public Command FeederControlCommand() {
+      if (isFeederActive) {
+        m_lightSubsystem.setAll(255, 0, 0);
+        isFeederActive = true;
+        return run(
+          () -> {
+            feederMotor.set(MathUtil.applyDeadband(motorSpeed, 0.1));
+          }
+        );
+      } else {
+        return run(
+          () -> {
+            feederMotor.set(MathUtil.applyDeadband(off, 0.1));
+          }
+        );
+      }
+    }
+
+
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
