@@ -79,10 +79,11 @@ public class RobotContainer {
             () -> driveController.getRightTriggerAxis() > 0.1
         ));
 
-    m_intake.setDefaultCommand (
-      // controls the speed of the intake
-      // uses X button of helms controller
-      m_intake.IntakeControlCommand(helmsController.button(Button.kX.value)));
+    //toggles the intake using the x button on the helms controller
+    helmsController.button(Button.kX.value).onTrue(
+      new InstantCommand(() -> m_intake.toggleIntake(), m_intake) 
+    );    
+    
   }
 
   /**
