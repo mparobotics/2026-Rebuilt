@@ -150,6 +150,11 @@ public class FieldConstants {
       public static Pose2d flipForAlliance(Pose2d pose){
           return new Pose2d(flipForAlliance(pose.getTranslation()), flipForAlliance(pose.getRotation()));
       }
+      
   }
-  
+  /* Shooter Constants */
+  public class shooterConstants {
+      public static final int SHOOTER_ID = 0; //Placeholder ID
+      public static final int FEEDER_ID = 0; //Feeder ID
+  }
 }

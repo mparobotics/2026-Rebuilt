@@ -9,25 +9,20 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-
+import frc.robot.Constants.shooterConstants;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  public final int ShooterID = 62; //Placeholder ID
-  public final int FeederID = 0; //Feeder ID
+  
   public final double motorSpeed = 0.0; //Placeholder speed
-  public final int off = 0; //Off with the motors
+  private boolean isFeederActive = false; //Feeder True
 
-    private boolean isFeederActive = false; //Feeder True
-
-  SparkMax shooterMotor = new SparkMax((int) ShooterID, MotorType.kBrushless);
-  SparkMax feederMotor = new SparkMax(FeederID, MotorType.kBrushless);
+  SparkMax shooterMotor = new SparkMax((int) shooterConstants.SHOOTER_ID, MotorType.kBrushless);
+  SparkMax feederMotor = new SparkMax(shooterConstants.FEEDER_ID, MotorType.kBrushless);
 
   LightSubsystem m_lightSubsystem = new LightSubsystem();
 
-
   public ShooterSubsystem() {}
-
 
     public Command ShootingControlCommand() {
       m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
@@ -38,7 +33,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public Command FeederControlCommand() {
-      if (isFeederActive) {
+      if (!isFeederActive) {
         m_lightSubsystem.setAll(255, 0, 0);
         isFeederActive = true;
         return run(
@@ -52,14 +47,11 @@ public class ShooterSubsystem extends SubsystemBase {
         return run(
           
           () -> {
-            feederMotor.set(MathUtil.applyDeadband(off, 0.1));
+            feederMotor.set(MathUtil.applyDeadband(0, 0.1));
           }
         );
       }
     }
-
-
-
   @Override
   public void periodic() {
     // This method will be called once per scheduler run

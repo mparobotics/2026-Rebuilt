@@ -17,12 +17,10 @@ import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
-import frc.robot.Subsystems.LightSubsystem;
 
 public class RobotContainer {
 
   private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
-  private final LightSubsystem m_lightSubsystem = new LightSubsystem();
   
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
@@ -52,7 +50,7 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
+    
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
     
     driveController.button(Button.kRightBumper.value).whileTrue(new InstantCommand(() -> m_ShooterSubsystem.ShootingControlCommand(), m_ShooterSubsystem));
