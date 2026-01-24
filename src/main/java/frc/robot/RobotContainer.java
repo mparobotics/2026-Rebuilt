@@ -50,12 +50,12 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    
+
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
     
-    driveController.button(Button.kRightBumper.value).whileTrue(new InstantCommand(() -> m_ShooterSubsystem.ShootingControlCommand(), m_ShooterSubsystem));
+    driveController.button(Button.kY.value).whileTrue(new InstantCommand(() -> m_ShooterSubsystem.ShootingControlCommand(), m_ShooterSubsystem));
 
-    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_ShooterSubsystem.FeederControlCommand(), m_ShooterSubsystem));
+    driveController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_ShooterSubsystem.FeederControlCommand(), m_ShooterSubsystem));
 
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));

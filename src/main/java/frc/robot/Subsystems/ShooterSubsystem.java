@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.Subsystems;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -14,7 +13,7 @@ import frc.robot.Constants.shooterConstants;
 public class ShooterSubsystem extends SubsystemBase {
 
   
-  public final double motorSpeed = 0.0; //Placeholder speed
+  public final double motorSpeed = 0.5; //Placeholder speed
   private boolean isFeederActive = false; //Feeder True
 
   SparkMax shooterMotor = new SparkMax((int) shooterConstants.SHOOTER_ID, MotorType.kBrushless);
@@ -25,29 +24,26 @@ public class ShooterSubsystem extends SubsystemBase {
   public ShooterSubsystem() {}
 
     public Command ShootingControlCommand() {
-      m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
-      return runOnce(
+      return run(
           () -> {
-            shooterMotor.set(MathUtil.applyDeadband(motorSpeed, 0.1));
+            shooterMotor.set(motorSpeed);
           });
     }
 
     public Command FeederControlCommand() {
       if (!isFeederActive) {
-        m_lightSubsystem.setAll(255, 0, 0);
         isFeederActive = true;
         return run(
           () -> {
-            feederMotor.set(MathUtil.applyDeadband(motorSpeed, 0.1));
+            feederMotor.set(motorSpeed);
           }
         );
       } else {
-        m_lightSubsystem.off();
         isFeederActive = false;
         return run(
           
           () -> {
-            feederMotor.set(MathUtil.applyDeadband(0, 0.1));
+            feederMotor.set(0);
           }
         );
       }
