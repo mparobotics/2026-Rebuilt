@@ -7,8 +7,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import java.util.function.DoubleSupplier;
-
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -49,7 +47,10 @@ public class ShooterSubsystem extends SubsystemBase {
           }
         );
       } else {
+        m_lightSubsystem.off();
+        isFeederActive = false;
         return run(
+          
           () -> {
             feederMotor.set(MathUtil.applyDeadband(off, 0.1));
           }
