@@ -14,10 +14,6 @@
 **When** I provide drive inputs in robot-oriented mode,  
 **Then** the robot should move relative to its own coordinate system, where forward is always the front of the robot.
 
-**Given** the robot is in teleop, auto, or test mode,  
-**When** the swerve subsystem is running,  
-**Then** it should publish both actual and desired swerve module states to NetworkTables for real-time monitoring and debugging.
-
 **Given** the robot is on the red alliance and in any mode,  
 **When** the gyro is zeroed,  
 **Then** the Pigeon2 yaw should be set to 180 degrees to account for alliance-specific field orientation.
