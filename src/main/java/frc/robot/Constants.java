@@ -152,7 +152,7 @@ public class FieldConstants {
       }
   }
   public class IntakeConstants {
-    public static int INTAKE_ID = 15;
+    public static int INTAKE_ID = 62;
     public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
   }
 }
