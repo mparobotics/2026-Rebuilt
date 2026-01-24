@@ -4,12 +4,11 @@
 
 package frc.robot.Subsystems;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
 
-import java.util.function.DoubleSupplier;
+import java.util.function.BooleanSupplier;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -18,17 +17,22 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
 
+  private double intakeOn = 0;
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {}
 
-  public void runIntake(double speed) {
-    intakeMotor.set(speed);
+  public void runIntake(Boolean pressed) {
+    if (pressed) {
+      intakeOn += 1;
+      intakeOn %= 2;
+    }
+    intakeMotor.set(IntakeConstants.INTAKE_SPEED * intakeOn);
   }
 
-  public Command IntakeControlCommand(DoubleSupplier speed) {
+  public Command IntakeControlCommand(BooleanSupplier pressed) {
     return runOnce(
       () -> {
-        runIntake(MathUtil.applyDeadband(speed.getAsDouble(), 0.1));
+        runIntake(pressed.getAsBoolean());
       });
   }
   

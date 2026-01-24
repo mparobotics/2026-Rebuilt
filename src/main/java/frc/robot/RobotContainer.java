@@ -81,9 +81,8 @@ public class RobotContainer {
 
     m_intake.setDefaultCommand (
       // controls the speed of the intake
-      // uses y of left joystick 
-      m_intake.IntakeControlCommand(helmsController::getLeftY)
-    );
+      // uses X button of helms controller
+      m_intake.IntakeControlCommand(helmsController.button(Button.kX.value)));
   }
 
   /**
