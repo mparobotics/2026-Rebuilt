@@ -6,7 +6,6 @@ package frc.robot.Subsystems;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import java.util.function.DoubleSupplier;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -14,17 +13,17 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public final int ID = 0; //Placeholder ID
   public final double motorSpeed = 0.0; //Placeholder speed
-  
+
   SparkMax shooterMotor = new SparkMax((int) ID, MotorType.kBrushless);
 
 
   public ShooterSubsystem() {}
 
 
-    public Command ShootingControlCommand(DoubleSupplier speed) {
+    public Command ShootingControlCommand() {
       return runOnce(
           () -> {
-            shooterMotor.set(MathUtil.applyDeadband(speed.getAsDouble(), 0.1));
+            shooterMotor.set(MathUtil.applyDeadband(motorSpeed, 0.1));
           });
     }
   @Override
