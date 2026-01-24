@@ -26,6 +26,7 @@ public class lightSubsystem extends SubsystemBase {
                 m_buffer.setRGB(i,r,g,b);
             }
         }
+
     public void blink(int r, int g, int b, double interval){
         if((timer.get() % (interval * 2)) < interval){
             setAll(r,g,b);
