@@ -13,8 +13,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 public class ShooterSubsystem extends SubsystemBase {
 
   public final int ID = 0; //Placeholder ID
-  SparkMax shooterMotor = new SparkMax((int) ID, MotorType.kBrushless);
   public final double motorSpeed = 0.0; //Placeholder speed
+  
+  SparkMax shooterMotor = new SparkMax((int) ID, MotorType.kBrushless);
 
 
   public ShooterSubsystem() {}
