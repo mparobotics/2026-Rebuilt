@@ -9,7 +9,7 @@ package frc.robot.Subsystems;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;;
 
 public class lightSubsystem extends SubsystemBase {
   public final int ledCount = 1; // Placeholder LED count
@@ -34,6 +34,10 @@ public class lightSubsystem extends SubsystemBase {
           setAll(0,0,0);
         }
       } 
+
+      public void off(){
+        setAll(0,0,0);
+      }
   @Override
   public void periodic() {
     // This method will be called once per scheduler run

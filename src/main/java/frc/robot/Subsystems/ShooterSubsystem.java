@@ -24,7 +24,7 @@ public class ShooterSubsystem extends SubsystemBase {
   SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
   SparkMax feederMotor = new SparkMax(ShooterConstants.FEEDER_ID, MotorType.kBrushless);
 
-  //LightSubsystem m_lightSubsystem = new LightSubsystem();
+  lightSubsystem m_lightSubsystem = new lightSubsystem();
 
   public ShooterSubsystem() {
     SparkMaxConfig shootConfig = new SparkMaxConfig();
@@ -35,6 +35,7 @@ public class ShooterSubsystem extends SubsystemBase {
       feedConfig.inverted(false);
       feedConfig.idleMode(IdleMode.kBrake);
 
+<<<<<<< HEAD
     shooterMotor.configure(shootConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
@@ -43,10 +44,12 @@ public class ShooterSubsystem extends SubsystemBase {
       if (!isShooterActive) {
         isShooterActive = true;
         shooterMotor.set(ShooterConstants.SHOOTER_SPEED);
+        m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
       }
       else {
         isShooterActive = false;
         shooterMotor.set(0);
+        m_lightSubsystem.off(); // Turn off lights when shooter stops
       }
     }
 
@@ -63,6 +66,7 @@ public class ShooterSubsystem extends SubsystemBase {
       return runOnce(
           () -> {
             shooterMotor.set(MathUtil.applyDeadband(speed.getAsDouble(), 0.1));
+            m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
           });
     }
   @Override
