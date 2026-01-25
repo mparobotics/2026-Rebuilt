@@ -151,5 +151,8 @@ public class FieldConstants {
           return new Pose2d(flipForAlliance(pose.getTranslation()), flipForAlliance(pose.getRotation()));
       }
   }
-  
+  public class IntakeConstants {
+    public static int INTAKE_ID = 62;
+    public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
+  }
 }
