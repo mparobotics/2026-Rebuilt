@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.Subsystems;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -13,35 +14,40 @@ import frc.robot.Constants.shooterConstants;
 public class ShooterSubsystem extends SubsystemBase {
 
   
-  public final double motorSpeed = 0.5; //Placeholder speed
-  private boolean isFeederActive = false; //Feeder True
+  public final double motorSpeed = 1; //Placeholder speed
+  private boolean isShooterActive = false; //Shooter True
 
-  SparkMax shooterMotor = new SparkMax((int) shooterConstants.SHOOTER_ID, MotorType.kBrushless);
+  SparkMax shooterMotor = new SparkMax(shooterConstants.SHOOTER_ID, MotorType.kBrushless);
   SparkMax feederMotor = new SparkMax(shooterConstants.FEEDER_ID, MotorType.kBrushless);
 
   LightSubsystem m_lightSubsystem = new LightSubsystem();
 
   public ShooterSubsystem() {}
 
-    public Command ShootingControlCommand() {
-      return run(
+    public Command RunFeeder() {
+      return runOnce(
           () -> {
-            shooterMotor.set(motorSpeed);
+            feederMotor.set(motorSpeed);
+          });
+    }
+    public Command StopFeeder() {
+      return runOnce(
+          () -> {
+            feederMotor.set(0);
           });
     }
 
-    public Command FeederControlCommand() {
-      if (!isFeederActive) {
-        isFeederActive = true;
-        return run(
+    public Command ShootingControlCommand() {
+      if (isShooterActive = false) {
+        isShooterActive = true;
+        return runOnce(
           () -> {
-            feederMotor.set(motorSpeed);
+            shooterMotor.set(motorSpeed);
           }
         );
       } else {
-        isFeederActive = false;
-        return run(
-          
+        isShooterActive = false;
+        return runOnce(
           () -> {
             feederMotor.set(0);
           }
