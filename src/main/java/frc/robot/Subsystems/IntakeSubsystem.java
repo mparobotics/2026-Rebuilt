@@ -13,10 +13,16 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 public class IntakeSubsystem extends SubsystemBase {
 
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
+  private final SparkMax intakeArmMotor = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
+
+  public double targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
 
   private boolean intakeOn = false;
   /** Creates a new IntakeSubsystem. */
-  public IntakeSubsystem() {}
+  public IntakeSubsystem() {
+    intakeMotor.setInverted(false); // depending on how the motor is mounted
+    intakeArmMotor.setInverted(false);
+  }
 
   public void toggleIntake() {
     intakeOn = !intakeOn;
@@ -27,6 +33,14 @@ public class IntakeSubsystem extends SubsystemBase {
     else {
       intakeMotor.set(0);
     }
+  }
+
+  public void raiseIntake() {
+    targetPosition
+  }
+
+  public void lowerIntake() {
+    ;
   }
   
   @Override
