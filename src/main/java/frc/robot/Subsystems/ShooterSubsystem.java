@@ -8,7 +8,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 import frc.robot.Constants.shooterConstants;
 
 public class ShooterSubsystem extends SubsystemBase {
@@ -22,7 +27,18 @@ public class ShooterSubsystem extends SubsystemBase {
 
   LightSubsystem m_lightSubsystem = new LightSubsystem();
 
-  public ShooterSubsystem() {}
+  public ShooterSubsystem() {
+    SparkMaxConfig shootConfig = new SparkMaxConfig();
+      shootConfig.inverted(false);
+      shootConfig.idleMode(IdleMode.kCoast);
+
+    SparkMaxConfig feedConfig = new SparkMaxConfig();
+      feedConfig.inverted(false);
+      feedConfig.idleMode(IdleMode.kBrake);
+
+    shooterMotor.configure(shootConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+  }
 
     public Command RunFeeder() {
       return runOnce(
@@ -54,8 +70,10 @@ public class ShooterSubsystem extends SubsystemBase {
         );
       }
     }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    SmartDashboard.putBoolean("Is Shooter Active", isShooterActive);
   }
 }
