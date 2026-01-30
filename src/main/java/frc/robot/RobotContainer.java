@@ -15,12 +15,15 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
+import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 public class RobotContainer {
   
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
+  // Xbox controller for helms controller
+  private final CommandXboxController helmsController = new CommandXboxController(1);
   // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
@@ -32,6 +35,9 @@ public class RobotContainer {
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
+
+  // IntakeSubsystem for intake
+  private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
   /**
    * Constructs the RobotContainer. Creates subsystems (which configure themselves)
@@ -73,6 +79,14 @@ public class RobotContainer {
             () -> driveController.getRightTriggerAxis() > 0.1
         ));
 
+    //toggles the intake using the x button on the helms controller
+    helmsController.button(Button.kX.value).onTrue(
+      new InstantCommand(() -> m_intake.toggleIntake(), m_intake)
+    );    
+    // raises and lowers the intake using the y button on the helms controller
+    helmsController.button(Button.kY.value).onTrue(
+      new InstantCommand(() -> m_intake.moveIntake(), m_intake)
+    );
   }
 
   /**

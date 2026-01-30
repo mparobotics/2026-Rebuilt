@@ -151,5 +151,17 @@ public class FieldConstants {
           return new Pose2d(flipForAlliance(pose.getTranslation()), flipForAlliance(pose.getRotation()));
       }
   }
-  
+  public class IntakeConstants {
+    public static int INTAKE_ID = 62; // placeholder
+    public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
+
+    public static int INTAKE_ARM_ID = 60; //placeholder
+    public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
+    public static double INTAKE_ARM_LOWERED_POSITION = 0;
+    public static double INTAKE_ARM_MINIMUM = 1000; // placeholders
+    public static double INTAKE_ARM_MAXIMUM = -1000;
+    public static double INTAKE_ARM_kD = 0;
+    public static double INTAKE_ARM_kI = 0;
+    public static double INTAKE_ARM_kP = 0;
+  }
 }
