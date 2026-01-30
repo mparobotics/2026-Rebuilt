@@ -3,7 +3,6 @@ package frc.robot.Command;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,15 +22,19 @@ public class AutoAlign extends Command {
     private static final double kTangentialSpeedMetersPerSecond = 1.25; // Constant speed for sliding around the hub
     private static final double kMaxRadialSpeedMetersPerSecond = 1.0; // Max speed for correcting radius errors
     private static final double kRadialKp = 1.6; //P-gain for radial distance correction
+    private static final double kRadialKi = 0.0;
+    private static final double kRadialKd = 0.0;
     private static final double kHeadingKp = 4.5; //P-gain for yaw control that faces the hub
 
     //PID that holds the robot's yaw pointed at the hub while driving the arc
     private final PIDController m_headingController = new PIDController(kHeadingKp,0,0);
+    private final PIDController m_radiusController = new PIDController(kRadialKp, kRadialKi, kRadialKd);
 
     public AutoAlign(SwerveSubsystem SwerveSubsystem){
         this.m_SwerveSubsystem = SwerveSubsystem;
         addRequirements(m_SwerveSubsystem);
         m_headingController.enableContinuousInput(-Math.PI, Math.PI);
+        m_radiusController.setSetpoint(kDesiredOrbitRadiusMeters);
         // Continuous input so heading errors are around ±π
     }
 
@@ -45,6 +48,7 @@ public class AutoAlign extends Command {
     @Override
     public void initialize(){
         m_headingController.reset(); //Reset yaw PID state every time the command starts
+        m_radiusController.reset();
     }
 
 
@@ -77,12 +81,12 @@ public class AutoAlign extends Command {
             //flip the tangent so we can orbit clockwise when needed
         }
 
-        double radiusError = radialDistance - kDesiredOrbitRadiusMeters; //Positive -> slid too far away
+        double radialPidOutput = m_radiusController.calculate(radialDistance);
         double radialSpeed = MathUtil.clamp(
-            radiusError * kRadialKp, 
+            -radialPidOutput, 
             -kMaxRadialSpeedMetersPerSecond, 
             kMaxRadialSpeedMetersPerSecond);
-        //P loop to correct the radius
+        //PID loop to correct the radius (negative because radialDirection points toward the hub)
 
 
         Translation2d tangentialVelocity = tangentialDirection.times(kTangentialSpeedMetersPerSecond);
@@ -103,7 +107,13 @@ public class AutoAlign extends Command {
 
         double desiredHeadingRadians = radialDirection.getAngle().getRadians();
         //Face stright at the hub while moving
+        double headingFeedforward = 0.0;
+        if (radialDistance > 1e-3){
+            headingFeedforward = (radialDirection.getY()*fieldRelativeVelocity.getX() 
+                - radialDirection.getX() * fieldRelativeVelocity.getY()) / radialDistance;
+        }
         double headingRate = MathUtil.clamp(
+            headingFeedforward +
             m_headingController.calculate((FieldPosition.getRotation().getRadians()), desiredHeadingRadians),
             -SwerveConstants.maxAngularVelocity,
             SwerveConstants.maxAngularVelocity);
