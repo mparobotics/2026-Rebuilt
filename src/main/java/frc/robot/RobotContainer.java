@@ -81,9 +81,12 @@ public class RobotContainer {
 
     //toggles the intake using the x button on the helms controller
     helmsController.button(Button.kX.value).onTrue(
-      new InstantCommand(() -> m_intake.toggleIntake(), m_intake) 
+      new InstantCommand(() -> m_intake.toggleIntake(), m_intake)
     );    
-    
+    // raises and lowers the intake using the y button on the helms controller
+    helmsController.button(Button.kY.value).onTrue(
+      new InstantCommand(() -> m_intake.moveIntake(), m_intake)
+    );
   }
 
   /**

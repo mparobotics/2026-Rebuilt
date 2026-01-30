@@ -4,10 +4,12 @@
 
 package frc.robot.Subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
 
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 public class IntakeSubsystem extends SubsystemBase {
@@ -15,9 +17,15 @@ public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
   private final SparkMax intakeArmMotor = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
 
+  private RelativeEncoder intakeArmEncoder = intakeArmMotor.getEncoder();
+
+  private PIDController intakeArmPID = new PIDController(IntakeConstants.INTAKE_ARM_kP, IntakeConstants.INTAKE_ARM_kI, IntakeConstants.INTAKE_ARM_kD);
+
   public double targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
 
   private boolean intakeOn = false;
+  private boolean intakeUp = true;
+
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
     intakeMotor.setInverted(false); // depending on how the motor is mounted
@@ -25,26 +33,44 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void toggleIntake() {
-    intakeOn = !intakeOn;
-
-    if (intakeOn) {
+    if (!intakeOn) {
+      intakeOn = true;
       intakeMotor.set(IntakeConstants.INTAKE_SPEED);
+      
     }
     else {
+      intakeOn = false;
       intakeMotor.set(0);
     }
   }
-
+  
   public void raiseIntake() {
-    targetPosition
+    targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
+    intakeUp = true;
   }
 
   public void lowerIntake() {
-    ;
+    targetPosition = IntakeConstants.INTAKE_ARM_LOWERED_POSITION;
+    intakeUp = false;
   }
   
+  public void moveIntake() {
+    if (intakeUp){
+      lowerIntake();
+    }
+    else {
+      raiseIntake();
+    }
+  }
+
+  public double getArmPosition() {
+    return intakeArmEncoder.getPosition() * 360;
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    double PIDOutput = intakeArmPID.calculate(getArmPosition(), targetPosition);
+    intakeArmMotor.set(-PIDOutput);
   }
 }
