@@ -18,7 +18,6 @@ import frc.robot.Constants.shooterConstants;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  
   public final double motorSpeed = 1; //Placeholder speed
   private boolean isShooterActive = false; //Shooter True
 
