@@ -19,7 +19,7 @@ import frc.robot.Constants.shooterConstants;
 public class ShooterSubsystem extends SubsystemBase {
 
   public final double motorSpeed = 1; //Placeholder speed
-  private boolean isShooterActive = false; //Shooter True
+  public boolean isShooterActive = false; //Shooter True
 
   SparkMax shooterMotor = new SparkMax(shooterConstants.SHOOTER_ID, MotorType.kBrushless);
   SparkMax feederMotor = new SparkMax(shooterConstants.FEEDER_ID, MotorType.kBrushless);
