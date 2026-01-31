@@ -35,7 +35,7 @@ public class RobotContainer {
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
 
-  private final ShooterSubsystem m_ShooterSubsystem = new ShooterSubsystem();
+  private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   /**
    * Constructs the RobotContainer. Creates subsystems (which configure themselves)
@@ -51,13 +51,12 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
     
-    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_ShooterSubsystem.ShootingControlCommand(), m_ShooterSubsystem));
+    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.toggleShooter(), m_shooter));
 
-    driveController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_ShooterSubsystem.RunFeeder(), m_ShooterSubsystem));//when you press B, the feeder runs
-    driveController.button(Button.kB.value).onFalse(new InstantCommand(() -> m_ShooterSubsystem.StopFeeder(), m_ShooterSubsystem));//when you let go of B, the feeder stops
+    driveController.button(Button.kB.value).whileTrue(new InstantCommand( () -> m_shooter.runFeeder(true), m_shooter));
+    driveController.button(Button.kB.value).onFalse(new InstantCommand( () -> m_shooter.runFeeder(false), m_shooter));
 
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));

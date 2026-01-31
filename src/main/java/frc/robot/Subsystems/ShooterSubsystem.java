@@ -7,6 +7,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -14,17 +17,16 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import frc.robot.Constants.shooterConstants;
+import frc.robot.Constants.ShooterConstants;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  public final double motorSpeed = 1; //Placeholder speed
   public boolean isShooterActive = false; //Shooter True
 
-  SparkMax shooterMotor = new SparkMax(shooterConstants.SHOOTER_ID, MotorType.kBrushless);
-  SparkMax feederMotor = new SparkMax(shooterConstants.FEEDER_ID, MotorType.kBrushless);
+  SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
+  SparkMax feederMotor = new SparkMax(ShooterConstants.FEEDER_ID, MotorType.kBrushless);
 
-  LightSubsystem m_lightSubsystem = new LightSubsystem();
+  //LightSubsystem m_lightSubsystem = new LightSubsystem();
 
   public ShooterSubsystem() {
     SparkMaxConfig shootConfig = new SparkMaxConfig();
@@ -39,34 +41,23 @@ public class ShooterSubsystem extends SubsystemBase {
     feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
-    public Command RunFeeder() {
-      return runOnce(
-          () -> {
-            feederMotor.set(motorSpeed);
-          });
-    }
-    public Command StopFeeder() {
-      return runOnce(
-          () -> {
-            feederMotor.set(0);
-          });
+    public void toggleShooter() {
+      if (!isShooterActive) {
+        isShooterActive = true;
+        shooterMotor.set(ShooterConstants.SHOOTER_SPEED);
+      }
+      else {
+        isShooterActive = false;
+        shooterMotor.set(0);
+      }
     }
 
-    public Command ShootingControlCommand() {
-      if (isShooterActive = false) {
-        isShooterActive = true;
-        return runOnce(
-          () -> {
-            shooterMotor.set(motorSpeed);
-          }
-        );
-      } else {
-        isShooterActive = false;
-        return runOnce(
-          () -> {
-            feederMotor.set(0);
-          }
-        );
+    public void runFeeder(boolean feederOn){
+      if (feederOn){
+        feederMotor.set(ShooterConstants.FEEDER_SPEED);
+      }
+      else {
+        feederMotor.set(0);
       }
     }
 
