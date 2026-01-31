@@ -21,7 +21,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private PIDController intakeArmPID = new PIDController(IntakeConstants.INTAKE_ARM_kP, IntakeConstants.INTAKE_ARM_kI, IntakeConstants.INTAKE_ARM_kD);
 
-  public double targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
+  public double targetPosition;
 
   private boolean intakeOn = false;
   private boolean intakeUp = true;
@@ -30,13 +30,14 @@ public class IntakeSubsystem extends SubsystemBase {
   public IntakeSubsystem() {
     intakeMotor.setInverted(false); // depending on how the motor is mounted
     intakeArmMotor.setInverted(false);
+    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION / 360);
+    targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
   }
 
   public void toggleIntake() {
     if (!intakeOn) {
       intakeOn = true;
       intakeMotor.set(IntakeConstants.INTAKE_SPEED);
-      
     }
     else {
       intakeOn = false;
@@ -44,13 +45,17 @@ public class IntakeSubsystem extends SubsystemBase {
     }
   }
   
+  public void setTargetPosition(double position) {
+    targetPosition = Math.max(IntakeConstants.INTAKE_ARM_MINIMUM, Math.min(IntakeConstants.INTAKE_ARM_MAXIMUM, position));
+  }
+
   public void raiseIntake() {
-    targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
+    setTargetPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
     intakeUp = true;
   }
 
   public void lowerIntake() {
-    targetPosition = IntakeConstants.INTAKE_ARM_LOWERED_POSITION;
+    setTargetPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
     intakeUp = false;
   }
   
@@ -71,6 +76,6 @@ public class IntakeSubsystem extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
     double PIDOutput = intakeArmPID.calculate(getArmPosition(), targetPosition);
-    intakeArmMotor.set(-PIDOutput);
+    intakeArmMotor.set(PIDOutput);
   }
 }
