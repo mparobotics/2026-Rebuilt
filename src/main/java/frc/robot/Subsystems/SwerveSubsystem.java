@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -178,6 +179,28 @@ public class SwerveSubsystem extends SubsystemBase {
     return (Constants.SwerveConstants.invertPigeon)
         ? Rotation2d.fromDegrees(360 - pigeon.getYaw().getValueAsDouble())
         : Rotation2d.fromDegrees(pigeon.getYaw().getValueAsDouble());
+  }
+
+  public void resyncModuleEncoders(){
+    for (SwerveModule mod : mSwerveMods){
+      mod.resyncToAbsolute();
+    }
+  }
+
+  public void saveModuleOffsets(){
+    saveModuleOffsets(new Rotation2d());
+  }
+
+  public void saveModuleOffsets(Rotation2d desiredAngle){
+    if(!DriverStation.isDisabled()){
+      DriverStation.reportWarning(
+          "Attempted to save swerve module offsets while robot is enabled. Disable before calibrating.",
+          false);
+      return;
+    }
+    for (SwerveModule mod : mSwerveMods){
+      mod.saveCanCoderOffset(desiredAngle);
+    }
   }
 
 

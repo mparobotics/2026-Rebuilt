@@ -25,6 +25,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Preferences;
 import frc.lib.CANSparkUtil;
 import frc.lib.CANSparkUtil.Usage;
 import frc.robot.Constants.SwerveConstants;
@@ -40,6 +41,7 @@ public class SwerveModule {
 
     private Rotation2d lastAngle;
     private Rotation2d angleOffset;
+    private final String angleOffsetPreferenceKey;
 
     private SparkMax angleMotor;
     private SparkFlex driveMotor;
@@ -73,12 +75,15 @@ public class SwerveModule {
      */
     public SwerveModule(int moduleNumber, ModuleData moduleConstants){
         this.moduleNumber = moduleNumber;
+        this.angleOffsetPreferenceKey = "Swerve/Module" + moduleNumber + "/AngleOffsetDegrees";
         this.m_angleKP = SwerveConstants.angleKP;
         this.m_angleKI = SwerveConstants.angleKI;
         this.m_angleKD = SwerveConstants.angleKD;
 
         // Calibration offset to align absolute encoder zero with module zero position.
-        angleOffset = Rotation2d.fromDegrees(moduleConstants.angleOffset());
+        double storedOffset =
+            Preferences.getDouble(angleOffsetPreferenceKey, moduleConstants.angleOffset());
+        angleOffset = Rotation2d.fromDegrees(normalizeDegrees(storedOffset));
         
         /* Angle Encoder Configuration
          * The CANcoder is an absolute encoder that provides the module's angle even after power loss.
@@ -401,6 +406,39 @@ public class SwerveModule {
         integratedAngleEncoder.setPosition(absolutePosition); //may need to change 
 
       }
+
+    //Re-synchronizes the integrated encoder with the CANcoder using the stored offset.
+    public void resyncToAbsolute(){
+        resetToAbsolute();
+    }
+
+    /*Saves the current CANcoder reading as the zero reference for this module.
+    Run this while the wheels are physically pointing straight to capture the
+    correct offset and persist it in WPILib Preferences.
+     */
+    public void saveCanCoderZero(){
+        saveCanCoderOffset(Rotation2d.fromDegrees(0.0));
+    }
+
+    /**
+     * Saves the current CANcoder reading as a reference for a desired heading.
+     * @param desiredAngle The field-relative angle that the wheel is currently aiming at.
+     */
+    public void saveCanCoderOffset(Rotation2d desiredAngle){
+        double absolute = getCanCoder().getDegrees();
+        double newOffset = normalizeDegrees(absolute - desiredAngle.getDegrees());
+        Preferences.setDouble(angleOffsetPreferenceKey, newOffset);
+        angleOffset = Rotation2d.fromDegrees(newOffset);
+        resetToAbsolute();
+    }
+
+    private double normalizeDegrees(double degrees){
+        double normalized = degrees % 360.0;
+        if (normalized < 0){
+            normalized += 360.0;
+        }
+        return normalized;
+    }
 
     /**
      * Configures the drive motor (SparkFlex) with all necessary settings for velocity control.
