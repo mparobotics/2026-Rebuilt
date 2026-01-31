@@ -3,11 +3,13 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.Subsystems;
-
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -24,7 +26,7 @@ public class ShooterSubsystem extends SubsystemBase {
   SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
   SparkMax feederMotor = new SparkMax(ShooterConstants.FEEDER_ID, MotorType.kBrushless);
 
-  lightSubsystem m_lightSubsystem = new lightSubsystem();
+  //LightSubsystem m_lightSubsystem = new LightSubsystem();
 
   public ShooterSubsystem() {
     SparkMaxConfig shootConfig = new SparkMaxConfig();
@@ -35,7 +37,6 @@ public class ShooterSubsystem extends SubsystemBase {
       feedConfig.inverted(false);
       feedConfig.idleMode(IdleMode.kBrake);
 
-<<<<<<< HEAD
     shooterMotor.configure(shootConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
@@ -44,12 +45,10 @@ public class ShooterSubsystem extends SubsystemBase {
       if (!isShooterActive) {
         isShooterActive = true;
         shooterMotor.set(ShooterConstants.SHOOTER_SPEED);
-        m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
       }
       else {
         isShooterActive = false;
         shooterMotor.set(0);
-        m_lightSubsystem.off(); // Turn off lights when shooter stops
       }
     }
 
@@ -62,13 +61,6 @@ public class ShooterSubsystem extends SubsystemBase {
       }
     }
 
-    public Command ShootingControlCommand(DoubleSupplier speed) {
-      return runOnce(
-          () -> {
-            shooterMotor.set(MathUtil.applyDeadband(speed.getAsDouble(), 0.1));
-            m_lightSubsystem.blink(255, 139, 0, 0.5); // Orange blink while shooting
-          });
-    }
   @Override
   public void periodic() {
     // This method will be called once per scheduler run

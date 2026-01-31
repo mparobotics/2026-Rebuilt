@@ -17,10 +17,10 @@ import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
-import frc.robot.Subsystems.lightSubsystem;
 
 public class RobotContainer {
 
+ 
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
   // Left Stick Y = Forward/backward motion
@@ -36,7 +36,6 @@ public class RobotContainer {
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
 
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
-  private final lightSubsystem m_lightSubsystem = new lightSubsystem();
   
   /**
    * Constructs the RobotContainer. Creates subsystems (which configure themselves)
@@ -52,15 +51,13 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    // X Button = Zero gyro (reset heading to 0° or 180° based on alliance)
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
     
-    // Y button = Toggle shooter (with lights)
     driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.toggleShooter(), m_shooter));
 
-    // B button = Run feeder
     driveController.button(Button.kB.value).whileTrue(new InstantCommand( () -> m_shooter.runFeeder(true), m_shooter));
     driveController.button(Button.kB.value).onFalse(new InstantCommand( () -> m_shooter.runFeeder(false), m_shooter));
+
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position
