@@ -225,7 +225,7 @@ public class SwerveSubsystem extends SubsystemBase {
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
       SmartDashboard.putNumber(
-          "Mod " + mod.moduleNumber + " New Offset", 
+          "Mod " + mod.moduleNumber + " New Cancoder Offset", 
         canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
   }
   swerveDataPublisher.set(getStates());
