@@ -23,6 +23,9 @@ public class RobotContainer {
  
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
+  // Xbox controller configuration for helms controls
+  private final CommandXboxController helmsController = new CommandXboxController(1);
+
   // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
@@ -52,12 +55,23 @@ public class RobotContainer {
   private void configureBindings() {
 
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+
+
+    // SHOOTER CONTROLLER
+    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
+        .whileTrue(new InstantCommand(() -> m_shooter.runShooter(true), m_shooter));
+    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
+        .onFalse(new InstantCommand(() -> m_shooter.runShooter(false), m_shooter));
+
+    helmsController.button(Button.kRightStick.value)
+        .whileTrue(new InstantCommand(() -> m_shooter.runFeeder(true), m_shooter));
+    helmsController.button(Button.kRightStick.value)
+        .onFalse(new InstantCommand(() -> m_shooter.runFeeder(false), m_shooter));
+
+    helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
+    helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
+
     
-    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.toggleShooter(), m_shooter));
-
-    driveController.button(Button.kB.value).whileTrue(new InstantCommand( () -> m_shooter.runFeeder(true), m_shooter));
-    driveController.button(Button.kB.value).onFalse(new InstantCommand( () -> m_shooter.runFeeder(false), m_shooter));
-
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position

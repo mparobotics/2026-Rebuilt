@@ -156,8 +156,14 @@ public class FieldConstants {
   public class ShooterConstants {
       public static final int SHOOTER_ID = 62; //Placeholder ID
       public static final int FEEDER_ID = 60; //Feeder ID
+      public static final int HOOD_ID = 61; //Hood ID (NEED CHANGE)
 
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
+
+      public static final double HOOD_ANGLE_LOW = 0.0;
+      public static final double HOOD_ANGLE_HIGH = 0.5;
+      public static final double HOOD_KP = 1.2;
+      public static final double HOOD_MAX_OUTPUT = 0.4;
   }
 }
