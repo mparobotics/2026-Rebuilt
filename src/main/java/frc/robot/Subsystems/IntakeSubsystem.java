@@ -45,6 +45,13 @@ public class IntakeSubsystem extends SubsystemBase {
     }
   }
   
+  public void setIntakePower(double power) {
+    double clampedPower = Math.max(-1.0, Math.min(1.0, power));
+    intakeOn = Math.abs(clampedPower) > 0.0;
+    intakeMotor.set(clampedPower * IntakeConstants.INTAKE_SPEED);
+  }
+  
+
   public void setTargetPosition(double position) {
     targetPosition = Math.max(IntakeConstants.INTAKE_ARM_MINIMUM, Math.min(IntakeConstants.INTAKE_ARM_MAXIMUM, position));
   }

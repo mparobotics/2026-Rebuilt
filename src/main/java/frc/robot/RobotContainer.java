@@ -8,9 +8,11 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Command.AutoAlign;
@@ -64,35 +66,37 @@ public class RobotContainer {
     // It automatically pauses when commands like AutoAlign take control, then resumes
     // when they finish.
     m_drive.setDefaultCommand(
-        new TeleopSwerve(
-            // SwerveSubsystem - The drive subsystem to control
-            m_drive,
-            // translationSupplier - Forward/backward speed
-            () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
-            // strafeSupplier - Side-to-side speed
-            () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
-            // rotationSupplier - Rotation speed
-            () -> -driveController.getRawAxis(rotationAxis) * 0.5,
-            // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
-            () -> robotCentric.getAsBoolean(),
-            // isAutoAlignSupplier - Auto-align active flag
-            () -> driveController.getRightTriggerAxis() > 0.1
-        ));
+      new TeleopSwerve(
+        // SwerveSubsystem - The drive subsystem to control
+        m_drive,
+        // translationSupplier - Forward/backward speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
+        // strafeSupplier - Side-to-side speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
+        // rotationSupplier - Rotation speed
+        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
+        () -> robotCentric.getAsBoolean(),
+        // isAutoAlignSupplier - Auto-align active flag
+        () -> driveController.getRightTriggerAxis() > 0.1
+      ));
 
-    //toggles the intake using the x button on the helms controller
-    helmsController.button(Button.kX.value).onTrue(
-      new InstantCommand(() -> m_intake.toggleIntake(), m_intake)
-    );
+    //INTAKE
+    // raises the intake using the A button on the helms controller
+    m_intake.setDefaultCommand(
+        new RunCommand(
+            () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
+            m_intake));
     
     
     //lowers the intake using the A button on the helms controller
     helmsController.button(Button.kA.value).onTrue(
-      new InstantCommand(() -> m_intake.lowerIntake(), m_intake)
+       new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
     );
 
-    // raises the intake using the Y button on the helms controller
-    helmsController.button(Button.kY.value).onTrue(
-      new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
+    // lowers the intake using the X button on the helms controller
+    helmsController.button(Button.kX.value).onTrue(
+        new InstantCommand(() -> m_intake.lowerIntake(), m_intake)
     );
   }
 
