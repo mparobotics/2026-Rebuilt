@@ -18,7 +18,7 @@ public class AutoAlign extends Command {
 
 
     //Orbit tuning constants (NEED CHANGE - kDesiredOrbitRadiusMeters, kTangentialSpeedMetersPerSecond)
-    private static final double kDesiredOrbitRadiusMeters = 3.5; //How far from the hub we want the robot to be
+    private static final double kDesiredOrbitRadiusMeters = 2.22; //How far from the hub we want the robot to be
     private static final double kTangentialSpeedMetersPerSecond = 1.25; // Constant speed for sliding around the hub
     private static final double kMaxRadialSpeedMetersPerSecond = 1.0; // Max speed for correcting radius errors
     private static final double kRadialKp = 1.6; //P-gain for radial distance correction
