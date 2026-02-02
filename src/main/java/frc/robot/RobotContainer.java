@@ -82,12 +82,20 @@ public class RobotContainer {
     //toggles the intake using the x button on the helms controller
     helmsController.button(Button.kX.value).onTrue(
       new InstantCommand(() -> m_intake.toggleIntake(), m_intake)
-    );    
-    // raises and lowers the intake using the y button on the helms controller
+    );
+    
+    
+    //lowers the intake using the A button on the helms controller
+    helmsController.button(Button.kA.value).onTrue(
+      new InstantCommand(() -> m_intake.lowerIntake(), m_intake)
+    );
+
+    // raises the intake using the Y button on the helms controller
     helmsController.button(Button.kY.value).onTrue(
-      new InstantCommand(() -> m_intake.moveIntake(), m_intake)
+      new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
     );
   }
+
 
   /**
    * Determines if the driver has requested speed reduction for precise positioning
