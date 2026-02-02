@@ -215,12 +215,18 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
 
     for (SwerveModule mod : mSwerveMods) {
+
+      double canCoderDegrees = mod.getCanCoder().getDegrees();
+
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Integrated", mod.getState().angle.getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+      SmartDashboard.putNumber(
+          "Mod " + mod.moduleNumber + " New Offset", 
+        canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
   }
   swerveDataPublisher.set(getStates());
 }
