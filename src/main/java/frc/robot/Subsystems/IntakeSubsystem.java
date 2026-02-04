@@ -25,6 +25,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private boolean intakeOn = false;
   private boolean intakeUp = true;
+  private boolean armEnabled = false;
 
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
@@ -32,6 +33,7 @@ public class IntakeSubsystem extends SubsystemBase {
     intakeArmMotor.setInverted(false);
     intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION / 360);
     targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
+    intakeArmPID.setTolerance(IntakeConstants.INTAKE_ARM_TOLERANCE);
   }
 
   public void toggleIntake() {
@@ -66,6 +68,18 @@ public class IntakeSubsystem extends SubsystemBase {
     intakeUp = false;
   }
   
+
+  public void enableArmControl() {
+    armEnabled = true;
+    intakeArmPID.reset();
+  }
+
+  public void disableArmControl() {
+    armEnabled = false;
+    intakeArmMotor.set(0);
+  }
+
+
   public void moveIntake() {
     if (intakeUp){
       lowerIntake();
@@ -82,7 +96,16 @@ public class IntakeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    if (!armEnabled) {
+      intakeArmMotor.set(0);
+      return;
+    }
     double PIDOutput = intakeArmPID.calculate(getArmPosition(), targetPosition);
-    intakeArmMotor.set(PIDOutput);
+    if (intakeArmPID.atSetpoint()) {
+      intakeArmMotor.set(0);
+    } else {
+      double clampedOutput = Math.max(-1.0, Math.min(1.0, PIDOutput));
+      intakeArmMotor.set(clampedOutput);
+    }
   }
 }
