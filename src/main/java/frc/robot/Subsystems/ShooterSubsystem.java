@@ -29,6 +29,7 @@ public class ShooterSubsystem extends SubsystemBase {
       0.0
   );
   private double hoodTargetPosition = ShooterConstants.HOOD_ANGLE_LOW;
+  private boolean hoodActive = false;
 
   public enum HoodAngle {
     LOW,
@@ -54,7 +55,7 @@ public class ShooterSubsystem extends SubsystemBase {
     feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     hoodMotor.configure(hoodConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
-    hoodController.setTolerance(0.01);
+    hoodController.setTolerance(ShooterConstants.HOOD_TOLERANCE);
   }
 
     public void toggleShooter() {
@@ -81,14 +82,13 @@ public class ShooterSubsystem extends SubsystemBase {
 
 
     public void runFeeder(boolean feederOn){
-      if (feederOn){
-        feederMotor.set(ShooterConstants.FEEDER_SPEED);
-      }
-      else {
-        feederMotor.set(0);
-      }
+      runFeederSpeed(feederOn ? ShooterConstants.FEEDER_SPEED : 0);
     }
-    
+
+    public void runFeederSpeed(double speed) {
+      feederMotor.set(speed);
+    }
+
     public void setHoodAngle(HoodAngle angle) {
       switch (angle) {
         case LOW:
@@ -100,6 +100,8 @@ public class ShooterSubsystem extends SubsystemBase {
         default:
           hoodTargetPosition = ShooterConstants.HOOD_ANGLE_HIGH;
       }
+      hoodController.reset();
+      hoodActive = true;
     }
 
     public double getHoodPosition() {
@@ -113,8 +115,19 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Hood Target Position", hoodTargetPosition);
     SmartDashboard.putNumber("Hood Position", getHoodPosition());
 
-    double output = hoodController.calculate(getHoodPosition(), hoodTargetPosition);
-    output = Math.max(-ShooterConstants.HOOD_MAX_OUTPUT, Math.min(ShooterConstants.HOOD_MAX_OUTPUT, output));
-    hoodMotor.set(output);
+    
+    if (hoodActive) {
+      double output = hoodController.calculate(getHoodPosition(), hoodTargetPosition);
+      output = Math.max(-ShooterConstants.HOOD_MAX_OUTPUT, Math.min(ShooterConstants.HOOD_MAX_OUTPUT, output));
+
+      if (hoodController.atSetpoint()) {
+        hoodMotor.set(0);
+        hoodActive = false;
+      } else {
+        hoodMotor.set(output);
+      }
+    } else {
+      hoodMotor.set(0);
+    }
   }
 }

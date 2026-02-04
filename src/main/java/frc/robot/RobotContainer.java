@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.SwerveSubsystem;
@@ -59,14 +60,22 @@ public class RobotContainer {
 
     // SHOOTER CONTROLLER
     helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
-        .whileTrue(new InstantCommand(() -> m_shooter.runShooter(true), m_shooter));
-    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
-        .onFalse(new InstantCommand(() -> m_shooter.runShooter(false), m_shooter));
+        .whileTrue(Commands.startEnd(
+            () -> m_shooter.runShooter(true),
+            () -> m_shooter.runShooter(false),
+            m_shooter));
 
-    helmsController.button(Button.kRightStick.value)
-        .whileTrue(new InstantCommand(() -> m_shooter.runFeeder(true), m_shooter));
-    helmsController.button(Button.kRightStick.value)
-        .onFalse(new InstantCommand(() -> m_shooter.runFeeder(false), m_shooter));
+    m_shooter.setDefaultCommand(
+        Commands.run(
+            () -> {
+              double feederAxis = helmsController.getRawAxis(Axis.kRightY.value);
+              double feederSpeed = 0.0;
+              if (Math.abs(feederAxis) > 0.1) {
+                feederSpeed = -Math.signum(feederAxis) * ShooterConstants.FEEDER_SPEED;
+              }
+              m_shooter.runFeederSpeed(feederSpeed);
+            },
+            m_shooter));
 
     helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
     helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
