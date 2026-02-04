@@ -15,6 +15,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /** Add your docs here. */
 public final class Constants {
@@ -160,4 +162,22 @@ public class FieldConstants {
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
   }
+
+  public class AutoConstants {
+    public enum AutoMode{
+        EightLemonAuto //go to band and shoot 8 lemon
+    }
+    
+    //create elastic chooser
+    // private static SendableChooser<Boolean> positionChooser = new SendableChooser<Boolean>(); 
+    // needs to be reworked when there is not a set starting position
+    private static SendableChooser<AutoMode> autoModeChooser = new SendableChooser<AutoMode>();
+    
+    static {
+    //send chooser to elastic
+    SmartDashboard.putData("Auto Chooser", autoModeChooser);
+    }
+    
+  }
 }
+

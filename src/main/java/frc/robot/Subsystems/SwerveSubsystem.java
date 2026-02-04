@@ -80,6 +80,7 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putData("Field", field);
   }
   
+  
     public Command autoDrive(String filename){
     try{
       PathPlannerPath path = PathPlannerPath.fromPathFile(filename);
@@ -91,6 +92,12 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
+  public Command startAutoAt(double x, double y, double direction) {
+    return runOnce(()->{
+      double newY = y;
+      if ()
+    }
+  }
 
   private void updateOdometryWithVision (String limelightName){
     boolean doRejectUpdate = false;
