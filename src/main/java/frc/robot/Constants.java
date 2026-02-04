@@ -111,10 +111,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 52, 19, 159.25, BACK_RIGHT), //Mod 0 Back right
-      new ModuleData(17, 53, 22, 230.89, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(15, 16, 21, 311.67, FRONT_LEFT), //Mod 2 Front left
-      new ModuleData(13, 12, 20, 297.69, BACK_LEFT) //Mod 3 Back left
+      new ModuleData(11, 52, 19, 159.34, BACK_RIGHT), //Mod 0 Back right
+      new ModuleData(17, 53, 22, 233.71, FRONT_RIGHT), //Mod 1 Front right
+      new ModuleData(15, 16, 21, 312.63, FRONT_LEFT), //Mod 2 Front left
+      new ModuleData(13, 12, 20, 298.75, BACK_LEFT) //Mod 3 Back left
     };
     
   }
