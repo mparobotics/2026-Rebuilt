@@ -4,12 +4,19 @@
 
 package frc.robot.Subsystems;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.TunableControllers.TunableArmFeedforward;
 import frc.robot.Constants.IntakeConstants;
 
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 public class IntakeSubsystem extends SubsystemBase {
@@ -21,6 +28,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private PIDController intakeArmPID = new PIDController(IntakeConstants.INTAKE_ARM_kP, IntakeConstants.INTAKE_ARM_kI, IntakeConstants.INTAKE_ARM_kD);
 
+  private ArmFeedforward intakeArmFeedForward = new ArmFeedforward(0,0,0);
+
   public double targetPosition;
 
   private boolean intakeOn = false;
@@ -28,9 +37,19 @@ public class IntakeSubsystem extends SubsystemBase {
 
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
-    intakeMotor.setInverted(false); // depending on how the motor is mounted
-    intakeArmMotor.setInverted(false);
-    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION / 360);
+    SparkMaxConfig intakeConfig = new SparkMaxConfig();
+      intakeConfig.inverted(false);
+      intakeConfig.idleMode(IdleMode.kCoast);
+
+    intakeMotor.configure(intakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+    SparkMaxConfig intakeArmConfig = new SparkMaxConfig();
+      intakeArmConfig.inverted(false);
+      intakeArmConfig.idleMode(IdleMode.kBrake);
+      intakeArmConfig.encoder.positionConversionFactor(360/IntakeConstants.GEAR_RATIO);
+
+    intakeArmMotor.configure(intakeArmConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
     targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
   }
 
@@ -82,7 +101,9 @@ public class IntakeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    double PIDOutput = intakeArmPID.calculate(getArmPosition(), targetPosition);
+    double PIDOutput = intakeArmFeedForward.calculate(
+      Units.degreesToRadians(intakeArmEncoder.getPosition()),0)
+      + intakeArmPID.calculate(getArmPosition(), targetPosition);
     intakeArmMotor.set(PIDOutput);
   }
 }
