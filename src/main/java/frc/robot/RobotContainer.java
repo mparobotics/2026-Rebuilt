@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
@@ -26,8 +27,9 @@ public class RobotContainer {
  
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
-  // Xbox controller for helms controller
+  // Xbox controller configuration for helms controls
   private final CommandXboxController helmsController = new CommandXboxController(1);
+
   // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
@@ -60,12 +62,31 @@ public class RobotContainer {
   private void configureBindings() {
 
     driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+
+
+    // SHOOTER CONTROLLER
+    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
+        .whileTrue(Commands.startEnd(
+            () -> m_shooter.runShooter(true),
+            () -> m_shooter.runShooter(false),
+            m_shooter));
+
+    m_shooter.setDefaultCommand(
+        Commands.run(
+            () -> {
+              double feederAxis = helmsController.getRawAxis(Axis.kRightY.value);
+              double feederSpeed = 0.0;
+              if (Math.abs(feederAxis) > 0.1) {
+                feederSpeed = -Math.signum(feederAxis) * ShooterConstants.FEEDER_SPEED;
+              }
+              m_shooter.runFeederSpeed(feederSpeed);
+            },
+            m_shooter));
+
+    helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
+    helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
+
     
-    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.toggleShooter(), m_shooter));
-
-    driveController.button(Button.kB.value).whileTrue(new InstantCommand( () -> m_shooter.runFeeder(true), m_shooter));
-    driveController.button(Button.kB.value).onFalse(new InstantCommand( () -> m_shooter.runFeeder(false), m_shooter));
-
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position
