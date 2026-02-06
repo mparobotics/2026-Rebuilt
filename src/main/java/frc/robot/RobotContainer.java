@@ -30,8 +30,6 @@ public class RobotContainer {
   // Xbox controller configuration for helms controls
   private final CommandXboxController helmsController = new CommandXboxController(1);
 
-  // Xbox controller for helms controller
-  private final CommandXboxController helmsController = new CommandXboxController(1);
   // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
