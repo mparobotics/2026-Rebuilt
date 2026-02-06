@@ -8,14 +8,17 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
+import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 
@@ -27,6 +30,8 @@ public class RobotContainer {
   // Xbox controller configuration for helms controls
   private final CommandXboxController helmsController = new CommandXboxController(1);
 
+  // Xbox controller for helms controller
+  private final CommandXboxController helmsController = new CommandXboxController(1);
   // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
@@ -38,6 +43,9 @@ public class RobotContainer {
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
+
+  // IntakeSubsystem for intake
+  private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
@@ -90,22 +98,40 @@ public class RobotContainer {
     // It automatically pauses when commands like AutoAlign take control, then resumes
     // when they finish.
     m_drive.setDefaultCommand(
-        new TeleopSwerve(
-            // SwerveSubsystem - The drive subsystem to control
-            m_drive,
-            // translationSupplier - Forward/backward speed
-            () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
-            // strafeSupplier - Side-to-side speed
-            () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
-            // rotationSupplier - Rotation speed
-            () -> -driveController.getRawAxis(rotationAxis) * 0.5,
-            // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
-            () -> robotCentric.getAsBoolean(),
-            // isAutoAlignSupplier - Auto-align active flag
-            () -> driveController.getRightTriggerAxis() > 0.1
-        ));
+      new TeleopSwerve(
+        // SwerveSubsystem - The drive subsystem to control
+        m_drive,
+        // translationSupplier - Forward/backward speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
+        // strafeSupplier - Side-to-side speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
+        // rotationSupplier - Rotation speed
+        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
+        () -> robotCentric.getAsBoolean(),
+        // isAutoAlignSupplier - Auto-align active flag
+        () -> driveController.getRightTriggerAxis() > 0.1
+      ));
 
+    //INTAKE
+    // raises the intake using the A button on the helms controller
+    m_intake.setDefaultCommand(
+        new RunCommand(
+            () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
+            m_intake));
+    
+    
+    //lowers the intake using the A button on the helms controller
+    helmsController.button(Button.kA.value).onTrue(
+       new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
+    );
+
+    // lowers the intake using the X button on the helms controller
+    helmsController.button(Button.kX.value).onTrue(
+        new InstantCommand(() -> m_intake.lowerIntake(), m_intake)
+    );
   }
+
 
   /**
    * Determines if the driver has requested speed reduction for precise positioning
