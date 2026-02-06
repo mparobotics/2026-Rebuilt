@@ -160,4 +160,19 @@ public class FieldConstants {
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
   }
+  public class IntakeConstants {
+    public static int INTAKE_ID = 60; // placeholder
+    public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
+
+    public static int INTAKE_ARM_ID = 62; //placeholder
+    public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
+    public static double INTAKE_ARM_LOWERED_POSITION = 0;
+    public static double INTAKE_ARM_MINIMUM = 0; // placeholders
+    public static double INTAKE_ARM_MAXIMUM = 90;
+    public static int GEAR_RATIO = 3;
+
+    public static double INTAKE_ARM_kP = 0.01;
+    public static double INTAKE_ARM_kI = 0;
+    public static double INTAKE_ARM_kD = 0;
+  }
 }
