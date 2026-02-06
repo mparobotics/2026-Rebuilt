@@ -46,10 +46,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
     public static final SwerveDriveKinematics swerveKinematics =
     new SwerveDriveKinematics(
-        new Translation2d(-halfTrackWidth, halfWheelBase), //Back Right
-        new Translation2d(halfTrackWidth,halfWheelBase), // Front Right
-        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Left
-        new Translation2d(-halfTrackWidth,-halfWheelBase)); // Back Left
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
+        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
+        new Translation2d(halfTrackWidth, halfWheelBase), // Front Left
+        new Translation2d(-halfTrackWidth, halfWheelBase)); // Back Left
     //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
     //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
@@ -67,7 +67,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     /* Drive Motor PID Values */
     public static final double driveKP = 0.1; //to tune
     public static final double driveKI = 0.0; //to tune
-    public static final double driveKD = 0.0; //to tune
+    public static final double driveKD = 0.0; //to tune 
   
     /* Drive Motor Characterization Values */
     //values to calculate the drive feedforward (KFF)
@@ -100,10 +100,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean angleInvert = true;
 
     //Location of modules
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
     /* Module Specific Constants */
     public record ModuleData(
