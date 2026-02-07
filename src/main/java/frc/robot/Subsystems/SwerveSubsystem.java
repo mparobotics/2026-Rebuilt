@@ -12,6 +12,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -93,10 +94,20 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public Command startAutoAt(double x, double y, double direction) {
-    return runOnce(()->{
-      double newY = y;
-      if ()
-    }
+    return runOnce(() -> {
+      // Create starting position and rotation
+      Translation2d startPos = new Translation2d(x, y);
+      Rotation2d startRotation = Rotation2d.fromDegrees(direction);
+      
+      // Apply alliance flip if on red side (field symmetry)
+      Pose2d startPose = new Pose2d(
+          FieldConstants.flipForAlliance(startPos),
+          FieldConstants.flipForAlliance(startRotation)
+      );
+      
+      // Reset odometry to the starting position
+      resetOdometry(startPose);
+    });
   }
 
   private void updateOdometryWithVision (String limelightName){
