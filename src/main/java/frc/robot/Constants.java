@@ -156,7 +156,7 @@ public class FieldConstants {
   public class ShooterConstants {
       public static final int SHOOTER_ID = 60; //Placeholder ID
       public static final int FEEDER_ID = 61; //Feeder ID
-      public static final int HOOD_ID = 62; //Hood ID (NEED CHANGE)
+      public static final int HOOD_ID = 63; //Hood ID (changed from 62 to avoid conflict with INTAKE_ARM_ID)
 
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
@@ -168,7 +168,7 @@ public class FieldConstants {
       public static final double HOOD_TOLERANCE = 0.02;
   }
   public class IntakeConstants {
-    public static int INTAKE_ID = 60; // placeholder
+    public static int INTAKE_ID = 59; // changed to 59 to avoid conflict with SHOOTER_ID
     public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
 
     public static int INTAKE_ARM_ID = 62; //placeholder
