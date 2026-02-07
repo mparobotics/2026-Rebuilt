@@ -16,8 +16,13 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.SwerveSubsystem;
+import frc.robot.Subsystems.CandleSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
-import frc.robot.Subsystems.LightSubsystem;
+import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
+
 
 public class RobotContainer {
 
@@ -35,7 +40,7 @@ public class RobotContainer {
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
-  private final LightSubsystem m_lightsubsystem = new LightSubsystem();
+  private final CandleSubsystem m_candle = new CandleSubsystem();
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   /**
@@ -59,7 +64,7 @@ public class RobotContainer {
     driveController.button(Button.kB.value).whileTrue(new InstantCommand( () -> m_shooter.runFeeder(true), m_shooter));
     driveController.button(Button.kB.value).onFalse(new InstantCommand( () -> m_shooter.runFeeder(false), m_shooter));
 
-    driveController.button(Button.kX.value).onTrue(new InstantCommand( () -> m_lightsubsystem.setAll(225, 0, 0), m_lightsubsystem));
+    driveController.button(Button.kX.value).onTrue(new InstantCommand( () -> m_candle.incrementAnimations(), m_candle));
 
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));

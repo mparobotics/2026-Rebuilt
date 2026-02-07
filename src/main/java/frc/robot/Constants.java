@@ -160,4 +160,7 @@ public class FieldConstants {
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
   }
+  public class CANdleConstants {
+    public static final int CANDLE_ID = 18; //Placeholder ID
+  }
 }
