@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.LimelightHelpers;
 import frc.robot.Constants;
+import frc.robot.test.SwerveDriftTestManager;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
@@ -76,6 +77,9 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+
+    // Initialize drift test dashboard controls (test code - separate from production)
+    SwerveDriftTestManager.initializeDashboard();
   }
   
 
@@ -203,13 +207,25 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-
+  /**
+   * Gets a specific swerve module by its module number.
+   * Useful for testing and diagnostics.
+   *
+   * @param moduleNumber The module number (0-3)
+   * @return The SwerveModule instance, or null if moduleNumber is invalid
+   */
+  public SwerveModule getModule(int moduleNumber) {
+    if (moduleNumber >= 0 && moduleNumber < mSwerveMods.length) {
+      return mSwerveMods[moduleNumber];
+    }
+    return null;
+  }
 
   @Override
   public void periodic() {
-        odometry.update(getYaw(), getPositions());
-        updateOdometryWithVision("limelight-a");
-        updateOdometryWithVision("limelight-b");
+    odometry.update(getYaw(), getPositions());
+    updateOdometryWithVision("limelight-a");
+    updateOdometryWithVision("limelight-b");
     field.setRobotPose(getPose());
 
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
@@ -221,8 +237,10 @@ public class SwerveSubsystem extends SubsystemBase {
           "Mod " + mod.moduleNumber + " Integrated", mod.getState().angle.getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
-  }
-  swerveDataPublisher.set(getStates());
-}
+    }
+    swerveDataPublisher.set(getStates());
 
+    // Check if drift test should be started from SmartDashboard (test code - separate from production)
+    SwerveDriftTestManager.checkAndStartTest(this);
+  }
 }
