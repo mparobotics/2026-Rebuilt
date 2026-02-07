@@ -5,6 +5,7 @@
 package frc.robot.test;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 /**
@@ -82,7 +83,7 @@ public class SwerveDriftTestManager {
         SwerveAngleDriftTestCommand testCommand = new SwerveAngleDriftTestCommand(
             swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 
             angleToleranceDegrees, maxWaitTimeSeconds);
-        testCommand.schedule();
+        CommandScheduler.getInstance().schedule(testCommand);
         
         System.out.println("Starting drift test: Module " + moduleNumber + 
             ", Angle " + testAngleDegrees + "°, Cycles " + numberOfCycles);

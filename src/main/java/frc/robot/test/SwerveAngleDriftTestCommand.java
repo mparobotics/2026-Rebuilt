@@ -54,7 +54,7 @@ public class SwerveAngleDriftTestCommand extends Command {
      * 1. Moving to the target angle and measuring drift
      * 2. Moving back to zero and measuring drift
      */
-    static record TestCycleResult(
+    public static record TestCycleResult(
         int cycleNumber,
         // Measurement at target angle
         double relativeEncoderAtTarget,
