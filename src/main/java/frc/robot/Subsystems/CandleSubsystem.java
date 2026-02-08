@@ -1,118 +1,106 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
-
+/* More or less a framework. Refrence it when needed apon other classes */
+// If you want, phoenix6 has smartdash support, so you can add it if you want.
+// Heres an example if you do want to add it: https://github.com/CrossTheRoadElec/Phoenix6-Examples/blob/main/java/CANdle/src/main/java/frc/robot/Robot.java
 package frc.robot.Subsystems;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.CANdleConstants;
-import com.ctre.phoenix.led.CANdle;
-import com.ctre.phoenix.led.CANdleConfiguration;
-import com.ctre.phoenix.led.CANdle.LEDStripType;
-import com.ctre.phoenix.led.CANdle.VBatOutputMode;
 
-
-
-//I imported stuff. Enjoy looking at the 4 unused imports.
-
-
-
-
-public class CandleSubsystem extends SubsystemBase {
- private final int ledAmount = 0; //Placeholder (LED AMOUNT)
- private final CANdle candle = new CANdle(CANdleConstants.CANDLE_ID, "rio");
- private int candleChannel = 0; //Placeholder (PORT)
- private boolean clearAllAnims = false; //Sets up anim toggle
- private boolean setAnim = false; //Allows for simple transition between animations
-
-
- public enum AnimTypes {
-   Setall,
-   Empty
- }
- private AnimTypes currentAnim; //Sets to null by default
-
-
- public CandleSubsystem() {
-     changeAnimation(AnimTypes.Empty);
-     CANdleConfiguration configAll = new CANdleConfiguration(); //Builds a configuration preset for the lights
-     configAll.statusLedOffWhenActive = true; //Candle hub has an LED, we hate when it lights up to "tell us usefull information"
-     configAll.disableWhenLOS = false; //Makes LEDs NOT turn off when a loss of signal occurs (Needed so on mini radio issue the leds dont start spazing out)
-     configAll.stripType = LEDStripType.GRB; //GRB because Dle, do you get the humor. Okay I'll leave...
-     configAll.brightnessScalar = 0.25; //So we dont burn out the bulbs
-     configAll.vBatOutputMode = VBatOutputMode.Modulated; //Sets up the CANdle for the inputs we want to insert.
-     candle.configAllSettings(configAll); //Imlements our awesome settings
- }
-
- public void setLedOn(boolean enabled) {
-   changeAnimation(enabled ? AnimTypes.Setall : AnimTypes.Empty);
- }
-
- public void incrementAnimations() {
-   switch(currentAnim) {
-     case Empty:
-       changeAnimation(AnimTypes.Setall);
-       break;
-     case Setall:
-       changeAnimation(AnimTypes.Empty);
-       break;
-     default:
-       changeAnimation(AnimTypes.Empty);
-       break;
-   }
- }
-
-
- public void changeAnimation(AnimTypes toChange) {
-   currentAnim = toChange; //Changes animations to a type
-
-
-   switch(toChange)
-   {
-     case Setall:
-       break;
-     case Empty:
-       break;
-   }
- }
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.configs.CANdleConfiguration;
+import com.ctre.phoenix6.controls.*;
+import com.ctre.phoenix6.hardware.CANdle;
+import com.ctre.phoenix6.signals.AnimationDirectionValue;
+import com.ctre.phoenix6.signals.RGBWColor;
+import com.ctre.phoenix6.signals.StatusLedWhenActiveValue;
+import com.ctre.phoenix6.signals.StripTypeValue;
+import edu.wpi.first.wpilibj.TimedRobot;
 
 
 
 
- public void clearAllAnimations() {clearAllAnims = true;}
+//Add color presets here:
+class Robot extends TimedRobot {
+  private static final RGBWColor kred = RGBWColor.fromHex("#ff0000ff").orElseThrow();
+  private static final RGBWColor kgreen = RGBWColor.fromHex("#00c25bff").orElseThrow();
+  private static final RGBWColor kblue = RGBWColor.fromHex("#0000ffff").orElseThrow();
+
+  //Sets up CANdle
+  private final CANdle candle = new CANdle(18, CANBus.roboRIO());
+
+  //Add presets here
+  private enum AnimationType {
+    None,
+    ColorFlow,
+    Fire,
+    Larson,
+    Rainbow,
+    RgbFade,
+    SingleFade,
+    Twinke,
+    TwinkleOff,
+  }
 
 
- @Override
- public void periodic() {
-   if (currentAnim == AnimTypes.Empty) {
-     candle.setLEDs(0, 0, 0);
-   } else if (currentAnim == AnimTypes.Setall) {
-     candle.setLEDs(255, 0, 0); //Red, fight me on it.
-   }
-   if(clearAllAnims) {
+  //Candle Config
+  public void CandleSubsystem() {
+    var config = new CANdleConfiguration();
+    config.LED.StripType = StripTypeValue.GRB;
+    config.LED.BrightnessScalar = 0.25;
+    config.CANdleFeatures.StatusLedWhenActive = StatusLedWhenActiveValue.Disabled;
+  
+    /* Clearing All previous anims */
+    for (int i = 0; i < 8; ++i) {
+      candle.setControl(new EmptyAnimation(i));
+    }
+  
+    //The leds on the candle (NOT the leds on the strip) controll. They are addressable.
+    candle.setControl(new SolidColor(0, 7).withColor(kblue));
+  }
+    /*Its called k1slotIndex because I had a variable for the first half of LEDs before.
+     I removed it and placed them here instead because its easier */
+    public void Anim1State(AnimationType type, int kSlot1StartIdx, int kSlot1EndIdx) {
+      switch (type) {
 
+        default:
+        case ColorFlow:
+          candle.setControl (
+            new ColorFlowAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0).withColor(kred)
+          );
+          break;
+        case Fire:
+          candle.setControl(
+            new FireAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0).withDirection(AnimationDirectionValue.Forward).withCooling(0.4).withSparking(0.5) //Idk what they were thinking when making fire animation be very different from every other animation
+          );
+          break;
+        case Larson:
+          candle.setControl(
+            new LarsonAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0) //I honestly have no idea what this does, but it was in the docs
+          );
+          break;
+        case Rainbow:
+          candle.setControl(
+            new RainbowAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0) //Rainbow by default does a rainbow pattern so we dont have to color it
+          );
+          break;
+        case RgbFade:
+          candle.setControl(
+            new RgbFadeAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0) //Dont need color for this one
+          );
+          break;
+        case SingleFade:
+          candle.setControl(
+            new SingleFadeAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0) //Dont need color for this one
+          );
+          break;
+        case Twinke:
+          candle.setControl(
+            new TwinkleAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0).withColor(kred)
+          );
+          break;
+        case TwinkleOff:
+          candle.setControl (
+            new TwinkleOffAnimation(kSlot1StartIdx, kSlot1EndIdx).withSlot(0).withColor(kred)
+          );
 
-       clearAllAnims = false;
-       /*Hey guys, welcome back to another video, today I will show you how to toggle something in java.
-        Make sure to like and subscribe, and without further ado, lets get straight into the video! 
-        Welcome into my vs code, so the first thing im going to do is create a new file, and name it whatever I want.
-        In this case im going to name it "Toggle trigger". Then lets click create. 
-        Now what im going to do is make a function. Just.. like that! 
-        And now what im going to do is make a boolean outside of the function. 
-        Lets call it "Toggled". And lets set it to false. Now what im going to do is add it into my function,
-        and make an if then statement saying "If Toggle is equal to false, set toggle to true." 
-        lets add in a print statement printing out the value of toggle at the end of the function. 
-        Now look at that! When I run my code, it toggles! But thats not all, we can also make it toggle both ways! 
-        First thing im going to do is replace the if then statement, and just replace it with a simple not statement, 
-        the toggle now goes both ways! If you found this tutorial helpfull, make sure to leave a like and subscribe, 
-        and I'll see you all in the next one, bye! (Outro plays)
-      */
-
-       for(int i = 0; i < 10; i++) {
-        
-         candle.clearAnimation(i); //Clears all animations on seperate leds. Humor is in the past.
-       }
-     }
- }
+      }
+    
+  }
 }
-
