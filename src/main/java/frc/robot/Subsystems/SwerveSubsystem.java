@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.LimelightHelpers;
 import frc.robot.Constants;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
@@ -92,11 +93,17 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-  public Command startAutoAt(double x, double y, double direction) {
+  // Seed odometry and gyro for an autonomous routine
+  public Command startAutoAt(double x, double y, double direction){
     return runOnce(()->{
       double newY = y;
-      if ()
-    }
+      if (FieldConstants.isRedAlliance()){
+        newY = FieldConstants.FIELD_WIDTH - y;
+      }
+      Pose2d startPose = FieldConstants.flipForAlliance(new Pose2d(x, newY, Rotation2d.fromDegrees(direction)));
+      pigeon.setYaw(startPose.getRotation().getDegrees());
+      odometry.resetPosition(startPose.getRotation(), getPositions(), startPose);
+    });
   }
 
   private void updateOdometryWithVision (String limelightName){

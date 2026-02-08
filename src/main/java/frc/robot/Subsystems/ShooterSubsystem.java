@@ -7,6 +7,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -121,6 +122,28 @@ public class ShooterSubsystem extends SubsystemBase {
     public double getHoodPosition() {
       return hoodMotor.getEncoder().getPosition();
     }
+
+    public Command autoShoot() {
+        return new InstantCommand(() -> {
+          if (!isShooterActive) {
+            isShooterActive = true;
+            shooterMotor.set(ShooterConstants.SHOOTER_SPEED);
+          }
+          else {
+            isShooterActive = false;
+            shooterMotor.set(0);
+          }
+      }, this);
+    }
+
+    public Command autoFeed() {
+      return new InstantCommand(() -> runFeeder(true), this);
+    }
+
+    public Command autoStopFeed() {
+      return new InstantCommand(() -> runFeeder(false), this);
+    }
+
 
   @Override
   public void periodic() {
