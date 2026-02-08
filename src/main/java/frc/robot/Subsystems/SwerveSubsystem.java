@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.Subsystems;
-
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -12,6 +11,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -93,16 +93,53 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-  // Seed odometry and gyro for an autonomous routine
-  public Command startAutoAt(double x, double y, double direction){
-    return runOnce(()->{
-      double newY = y;
-      if (FieldConstants.isRedAlliance()){
-        newY = FieldConstants.FIELD_WIDTH - y;
-      }
-      Pose2d startPose = FieldConstants.flipForAlliance(new Pose2d(x, newY, Rotation2d.fromDegrees(direction)));
-      pigeon.setYaw(startPose.getRotation().getDegrees());
-      odometry.resetPosition(startPose.getRotation(), getPositions(), startPose);
+  /**
+   * Creates a command that resets the robot's odometry to a specified starting position and orientation.
+   *
+   * <p>This method is used at the beginning of autonomous routines to tell the robot where it is
+   * physically located on the field. It does NOT move the robot - it only updates the software's
+   * position estimate (odometry).
+   *
+   * <p><b>IMPORTANT:</b> The robot must be physically placed at the specified position before
+   * this command is executed. If the physical position doesn't match the coordinates passed to
+   * this method, autonomous paths will be incorrect and the robot may drive to wrong locations.
+   *
+   * <p>The method automatically handles alliance-aware coordinate flipping. If the robot is on the
+   * red alliance, the coordinates and rotation are automatically mirrored to account for field
+   * symmetry.
+   *
+   * <p>This command should typically be the first command in an autonomous sequence, before any
+   * path-following commands.
+   *
+   * @param x The X coordinate of the starting position in meters (field coordinates)
+   * @param y The Y coordinate of the starting position in meters (field coordinates)
+   * @param direction The starting heading in degrees (0° = east/right, 90° = north/up, 180° = west/left, 270° = south/down)
+   * @return A command that resets odometry to the specified pose when executed
+   *
+   * <p><b>Example usage:</b>
+   * <pre>{@code
+   * // Robot is physically placed at (7.13, 7.276) facing 180° (south)
+   * // Then in autonomous command sequence:
+   * addCommands(
+   *     drive.startAutoAt(7.13, 7.276, 180),  // Reset odometry to match physical position
+   *     drive.autoDrive("MyPath")             // Follow path from this starting position
+   * );
+   * }</pre>
+   */
+  public Command startAutoAt(double x, double y, double direction) {
+    return runOnce(() -> {
+      // Create starting position and rotation
+      Translation2d startPos = new Translation2d(x, y);
+      Rotation2d startRotation = Rotation2d.fromDegrees(direction);
+      
+      // Apply alliance flip if on red side (field symmetry)
+      Pose2d startPose = new Pose2d(
+          FieldConstants.flipForAlliance(startPos),
+          FieldConstants.flipForAlliance(startRotation)
+      );
+      
+      // Reset odometry to the starting position
+      resetOdometry(startPose);
     });
   }
 
