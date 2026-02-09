@@ -19,7 +19,7 @@ import com.ctre.phoenix.led.CANdle.VBatOutputMode;
 
 
 public class CandleSubsystem extends SubsystemBase {
- private final int ledAmount = 0; //Placeholder (LED AMOUNT)
+ private final int oledAmount = 0; //Placeholder (LED AMOUNT)
  private final CANdle candle = new CANdle(CANdleConstants.CANDLE_ID, "rio");
  private int candleChannel = 0; //Placeholder (PORT)
  private boolean clearAllAnims = false; //Sets up anim toggle
@@ -87,7 +87,7 @@ public class CandleSubsystem extends SubsystemBase {
    if (currentAnim == AnimTypes.Empty) {
      candle.setLEDs(0, 0, 0);
    } else if (currentAnim == AnimTypes.Setall) {
-     candle.setLEDs(255, 0, 0); //Red, fight me on it.
+     candle.setLEDs(0, 0, 255); //Red, fight me on it.
    }
    if(clearAllAnims) {
 
