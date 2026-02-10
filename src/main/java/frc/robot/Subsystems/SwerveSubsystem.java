@@ -6,6 +6,7 @@ package frc.robot.Subsystems;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -79,6 +80,25 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+
+    RobotConfig config;
+    try {
+     config = RobotConfig.fromGUISettings();
+    } 
+    catch (Exception e) {
+     e.printStackTrace();
+    }
+
+    AutoBuilder.configure(
+      this::getPose, 
+      this::resetOdometry, 
+      getChassisSpeeds(), 
+      null, 
+      null, 
+      config, 
+      null, 
+      null);
+
   }
   
   
@@ -87,7 +107,7 @@ public class SwerveSubsystem extends SubsystemBase {
       PathPlannerPath path = PathPlannerPath.fromPathFile(filename);
       return AutoBuilder.followPath(path);
     }
-    catch(Exception e){ //exception e: see what the error was
+    catch (Exception e) { //exception e: see what the error was
       DriverStation.reportError("Pathplanner Error: "+ e.getMessage(), e.getStackTrace());
       return null;
     }
@@ -265,8 +285,6 @@ public class SwerveSubsystem extends SubsystemBase {
       mod.saveCanCoderOffset(desiredAngle);
     }
   }
-
-
 
   @Override
   public void periodic() {
