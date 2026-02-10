@@ -21,6 +21,7 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
+import frc.robot.Subsystems.CandleSubsystem;
 
 public class RobotContainer {
 
@@ -46,6 +47,8 @@ public class RobotContainer {
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
+
+  private final CandleSubsystem m_candle = new CandleSubsystem();
   
   /**
    * Constructs the RobotContainer. Creates subsystems (which configure themselves)
@@ -61,8 +64,12 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+    // X Button = Zero gyro (reset heading to 0° or 180° based on alliance)
+    // driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
 
+    // X Button = Toggle LED lights on/off
+    driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_candle.setLedOn(true), m_candle));
+    driveController.button(Button.kX.value).onFalse(new InstantCommand(() -> m_candle.setLedOn(false), m_candle));
 
     // SHOOTER CONTROLLER
     helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)

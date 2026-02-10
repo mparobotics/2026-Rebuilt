@@ -182,4 +182,7 @@ public class FieldConstants {
     public static double INTAKE_ARM_kI = 0;
     public static double INTAKE_ARM_kD = 0;
   }
+  public class CANdleConstants {
+    public static final int CANDLE_ID = 18; //Placeholder ID
+  }
 }
