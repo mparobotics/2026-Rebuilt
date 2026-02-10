@@ -9,7 +9,7 @@ public class EightLemonAuto extends SequentialCommandGroup{
     public EightLemonAuto (SwerveSubsystem drive, ShooterSubsystem shoot) {
         addCommands(
             drive.startAutoAt(3, 7.276, 180), //placeholder numbers from wherever we start auto
-            drive.autoDrive("EightLemonPath"),
+            drive.autoDrive("Eight Lemon Path"),
             shoot.autoShoot(),
             new WaitCommand(3.0),
             shoot.autoFeed(),
