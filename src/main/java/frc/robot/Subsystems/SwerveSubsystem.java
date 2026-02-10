@@ -6,7 +6,9 @@ package frc.robot.Subsystems;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -81,24 +83,30 @@ public class SwerveSubsystem extends SubsystemBase {
     field = new Field2d();
     SmartDashboard.putData("Field", field);
 
-    RobotConfig config;
+    RobotConfig autoConfig;
     try {
-     config = RobotConfig.fromGUISettings();
+     autoConfig = RobotConfig.fromGUISettings();
     } 
     catch (Exception e) {
      e.printStackTrace();
+     autoConfig = null;
     }
 
     AutoBuilder.configure(
       this::getPose, 
       this::resetOdometry, 
-      getChassisSpeeds(), 
-      null, 
-      null, 
-      config, 
-      null, 
-      null);
-
+      this::getChassisSpeeds, 
+      (speeds, feedforwards) -> driveFromChassisSpeeds(speeds, false), 
+      new PPHolonomicDriveController(
+        new PIDConstants(SwerveConstants.driveKP, SwerveConstants.driveKI, SwerveConstants.driveKD),
+        new PIDConstants(SwerveConstants.angleKP, SwerveConstants.angleKI, SwerveConstants.angleKD)
+      ), 
+      autoConfig, 
+      () -> {
+        return FieldConstants.isRedAlliance();
+      }, 
+      this
+      );
   }
   
   
