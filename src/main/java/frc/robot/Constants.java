@@ -16,7 +16,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
-/** Add your docs here. */
+/** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
 
 

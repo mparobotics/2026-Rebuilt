@@ -14,6 +14,8 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
 
+/* Default drive command for field-centric manual swerve control */
+
 public class TeleopSwerve extends Command {
   private SwerveSubsystem m_SwerveSubsystem;
   private DoubleSupplier m_translationSupplier;
@@ -21,17 +23,20 @@ public class TeleopSwerve extends Command {
   private DoubleSupplier m_rotationSupplier;
   private BooleanSupplier m_robotCentricSupplier;
 
-  private SlewRateLimiter translationLimiter = new SlewRateLimiter(3.0); //can only change by 3 m/s in the span of 1 s
+
+  //Limit acceleration to smooth driver inputs and reduce wheel slip
+  private SlewRateLimiter translationLimiter = new SlewRateLimiter(3.0);
   private SlewRateLimiter strafeLimiter = new SlewRateLimiter(3.0);
   private SlewRateLimiter rotationLimiter = new SlewRateLimiter(3.0);
-  /** Creates a new TeleopSwerve. */
+  /** Creates a new TeleopSwerve command */
   public TeleopSwerve(SwerveSubsystem SwerveSubsystem,
       DoubleSupplier translationSupplier,
       DoubleSupplier strafeSupplier,
       DoubleSupplier rotationSupplier,
       BooleanSupplier robotCentricSupplier,
       BooleanSupplier isAutoAlignSupplier) {
-    // Use addRequirements() here to declare subsystem dependencies.
+
+    // Declare the swerve subsystem requirement so this is the active default drive command.
     this.m_SwerveSubsystem = SwerveSubsystem;
     addRequirements(m_SwerveSubsystem);
     this.m_translationSupplier = translationSupplier;
@@ -48,7 +53,7 @@ public class TeleopSwerve extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-        /* Get Values, applies Deadband, (doesnt do anything if stick is less than a value)*/
+        /* Read joystick values, apply deadband, and slew-limit for smooth control*/
     double xVal =
         translationLimiter.calculate(
             MathUtil.applyDeadband(m_translationSupplier.getAsDouble(), SwerveConstants.inputDeadband));
@@ -63,13 +68,13 @@ public class TeleopSwerve extends Command {
         invert = -1;
       }
 
-    /* Drive */
+    /* Command closed-loop swerve drive */
     m_SwerveSubsystem.drive(
-        //the joystick values (-1 to 1) multiplied by the max speed of the drivetrain
+        // Scale joystick tranlation (-1 to 1) to real drivetrain speed.
         xVal * SwerveConstants.maxSpeed * invert, yVal * SwerveConstants.maxSpeed * invert,
-        //rotation value times max spin speed
+        //Scale joystick rotation (-1 to 1) to max angular velocity
         rotationVal * SwerveConstants.maxAngularVelocity,
-        //whether or not in field centric mode
+        //Drive field-relative unless robot-centric mode is requested.
         !m_robotCentricSupplier.getAsBoolean());
 
   }
