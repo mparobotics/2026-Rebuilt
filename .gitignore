@@ -38,6 +38,7 @@ bin/
 # Simulator runtime files
 networktables.json
 simgui*.json
+ctre_sim/
 
 # JVM crash logs
 hs_err_pid*.log

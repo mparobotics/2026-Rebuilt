@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.sim.SimulationManager;
 
 /**
  * Main robot class that extends TimedRobot. This is the entry point for the robot program
@@ -24,12 +25,19 @@ public class Robot extends TimedRobot {
 
   private final RobotContainer m_robotContainer;
 
+  // Simulation support
+  private SimulationManager simManager;
+
   /**
    * Constructs the Robot. Initializes the RobotContainer which creates subsystems
    * (subsystems configure themselves) and sets up command bindings.
    */
   public Robot() {
     m_robotContainer = new RobotContainer();
+  }
+
+  @Override
+  public void robotInit() {
   }
 
   /**
@@ -91,4 +99,18 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testExit() {}
+
+  @Override
+  public void simulationInit() {
+    // Initialize simulation manager for driver practice simulation
+    simManager = new SimulationManager(m_robotContainer.getSwerveSubsystem());
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    // Run simulation manager (handles both normal simulation and API testing)
+    if (simManager != null) {
+      simManager.simulationPeriodic();
+    }
+  }
 }

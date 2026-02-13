@@ -56,6 +56,15 @@ public class SwerveSubsystem extends SubsystemBase {
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
 
+  // Store last desired module states for simulation access
+  // Initialize with zero states to avoid null pointer exceptions
+  private SwerveModuleState[] lastDesiredStates = new SwerveModuleState[]{
+    new SwerveModuleState(0, new Rotation2d()),
+    new SwerveModuleState(0, new Rotation2d()),
+    new SwerveModuleState(0, new Rotation2d()),
+    new SwerveModuleState(0, new Rotation2d())
+  };
+
   /** Creates a new SwerveSubsystem. */
   public SwerveSubsystem() { 
     //instantiates new pigeon gyro, wipes it, and zeros it
@@ -116,10 +125,13 @@ public class SwerveSubsystem extends SubsystemBase {
     }
     driveFromChassisSpeeds(desiredSpeeds, true);
   }
- 
+
   public void driveFromChassisSpeeds(ChassisSpeeds driveSpeeds, boolean isOpenLoop){
     SwerveModuleState[] desiredStates = SwerveConstants.swerveKinematics.toSwerveModuleStates(driveSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.maxSpeed);
+
+    // Store desired states for simulation access
+    lastDesiredStates = desiredStates;
 
     desiredSwerveDataPublisher.set(desiredStates);
 
@@ -203,8 +215,6 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-
-
   @Override
   public void periodic() {
         odometry.update(getYaw(), getPositions());
@@ -225,4 +235,37 @@ public class SwerveSubsystem extends SubsystemBase {
   swerveDataPublisher.set(getStates());
 }
 
+  // ============================================================================
+  // Simulation Support Methods
+  // These methods are only used by SimulationManager.
+  // They expose internal objects needed for simulating robot motion.
+  // ============================================================================
+
+  /**
+   * Gets the last desired module states. Used by simulation to track robot motion.
+   * @return Array of desired swerve module states
+   */
+  public SwerveModuleState[] getDesiredStates() {
+    return lastDesiredStates;
+  }
+
+  public Field2d getField() {
+    return field;
+  }
+
+  public Pigeon2 getPigeon() {
+    return pigeon;
+  }
+
+  public SwerveModule[] getModules() {
+    return mSwerveMods;
+  }
+
+  public SwerveDrivePoseEstimator getOdometry() {
+    return odometry;
+  }
+
+  public SwerveDriveKinematics getKinematics() {
+    return Constants.SwerveConstants.swerveKinematics;
+  }
 }
