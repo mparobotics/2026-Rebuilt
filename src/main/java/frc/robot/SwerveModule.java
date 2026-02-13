@@ -476,4 +476,34 @@ public class SwerveModule {
         // Reset encoder position to zero (sets starting position for odometry)
         driveEncoder.setPosition(0.0);
     }
+
+    // ============================================================================
+    // Simulation Support Methods
+    // These methods are only used by SimulationManager.
+    // They expose internal objects needed for simulating robot motion.
+    // ============================================================================
+
+    /**
+     * Gets the CANcoder for simulation access.
+     * @return The CANcoder instance
+     */
+    public CANcoder getCanCoderDevice() {
+        return angleEncoder;
+    }
+
+    /**
+     * Gets the drive encoder for simulation access.
+     * @return The drive encoder (RelativeEncoder from SparkFlex)
+     */
+    public RelativeEncoder getDriveEncoder() {
+        return driveEncoder;
+    }
+
+    /**
+     * Gets the angle encoder for simulation access.
+     * @return The angle encoder (RelativeEncoder from SparkMax)
+     */
+    public RelativeEncoder getAngleEncoder() {
+        return integratedAngleEncoder;
+    }
 }
