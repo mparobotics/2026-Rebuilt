@@ -6,9 +6,12 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
 
+//Program entry point that launches the WPILib robot framework
 public final class Main {
+  //Prevents instantiation of this utility class
   private Main() {}
 
+  // Starts the robot by creating a {@link Robot} instance.
   public static void main(String... args) {
     RobotBase.startRobot(Robot::new);
   }
