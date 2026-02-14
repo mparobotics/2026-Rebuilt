@@ -126,7 +126,7 @@ public class SwerveSubsystem extends SubsystemBase {
     desiredSwerveDataPublisher.set(desiredStates);
 
     for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(desiredStates[mod.moduleNumber], false);
+      mod.setDesiredState(desiredStates[mod.moduleNumber], isOpenLoop); //NEED CONFIRM
     }
   }
 
@@ -184,6 +184,12 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void resyncModuleEncoders(){
+    if(!DriverStation.isDisabled()){
+      DriverStation.reportWarning
+        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",  
+        false); //NEED CONFIRM
+      return;
+    }
     for (SwerveModule mod : mSwerveMods){
       mod.resyncToAbsolute();
     }

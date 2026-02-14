@@ -26,30 +26,34 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 // Swerve Constants
   public static final class SwerveConstants{
     public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
-    public static final int PIGEON_ID = 23; //CAN ID for Pigeon gyro sensor
+    public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
     public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
     /* Drivetrain Constants */
-    public static final double halfTrackWidth = Units.inchesToMeters(28/2.0);//to find
-    public static final double halfWheelBase = Units.inchesToMeters(28/2.0);//to find
+    public static final double halfTrackWidth = Units.inchesToMeters(27/2.0);//to find
+    public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
     public static final double wheelDiameter = Units.inchesToMeters(4.0);
     public static final double wheelCircumference = wheelDiameter * Math.PI;
-    public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+    //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
+    //public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+    public static final double driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
+
 
     public static final double openLoopRamp = 0.25;
     public static final double closedLoopRamp = 0.0;
 
-    public static final double driveGearRatio = (8.14 / 1.0); // 6.75:1 L2 Mk4 Modules
+    public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1 L2 Mk4 Modules
     //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
     public static final double angleGearRatio = (12.8 / 1.0); // 12.8:1 MK4 SDS Modules
     //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
     public static final SwerveDriveKinematics swerveKinematics =
     new SwerveDriveKinematics(
-        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
-        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
-        new Translation2d(halfTrackWidth, halfWheelBase), // Front Left
-        new Translation2d(-halfTrackWidth, halfWheelBase)); // Back Left
+        //WPILib coordinate system: +X = forward, +Y = left
+        new Translation2d(halfTrackWidth, halfWheelBase), //Front left
+        new Translation2d(halfTrackWidth, -halfWheelBase), //Front right
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back right
+        new Translation2d(-halfTrackWidth, halfWheelBase)); //Back Left
     //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
     //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
@@ -100,9 +104,9 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean angleInvert = true;
 
     //Location of modules
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
     public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
     public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
     /* Module Specific Constants */
@@ -111,10 +115,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 52, 19, 159.34, BACK_RIGHT), //Mod 0 Back right
-      new ModuleData(17, 53, 22, 233.71, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(15, 16, 21, 312.63, FRONT_LEFT), //Mod 2 Front left
-      new ModuleData(13, 12, 20, 298.75, BACK_LEFT) //Mod 3 Back left
+      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT), //Mod 0 Front left
+      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT), //Mod 1 Front right
+      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT), //Mod 2 Back right
+      new ModuleData(15, 14, 16, 8.52, BACK_LEFT) //Mod 3 Back left
     };
     
   }

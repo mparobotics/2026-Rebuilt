@@ -49,6 +49,14 @@ public class RobotContainer {
 
     // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
     driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+
+    //Back button (view) = resync integrated angle encoders to CANcoders (DISABLED ONLY)
+    driveController.button(Button.kBack.value).onTrue(new InstantCommand(()->m_drive.resyncModuleEncoders(), m_drive));
+    //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
+    driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
+    
+
+
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position
