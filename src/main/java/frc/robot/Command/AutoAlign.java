@@ -10,6 +10,8 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
 
+/* Drives the robot in an orbit around the hub while continuously facing the hub center */
+
 public class AutoAlign extends Command {
 
     private SwerveSubsystem m_SwerveSubsystem;
@@ -18,7 +20,7 @@ public class AutoAlign extends Command {
 
 
     //Orbit tuning constants (NEED CHANGE - kDesiredOrbitRadiusMeters, kTangentialSpeedMetersPerSecond)
-    private static final double kDesiredOrbitRadiusMeters = 3.5; //How far from the hub we want the robot to be
+    private static final double kDesiredOrbitRadiusMeters = 2.22; //How far from the hub we want the robot to be
     private static final double kTangentialSpeedMetersPerSecond = 1.25; // Constant speed for sliding around the hub
     private static final double kMaxRadialSpeedMetersPerSecond = 1.0; // Max speed for correcting radius errors
     private static final double kRadialKp = 1.6; //P-gain for radial distance correction
@@ -59,7 +61,7 @@ public class AutoAlign extends Command {
         Translation2d HubLocation = new Translation2d(4.61,4.03); //Hub location
         HubLocation = FieldConstants.flipForAlliance(HubLocation); //Mirror the hub point when we are Red
 
-        Translation2d robotToHub = HubLocation.minus(FieldPosition.getTranslation()); //Vector pointing at hub ???
+        Translation2d robotToHub = HubLocation.minus(FieldPosition.getTranslation()); //Vector from robot to hub.
         double radialDistance = robotToHub.getNorm(); 
         /*translation2d that points from the robot to the hub 
          * getNorm() returns the vector's magnitude (length)
@@ -106,7 +108,7 @@ public class AutoAlign extends Command {
 
 
         double desiredHeadingRadians = radialDirection.getAngle().getRadians();
-        //Face stright at the hub while moving
+        //Face straight at the hub while moving
         double headingFeedforward = 0.0;
         if (radialDistance > 1e-3){
             headingFeedforward = (radialDirection.getY()*fieldRelativeVelocity.getX() 
