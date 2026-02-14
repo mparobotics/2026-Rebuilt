@@ -130,7 +130,6 @@ public class RobotContainer {
     );
   }
 
-
   /**
    * Determines if the driver has requested speed reduction for precise positioning
    * or delicate tasks.
@@ -162,5 +161,12 @@ public class RobotContainer {
     return Commands.print("No autonomous command configured");
   }
 
+  /**
+   * Gets the swerve subsystem. Exposed for simulation support.
+   * @return The swerve subsystem
+   */
+  public SwerveSubsystem getSwerveSubsystem() {
+    return m_drive;
+  }
 
 }
