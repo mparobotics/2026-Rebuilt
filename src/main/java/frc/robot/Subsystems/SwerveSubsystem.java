@@ -195,6 +195,9 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
+    public void saveModuleOffsets(){
+    saveModuleOffsets(new Rotation2d());
+  }
   public void saveModuleOffsets(Rotation2d desiredAngle){
     if(!DriverStation.isDisabled()){
       DriverStation.reportWarning(
