@@ -34,6 +34,8 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
 import frc.robot.SwerveModule;
 
+
+// Manges swerve drivetrain hardware, odometry, and vision-assisted pose up dates.
 public class SwerveSubsystem extends SubsystemBase {
   private final Pigeon2 pigeon;
 
@@ -215,7 +217,7 @@ public class SwerveSubsystem extends SubsystemBase {
     desiredSwerveDataPublisher.set(desiredStates);
 
     for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(desiredStates[mod.moduleNumber], false);
+      mod.setDesiredState(desiredStates[mod.moduleNumber], isOpenLoop); //NEED CONFIRM
     }
   }
 
@@ -273,6 +275,12 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void resyncModuleEncoders(){
+    if(!DriverStation.isDisabled()){
+      DriverStation.reportWarning
+        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",  
+        false); //NEED CONFIRM
+      return;
+    }
     for (SwerveModule mod : mSwerveMods){
       mod.resyncToAbsolute();
     }
@@ -281,6 +289,19 @@ public class SwerveSubsystem extends SubsystemBase {
   public void saveModuleOffsets(){
     saveModuleOffsets(new Rotation2d());
   }
+
+  public void saveModuleOffsets(Rotation2d desiredAngle){
+    if(!DriverStation.isDisabled()){
+      DriverStation.reportWarning(
+          "Attempted to save swerve module offsets while robot is enabled. Disable before calibrating.",
+          false);
+      return;
+    }
+    for (SwerveModule mod : mSwerveMods){
+      mod.saveCanCoderOffset(desiredAngle);
+    }
+  }
+
 
   public void saveModuleOffsets(Rotation2d desiredAngle){
     if(!DriverStation.isDisabled()){
@@ -304,12 +325,18 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
 
     for (SwerveModule mod : mSwerveMods) {
+
+      double canCoderDegrees = mod.getCanCoder().getDegrees();
+
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Integrated", mod.getState().angle.getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+      SmartDashboard.putNumber(
+          "Mod " + mod.moduleNumber + " New Cancoder Offset", 
+        canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
   }
   swerveDataPublisher.set(getStates());
 }

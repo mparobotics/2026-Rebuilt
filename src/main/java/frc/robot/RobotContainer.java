@@ -61,32 +61,16 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+    // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
+    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
 
-
-    // SHOOTER CONTROLLER
-    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
-        .whileTrue(Commands.startEnd(
-            () -> m_shooter.runShooter(true),
-            () -> m_shooter.runShooter(false),
-            m_shooter));
-
-    m_shooter.setDefaultCommand(
-        Commands.run(
-            () -> {
-              double feederAxis = helmsController.getRawAxis(Axis.kRightY.value);
-              double feederSpeed = 0.0;
-              if (Math.abs(feederAxis) > 0.1) {
-                feederSpeed = -Math.signum(feederAxis) * ShooterConstants.FEEDER_SPEED;
-              }
-              m_shooter.runFeederSpeed(feederSpeed);
-            },
-            m_shooter));
-
-    helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
-    helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
-
+    //Back button (view) = resync integrated angle encoders to CANcoders (DISABLED ONLY)
+    driveController.button(Button.kBack.value).onTrue(new InstantCommand(()->m_drive.resyncModuleEncoders(), m_drive));
+    //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
+    driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
     
+
+
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position
