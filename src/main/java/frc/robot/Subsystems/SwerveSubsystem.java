@@ -3,14 +3,18 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.Subsystems;
-
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
-
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -20,9 +24,11 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.LimelightHelpers;
 import frc.robot.Constants;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
@@ -78,9 +84,94 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+
+    RobotConfig autoConfig;
+    try {
+     autoConfig = RobotConfig.fromGUISettings();
+    } 
+    catch (Exception e) {
+     e.printStackTrace();
+     autoConfig = null;
+    }
+
+    AutoBuilder.configure(
+      this::getPose, 
+      this::resetOdometry, 
+      this::getChassisSpeeds, 
+      (speeds, feedforwards) -> driveFromChassisSpeeds(speeds, false), 
+      new PPHolonomicDriveController(
+        new PIDConstants(SwerveConstants.driveKP, SwerveConstants.driveKI, SwerveConstants.driveKD),
+        new PIDConstants(SwerveConstants.angleKP, SwerveConstants.angleKI, SwerveConstants.angleKD)
+      ), 
+      autoConfig, 
+      () -> {
+        return FieldConstants.isRedAlliance();
+      }, 
+      this
+      );
   }
   
+  
+    public Command autoDrive(String filename){
+    try{
+      PathPlannerPath path = PathPlannerPath.fromPathFile(filename);
+      return AutoBuilder.followPath(path);
+    }
+    catch (Exception e) { //exception e: see what the error was
+      DriverStation.reportError("Pathplanner Error: "+ e.getMessage(), e.getStackTrace());
+      return null;
+    }
+  }
 
+  /**
+   * Creates a command that resets the robot's odometry to a specified starting position and orientation.
+   *
+   * <p>This method is used at the beginning of autonomous routines to tell the robot where it is
+   * physically located on the field. It does NOT move the robot - it only updates the software's
+   * position estimate (odometry).
+   *
+   * <p><b>IMPORTANT:</b> The robot must be physically placed at the specified position before
+   * this command is executed. If the physical position doesn't match the coordinates passed to
+   * this method, autonomous paths will be incorrect and the robot may drive to wrong locations.
+   *
+   * <p>The method automatically handles alliance-aware coordinate flipping. If the robot is on the
+   * red alliance, the coordinates and rotation are automatically mirrored to account for field
+   * symmetry.
+   *
+   * <p>This command should typically be the first command in an autonomous sequence, before any
+   * path-following commands.
+   *
+   * @param x The X coordinate of the starting position in meters (field coordinates)
+   * @param y The Y coordinate of the starting position in meters (field coordinates)
+   * @param direction The starting heading in degrees (0° = east/right, 90° = north/up, 180° = west/left, 270° = south/down)
+   * @return A command that resets odometry to the specified pose when executed
+   *
+   * <p><b>Example usage:</b>
+   * <pre>{@code
+   * // Robot is physically placed at (7.13, 7.276) facing 180° (south)
+   * // Then in autonomous command sequence:
+   * addCommands(
+   *     drive.startAutoAt(7.13, 7.276, 180),  // Reset odometry to match physical position
+   *     drive.autoDrive("MyPath")             // Follow path from this starting position
+   * );
+   * }</pre>
+   */
+  public Command startAutoAt(double x, double y, double direction) {
+    return runOnce(() -> {
+      // Create starting position and rotation
+      Translation2d startPos = new Translation2d(x, y);
+      Rotation2d startRotation = Rotation2d.fromDegrees(direction);
+      
+      // Apply alliance flip if on red side (field symmetry)
+      Pose2d startPose = new Pose2d(
+          FieldConstants.flipForAlliance(startPos),
+          FieldConstants.flipForAlliance(startRotation)
+      );
+      
+      // Reset odometry to the starting position
+      resetOdometry(startPose);
+    });
+  }
 
   private void updateOdometryWithVision (String limelightName){
     boolean doRejectUpdate = false;
@@ -212,6 +303,17 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
 
+  public void saveModuleOffsets(Rotation2d desiredAngle){
+    if(!DriverStation.isDisabled()){
+      DriverStation.reportWarning(
+          "Attempted to save swerve module offsets while robot is enabled. Disable before calibrating.",
+          false);
+      return;
+    }
+    for (SwerveModule mod : mSwerveMods){
+      mod.saveCanCoderOffset(desiredAngle);
+    }
+  }
 
   @Override
   public void periodic() {
