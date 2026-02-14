@@ -302,19 +302,6 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-
-  public void saveModuleOffsets(Rotation2d desiredAngle){
-    if(!DriverStation.isDisabled()){
-      DriverStation.reportWarning(
-          "Attempted to save swerve module offsets while robot is enabled. Disable before calibrating.",
-          false);
-      return;
-    }
-    for (SwerveModule mod : mSwerveMods){
-      mod.saveCanCoderOffset(desiredAngle);
-    }
-  }
-
   @Override
   public void periodic() {
         odometry.update(getYaw(), getPositions());
