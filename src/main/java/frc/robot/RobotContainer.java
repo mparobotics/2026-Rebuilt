@@ -8,13 +8,17 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
+import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -27,6 +31,9 @@ public class RobotContainer {
  
   // Xbox controller configuration for drive controls
   private final CommandXboxController driveController = new CommandXboxController(0); 
+  // Xbox controller configuration for helms controls
+  private final CommandXboxController helmsController = new CommandXboxController(1);
+
   // Left Stick Y = Forward/backward motion
   private final int translationAxis = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
@@ -38,7 +45,11 @@ public class RobotContainer {
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
-  //private final ShooterSubsystem m_shooter = new ShooterSubsystem();
+
+  // IntakeSubsystem for intake
+  private final IntakeSubsystem m_intake = new IntakeSubsystem();
+
+  private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   /**
    * Constructs the RobotContainer. Creates subsystems (which configure themselves)
@@ -54,9 +65,39 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-   /**  driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive)); */
+    // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
+    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+
+    //Back button (view) = resync integrated angle encoders to CANcoders (DISABLED ONLY)
+    driveController.button(Button.kBack.value).onTrue(new InstantCommand(()->m_drive.resyncModuleEncoders(), m_drive));
+    //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
+    driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
+   
 
 
+    // SHOOTER CONTROLLER
+    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
+        .whileTrue(Commands.startEnd(
+            () -> m_shooter.runShooter(true),
+            () -> m_shooter.runShooter(false),
+            m_shooter));
+
+    m_shooter.setDefaultCommand(
+        Commands.run(
+            () -> {
+              double feederAxis = helmsController.getRawAxis(Axis.kRightY.value);
+              double feederSpeed = 0.0;
+              if (Math.abs(feederAxis) > 0.1) {
+                feederSpeed = -Math.signum(feederAxis) * ShooterConstants.FEEDER_SPEED;
+              }
+              m_shooter.runFeederSpeed(feederSpeed);
+            },
+            m_shooter));
+
+    helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
+    helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
+
+    
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position
@@ -66,22 +107,40 @@ public class RobotContainer {
     // It automatically pauses when commands like AutoAlign take control, then resumes
     // when they finish.
     m_drive.setDefaultCommand(
-        new TeleopSwerve(
-            // SwerveSubsystem - The drive subsystem to control
-            m_drive,
-            // translationSupplier - Forward/backward speed
-            () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
-            // strafeSupplier - Side-to-side speed
-            () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
-            // rotationSupplier - Rotation speed
-            () -> -driveController.getRawAxis(rotationAxis) * 0.5,
-            // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
-            () -> robotCentric.getAsBoolean(),
-            // isAutoAlignSupplier - Auto-align active flag
-            () -> driveController.getRightTriggerAxis() > 0.1
-        ));
+      new TeleopSwerve(
+        // SwerveSubsystem - The drive subsystem to control
+        m_drive,
+        // translationSupplier - Forward/backward speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
+        // strafeSupplier - Side-to-side speed
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
+        // rotationSupplier - Rotation speed
+        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
+        () -> robotCentric.getAsBoolean(),
+        // isAutoAlignSupplier - Auto-align active flag
+        () -> driveController.getRightTriggerAxis() > 0.1
+      ));
 
+    //INTAKE
+    // raises the intake using the A button on the helms controller
+    m_intake.setDefaultCommand(
+        new RunCommand(
+            () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
+            m_intake));
+    
+    
+    //lowers the intake using the A button on the helms controller
+    helmsController.button(Button.kA.value).onTrue(
+       new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
+    );
+
+    // lowers the intake using the X button on the helms controller
+    helmsController.button(Button.kX.value).onTrue(
+        new InstantCommand(() -> m_intake.lowerIntake(), m_intake)
+    );
   }
+
 
   /**
    * Determines if the driver has requested speed reduction for precise positioning

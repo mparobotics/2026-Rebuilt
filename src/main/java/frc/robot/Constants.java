@@ -16,7 +16,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
-/** Add your docs here. */
+/** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
 
 
@@ -26,30 +26,34 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 // Swerve Constants
   public static final class SwerveConstants{
     public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
-    public static final int PIGEON_ID = 23; //CAN ID for Pigeon gyro sensor
+    public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
     public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
     /* Drivetrain Constants */
-    public static final double halfTrackWidth = Units.inchesToMeters(28/2.0);//to find
-    public static final double halfWheelBase = Units.inchesToMeters(28/2.0);//to find
+    public static final double halfTrackWidth = Units.inchesToMeters(27/2.0);//to find
+    public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
     public static final double wheelDiameter = Units.inchesToMeters(4.0);
     public static final double wheelCircumference = wheelDiameter * Math.PI;
-    public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+    //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
+    //public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+    public static final double driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
+
 
     public static final double openLoopRamp = 0.25;
     public static final double closedLoopRamp = 0.0;
 
-    public static final double driveGearRatio = (8.14 / 1.0); // 6.75:1 L2 Mk4 Modules
+    public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1 L2 Mk4 Modules
     //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
-    public static final double angleGearRatio = (12.8 / 1.0); // 12.8:1 MK4 SDS Modules
+    public static final double angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
     //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
     public static final SwerveDriveKinematics swerveKinematics =
     new SwerveDriveKinematics(
-        new Translation2d(-halfTrackWidth, halfWheelBase), //Back Right
-        new Translation2d(halfTrackWidth,halfWheelBase), // Front Right
-        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Left
-        new Translation2d(-halfTrackWidth,-halfWheelBase)); // Back Left
+        //WPILib coordinate system: +X = forward, +Y = left
+        new Translation2d(halfTrackWidth, halfWheelBase), //Front left
+        new Translation2d(halfTrackWidth, -halfWheelBase), //Front right
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back right
+        new Translation2d(-halfTrackWidth, halfWheelBase)); //Back Left
     //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
     //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
@@ -67,7 +71,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     /* Drive Motor PID Values */
     public static final double driveKP = 0.1; //to tune
     public static final double driveKI = 0.0; //to tune
-    public static final double driveKD = 0.0; //to tune
+    public static final double driveKD = 0.0; //to tune 
   
     /* Drive Motor Characterization Values */
     //values to calculate the drive feedforward (KFF)
@@ -100,10 +104,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean angleInvert = true;
 
     //Location of modules
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
     /* Module Specific Constants */
     public record ModuleData(
@@ -111,10 +115,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 52, 19, 340.32, BACK_RIGHT), //Mod 0 Back right
-      new ModuleData(17, 53, 22, 51.59, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(15, 16, 21, 130.16, FRONT_LEFT), //Mod 2 Front left
-      new ModuleData(13, 12, 20, 118.47, BACK_LEFT) //Mod 3 Back left
+      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT), //Mod 0 Front left
+      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT), //Mod 1 Front right
+      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT), //Mod 2 Back right
+      new ModuleData(15, 14, 16, 8.52, BACK_LEFT) //Mod 3 Back left
     };
     
   }
@@ -154,11 +158,33 @@ public class FieldConstants {
   }
   /* Shooter Constants */
   public class ShooterConstants {
-      public static final int SHOOTER_ID = 62; //Placeholder ID
-      public static final int FEEDER_ID = 60; //Feeder ID
+      public static final int SHOOTER_ID = 60; //Placeholder ID
+      public static final int FEEDER_ID = 61; //Feeder ID
+      public static final int HOOD_ID = 62; //Hood ID (NEED CHANGE)
 
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
+
+      public static final double HOOD_ANGLE_LOW = 0.0;
+      public static final double HOOD_ANGLE_HIGH = 0.5;
+      public static final double HOOD_KP = 1.2;
+      public static final double HOOD_MAX_OUTPUT = 0.4;
+      public static final double HOOD_TOLERANCE = 0.02;
+  }
+  public class IntakeConstants {
+    public static int INTAKE_ID = 60; // placeholder
+    public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
+
+    public static int INTAKE_ARM_ID = 62; //placeholder
+    public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
+    public static double INTAKE_ARM_LOWERED_POSITION = 0;
+    public static double INTAKE_ARM_MINIMUM = 0; // placeholders
+    public static double INTAKE_ARM_MAXIMUM = 90;
+    public static int GEAR_RATIO = 3;
+
+    public static double INTAKE_ARM_kP = 0.01;
+    public static double INTAKE_ARM_kI = 0;
+    public static double INTAKE_ARM_kD = 0;
   }
   public class CANdleConstants {
     public static final int CANDLE_ID = 18; //Placeholder ID
