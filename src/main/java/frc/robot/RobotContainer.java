@@ -144,6 +144,16 @@ public class RobotContainer {
   }
 
   /**
+   * Gets the swerve subsystem instance.
+   * Used for test code that needs access to the swerve subsystem.
+   *
+   * @return The SwerveSubsystem instance
+   */
+  public SwerveSubsystem getSwerveSubsystem() {
+    return m_drive;
+  }
+
+  /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
