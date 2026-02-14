@@ -123,7 +123,8 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
   public class AutoConstants {
     public enum AutoMode{
-        EightLemonAuto //go to band and shoot 8 lemon
+        EightLemonAuto, //go to band and shoot 8 lemon
+        LeaveAuto //leaves
     }
     
     //create elastic chooser
