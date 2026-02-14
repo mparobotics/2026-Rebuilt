@@ -4,115 +4,188 @@
 
 
 package frc.robot.Subsystems;
+
+
+import com.ctre.phoenix6.configs.CANdleConfiguration;
+import com.ctre.phoenix6.controls.ColorFlowAnimation;
+import com.ctre.phoenix6.controls.EmptyAnimation;
+import com.ctre.phoenix6.controls.SolidColor;
+import com.ctre.phoenix6.hardware.CANdle;
+import com.ctre.phoenix6.signals.RGBWColor;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CANdleConstants;
-import com.ctre.phoenix.led.CANdle;
-import com.ctre.phoenix.led.CANdleConfiguration;
-import com.ctre.phoenix.led.CANdle.LEDStripType;
-import com.ctre.phoenix.led.CANdle.VBatOutputMode;
-
-
-
-//I imported stuff. Enjoy looking at the 4 unused imports.
-
-
 
 
 public class CandleSubsystem extends SubsystemBase {
- private final int oledAmount = 0; //Placeholder (LED AMOUNT)
- private final CANdle candle = new CANdle(CANdleConstants.CANDLE_ID, "rio");
- private int candleChannel = 0; //Placeholder (PORT)
- private boolean clearAllAnims = false; //Sets up anim toggle
- private boolean setAnim = false; //Allows for simple transition between animations
-
-
- public enum AnimTypes {
-   Setall,
-   Empty
- }
- private AnimTypes currentAnim; //Sets to null by default
+ private final CANdle candle = new CANdle(CANdleConstants.CANDLE_ID);
+ // LED indices: 0-7 control onboard LEDs, 8-399 control attached LED strip
+ // We have 60 LEDs on our strip (indices 8-67)
+ private static final int LED_START_INDEX = 0; //No need to do anything because I configure it all when seting anim
+ private static final int LED_END_INDEX = 60;
 
 
  public CandleSubsystem() {
-     changeAnimation(AnimTypes.Empty);
-     CANdleConfiguration configAll = new CANdleConfiguration(); //Builds a configuration preset for the lights
-     configAll.statusLedOffWhenActive = true; //Candle hub has an LED, we hate when it lights up to "tell us usefull information"
-     configAll.disableWhenLOS = false; //Makes LEDs NOT turn off when a loss of signal occurs (Needed so on mini radio issue the leds dont start spazing out)
-     configAll.stripType = LEDStripType.GRB; //GRB because Dle, do you get the humor. Okay I'll leave...
-     configAll.brightnessScalar = 0.25; //So we dont burn out the bulbs
-     configAll.vBatOutputMode = VBatOutputMode.Modulated; //Sets up the CANdle for the inputs we want to insert.
-     candle.configAllSettings(configAll); //Imlements our awesome settings
+   CANdleConfiguration configAll = new CANdleConfiguration(); //Builds a configuration preset for the lights
+   // Apply default configuration using Phoenix 6 API
+   configAll.LED.BrightnessScalar = 0.25;
+  
+   candle.getConfigurator().apply(configAll); //Implements our awesome settings using Phoenix 6 API
+
+
+   // Initialize LEDs to off
+   LightConfig(AnimationType.Off, LED_START_INDEX, LED_END_INDEX, Colors.Black);
  }
 
- public void setLedOn(boolean enabled) {
-   changeAnimation(enabled ? AnimTypes.Setall : AnimTypes.Empty);
+
+ private RGBWColor LedColor;
+
+
+ public enum Colors {
+   None,
+   Red,
+   Orange,
+   Yellow,
+   Green,
+   Blue,
+   Purple,
+   Black,
+   Custom
  }
 
- public void incrementAnimations() {
-   switch(currentAnim) {
-     case Empty:
-       changeAnimation(AnimTypes.Setall);
-       break;
-     case Setall:
-       changeAnimation(AnimTypes.Empty);
-       break;
+
+ public enum AnimationType {
+   None,
+   ColorFlow,
+   Fire,
+   Larson,
+   Rainbow,
+   RgbFade,
+   SingleFade,
+   Twinke,
+   TwinkleOff,
+   Solid, //Snake
+   Off
+ }
+
+
+ public enum LedStates {
+   None,
+   OutOfRange,
+   InRange,
+   Aligned,
+   ShooterUpToSpeed,
+   HopperFull,
+   ReadyToShoot,
+   InRangeAligned,
+   InRangeShooterSpeed,
+   ShooterSpeedAligned
+ }
+
+
+ //Some Color Presets
+ public void ChangeColor(Colors Color, int R, int G, int B, int W) {
+   switch(Color) {
      default:
-       changeAnimation(AnimTypes.Empty);
+     case Red:
+       LedColor = RGBWColor.fromHex("#ff0000ff").orElseThrow();
+       break;
+     case Orange:
+       LedColor = RGBWColor.fromHex("#ff9d00ff").orElseThrow();
+       break;
+     case Yellow:
+       LedColor = RGBWColor.fromHex("#fffb00ff").orElseThrow();
+       break;
+     case Green:
+       LedColor = RGBWColor.fromHex("#26ff00ff").orElseThrow();
+       break;
+     case Blue:
+       LedColor = RGBWColor.fromHex("#0000ffff").orElseThrow();
+       break;
+     case Purple:
+       LedColor = RGBWColor.fromHex("#b700ffff").orElseThrow();
+       break;
+     case Black:
+       LedColor = RGBWColor.fromHex("#000000ff").orElseThrow();
+       break;
+     case Custom:
+       LedColor = new RGBWColor(R, G, B, W);
        break;
    }
  }
 
 
- public void changeAnimation(AnimTypes toChange) {
-   currentAnim = toChange; //Changes animations to a type
-
-
-   switch(toChange)
-   {
-     case Setall:
+ public void ChangeState(LedStates State) {
+   ClearAnimations();
+   LightConfig(AnimationType.Off, LED_START_INDEX, LED_END_INDEX, Colors.Black);
+   switch(State) {
+     default:
+     case None:
+     break;
+     case OutOfRange:
+       LightConfig(AnimationType.Solid, LED_START_INDEX, LED_END_INDEX, Colors.Red);
        break;
-     case Empty:
+     case InRange:
+       LightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
        break;
+     case Aligned:
+       LightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
+       break;
+     case ShooterUpToSpeed:
+       LightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
+       break;
+     case ReadyToShoot:
+       LightConfig(AnimationType.Solid, LED_START_INDEX, LED_END_INDEX, Colors.Green);
+       break;
+     case HopperFull:
+       LightConfig(AnimationType.ColorFlow, LED_START_INDEX, LED_END_INDEX, Colors.Blue);
+       break;
+     case InRangeAligned:
+       LightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
+       LightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
+       break;
+     case InRangeShooterSpeed:
+       LightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
+       LightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
+       break;
+     case ShooterSpeedAligned:
+       LightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
+       LightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
+       break;
+   }
+ }
+ public void ClearAnimations() {
+   for (int i = 0; i < 8; ++i) {
+     candle.setControl(new EmptyAnimation(i));
    }
  }
 
 
 
 
- public void clearAllAnimations() {clearAllAnims = true;}
-
-
- @Override
- public void periodic() {
-   if (currentAnim == AnimTypes.Empty) {
-     candle.setLEDs(0, 0, 0);
-   } else if (currentAnim == AnimTypes.Setall) {
-     candle.setLEDs(0, 0, 255); //Red, fight me on it.
-   }
-   if(clearAllAnims) {
-
-
-       clearAllAnims = false;
-       /*Hey guys, welcome back to another video, today I will show you how to toggle something in java.
-        Make sure to like and subscribe, and without further ado, lets get straight into the video! 
-        Welcome into my vs code, so the first thing im going to do is create a new file, and name it whatever I want.
-        In this case im going to name it "Toggle trigger". Then lets click create. 
-        Now what im going to do is make a function. Just.. like that! 
-        And now what im going to do is make a boolean outside of the function. 
-        Lets call it "Toggled". And lets set it to false. Now what im going to do is add it into my function,
-        and make an if then statement saying "If Toggle is equal to false, set toggle to true." 
-        lets add in a print statement printing out the value of toggle at the end of the function. 
-        Now look at that! When I run my code, it toggles! But thats not all, we can also make it toggle both ways! 
-        First thing im going to do is replace the if then statement, and just replace it with a simple not statement, 
-        the toggle now goes both ways! If you found this tutorial helpfull, make sure to leave a like and subscribe, 
-        and I'll see you all in the next one, bye! (Outro plays)
-      */
-
-       for(int i = 0; i < 10; i++) {
-        
-         candle.clearAnimation(i); //Clears all animations on seperate leds. Humor is in the past.
-       }
+  public void LightConfig(AnimationType type, int kSlot1StartIdx, int kSlot1EndIdx, Colors NewColor) {
+     ChangeColor(NewColor, 0,0,0,0);
+    
+     switch (type) {
+       default:
+       case ColorFlow:
+         candle.setControl (
+           new ColorFlowAnimation(kSlot1StartIdx + 7, kSlot1EndIdx + 7).withSlot(0).withColor(LedColor)
+         );
+         break;
+       case Solid: //Snake
+         candle.setControl(
+           new SolidColor(kSlot1StartIdx + 7, kSlot1EndIdx + 7).withColor(LedColor)
+         );
+         break;
+       case Off:
+         ChangeColor(Colors.Black, 0,0,0,0);
+         candle.setControl(
+           new SolidColor(kSlot1StartIdx + 7, kSlot1EndIdx + 7).withColor(LedColor)
+         );
+         break;
      }
+  } 
  }
-}
+
+
 
