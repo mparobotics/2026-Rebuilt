@@ -156,7 +156,7 @@ public class FieldConstants {
   public class ShooterConstants {
       public static final int SHOOTER_ID = 60; //Placeholder ID
       public static final int FEEDER_ID = 61; //Feeder ID
-      public static final int HOOD_ID = 63; //Hood ID (changed from 62 to avoid conflict with INTAKE_ARM_ID)
+      public static final int HOOD_ID = 62; //Hood ID
 
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 
