@@ -4,6 +4,8 @@
 
 package frc.robot.test;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -180,7 +182,8 @@ public class SwerveAngleDriftTestCommand extends Command {
         stateStartTime = Timer.getFPGATimestamp();  // Record start time for timeout detection
         
         // Begin first cycle: command module to rotate to the test angle
-        testModule.pointInDirection(testAngleDegrees);
+        // Use setDesiredState to match production code behavior (includes optimization logic)
+        testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(testAngleDegrees)), false);
         
         // Log test start
         System.out.println("=== Swerve Angle Drift Test Started ===");
@@ -249,6 +252,40 @@ public class SwerveAngleDriftTestCommand extends Command {
             default:
                 break;
         }
+
+        // Update NetworkTables with real-time encoder and angle information for simulator testing
+        updateNetworkTables();
+    }
+
+    /**
+     * Updates NetworkTables with real-time motor angle and encoder information.
+     * This allows monitoring the test progress in the simulator or on SmartDashboard.
+     */
+    private void updateNetworkTables() {
+        if (testModule == null) {
+            return;
+        }
+
+        // Get current encoder values
+        double currentRelativeAngle = SwerveModuleTestUtils.getRelativeEncoderDegrees(testModule);
+        double currentAbsoluteAngle = SwerveModuleTestUtils.getAbsoluteEncoderDegrees(testModule);
+        double currentDrift = Math.IEEEremainder(currentRelativeAngle - currentAbsoluteAngle, 360.0);
+
+        // Determine target angle based on current state
+        double targetAngle = (currentState == TestState.MOVING_TO_TARGET) ? testAngleDegrees : 0.0;
+        double angleError = Math.IEEEremainder(currentRelativeAngle - targetAngle, 360.0);
+
+        // Get current module state for additional information
+        SwerveModuleState moduleState = testModule.getState();
+
+        // Publish to NetworkTables (accessible via SmartDashboard or NetworkTables API)
+        SmartDashboard.putNumber("DriftTest/CurrentAngle", currentRelativeAngle);
+        SmartDashboard.putNumber("DriftTest/AbsoluteAngle", currentAbsoluteAngle);
+        SmartDashboard.putNumber("DriftTest/TargetAngle", targetAngle);
+        SmartDashboard.putNumber("DriftTest/AngleError", angleError);
+        SmartDashboard.putNumber("DriftTest/CurrentDrift", currentDrift);
+        SmartDashboard.putNumber("DriftTest/ModuleVelocity", moduleState.speedMetersPerSecond);
+        SmartDashboard.putString("DriftTest/State", currentState.toString());
     }
 
     /**
@@ -305,7 +342,8 @@ public class SwerveAngleDriftTestCommand extends Command {
     private void transitionToZero(double currentTime) {
         currentState = TestState.MOVING_TO_ZERO;
         stateStartTime = currentTime;
-        testModule.pointInDirection(0.0);
+        // Use setDesiredState to match production code behavior (includes optimization logic)
+        testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(0.0)), false);
     }
     
     /**
@@ -316,7 +354,8 @@ public class SwerveAngleDriftTestCommand extends Command {
     private void transitionToNextCycle(double currentTime) {
         currentState = TestState.MOVING_TO_TARGET;
         stateStartTime = currentTime;
-        testModule.pointInDirection(testAngleDegrees);
+        // Use setDesiredState to match production code behavior (includes optimization logic)
+        testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(testAngleDegrees)), false);
         SmartDashboard.putNumber("DriftTest/Cycle", currentCycle);
     }
     
