@@ -4,17 +4,22 @@
 
 package frc.robot;
 
-
-
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
@@ -124,14 +129,56 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
   }
 
 
+public static final class AutoConstants {
+  public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
+  SwerveConstants.maxSpeed,
+  1.2,
+  DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
+  SwerveConstants.driveContinuousCurrentLimit,
+  1);
+
+  public static final RobotConfig ROBOT_CONFIG = new RobotConfig (52, 6.8, MODULE_CONFIG,
+  SwerveConstants.FRONT_LEFT, SwerveConstants.FRONT_RIGHT, SwerveConstants.BACK_LEFT, SwerveConstants.BACK_RIGHT);
+
+  public static final PPHolonomicDriveController SWERV_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
+  new PIDConstants(5.0, 0.005, 0.001) );
+
+  public enum AutoMode{
+    EightLemonAuto
+  }
+
+  private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
+  private static SendableChooser<AutoMode> autoModeChooser = new SendableChooser<AutoMode>();
+  private static SendableChooser<AutoMode> eightLemonAutoChooser = new SendableChooser<AutoMode>();
+  static{
+    sideChooser.addOption("RIGHT", true);
+    sideChooser.setDefaultOption("LEFT", false);
+
+    for(AutoMode mode : AutoMode.values()){
+      autoModeChooser.addOption(mode.toString(), mode);
+    }
+
+    autoModeChooser.setDefaultOption(AutoMode.EightLemonAuto.toString(), AutoMode.EightLemonAuto);
+    SmartDashboard.putData("Eight_Lemon_Auto_Chooser", eightLemonAutoChooser);
+    SmartDashboard.putData("Auto Starting Location", sideChooser);
+    SmartDashboard.putData("Auto Mode", autoModeChooser);
+  }
+  
+  public static AutoMode getSelectedAutoMode(){
+    AutoMode selection = autoModeChooser.getSelected();
+    return selection != null ? selection : AutoMode.EightLemonAuto;
+  }
+  public static boolean isRightSideAuto(){
+    return Boolean.TRUE.equals(sideChooser.getSelected());
+  }
+}
+
+
 public class FieldConstants {
       public static final double FIELD_LENGTH = 17.54824934;
       public static final double FIELD_WIDTH = 8.052;
 
-      public static final Translation2d BLUE_REEF_CENTER = new Translation2d(4.48933684,4.02587697);
-
-      public static final Rotation2d RIGHT_CORAL_STATION_ANGLE = Rotation2d.fromDegrees(234.011392);
-      public static final Rotation2d LEFT_CORAL_STATION_ANGLE = Rotation2d.fromDegrees(-234.011392);
+      public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
 
       public static boolean isRedAlliance(){
           return DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
