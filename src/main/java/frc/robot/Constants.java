@@ -205,7 +205,7 @@ public class FieldConstants {
   }
   /* Shooter Constants */
   public class ShooterConstants {
-      public static final int SHOOTER_ID = 60; //Placeholder ID
+      public static final int SHOOTER_ID = 70; //Placeholder ID
       public static final int FEEDER_ID = 61; //Feeder ID
       public static final int HOOD_ID = 62; //Hood ID (NEED CHANGE)
 
