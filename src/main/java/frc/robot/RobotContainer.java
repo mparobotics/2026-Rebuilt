@@ -152,11 +152,13 @@ public class RobotContainer {
   }
 
   /**
-   * Gets the swerve subsystem. Exposed for simulation support.
-   * @return The swerve subsystem
+   * Gets the swerve subsystem instance.
+   * Used for simulation and test code that needs access to the
+   * swerve subsystem.
+   *
+   * @return The SwerveSubsystem instance
    */
   public SwerveSubsystem getSwerveSubsystem() {
     return m_drive;
   }
-
 }

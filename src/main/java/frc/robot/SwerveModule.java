@@ -43,6 +43,9 @@ public class SwerveModule {
     private Rotation2d angleOffset;
     private final String angleOffsetPreferenceKey;
 
+    // Store desired state for simulation access
+    private SwerveModuleState desiredState;
+
     private SparkMax angleMotor;
     private SparkFlex driveMotor;
 
@@ -129,6 +132,9 @@ public class SwerveModule {
 
         // Initialize lastAngle to current module angle for optimization calculations
         lastAngle = getState().angle;
+
+        // Initialize desired state to zero state - used for simulation
+        desiredState = new SwerveModuleState(0, new Rotation2d());
     }
 
     /**
@@ -136,6 +142,21 @@ public class SwerveModule {
      * <p>
      * This is the main method for controlling the swerve module. It optimizes the desired
      * state to minimize rotation distance, then sets both the wheel angle and drive speed.
+     * <p>
+     * <b>IMPORTANT FOR SIMULATION/TESTING:</b> This method stores the optimized state in
+     * the {@code desiredState} field, which is read by {@link frc.robot.sim.SimulationManager}
+     * to simulate robot motion. All control commands (driving, testing, autonomous) must
+     * flow through this method to ensure simulation works correctly.
+     * <p>
+     * <b>Control Flow:</b>
+     * <ul>
+     *   <li>Normal driving: TeleopSwerve → SwerveSubsystem.drive() → this method</li>
+     *   <li>Test commands: TestCommand → this method (directly)</li>
+     *   <li>Autonomous: Auto command → SwerveSubsystem → this method</li>
+     * </ul>
+     * <p>
+     * <b>Note:</b> Simulation automatically works for all the above control flows since
+     * {@link frc.robot.sim.SimulationManager} reads the stored desired state from this method.
      * 
      * @param desiredState The target module state (speed in m/s and wheel angle)
      * @param isOpenLoop If true, uses open loop control for drive motor; if false, uses closed loop velocity control
@@ -143,6 +164,8 @@ public class SwerveModule {
     public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
         // Optimize the desired state to minimize rotation (flip wheel 180° if needed)
         SwerveModuleState optimizedState = optimize(desiredState, getAngle());
+        // Store desired state for simulation access
+        this.desiredState = optimizedState;
         // Set the wheel angle to the optimized direction
         setAngle(optimizedState);
         // Set the drive motor speed (open loop or closed loop based on parameter)
@@ -340,16 +363,19 @@ public class SwerveModule {
      * <p>
      * This method rotates the wheel to the specified angle (in degrees) while keeping
      * the drive motor stopped. Useful for testing, calibration, or positioning the wheel
-     * without moving the robot. Unlike {@link #setDesiredState(SwerveModuleState, boolean)},
-     * this method only controls the angle motor, not the drive motor.
+     * without moving the robot.
      * <p>
-     * <b>Note:</b> This method is currently not called anywhere in the codebase.
+     * This method internally uses {@link #setDesiredState(SwerveModuleState, boolean)}
+     * to ensure simulation and test code can track the commanded state. This maintains
+     * consistency with the simulation architecture where all module commands flow through
+     * {@code setDesiredState()}.
      * 
      * @param degrees The target wheel angle in degrees (0-360)
      */
     public void pointInDirection(double degrees){
-        angleController.setReference(degrees, ControlType.kPosition);
-        lastAngle = Rotation2d.fromDegrees(degrees);
+        // Use setDesiredState to maintain consistency with simulation
+        // Speed = 0.0 (wheel doesn't drive), angle = desired direction, closed loop control
+        setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(degrees)), false);
     }
     
     /**
@@ -505,5 +531,14 @@ public class SwerveModule {
      */
     public RelativeEncoder getAngleEncoder() {
         return integratedAngleEncoder;
+    }
+
+    /**
+     * Gets the desired state of the swerve module (what it's trying to achieve).
+     * Used by simulation to track commanded module states.
+     * @return The desired SwerveModuleState
+     */
+    public SwerveModuleState getDesiredState() {
+        return desiredState;
     }
 }
