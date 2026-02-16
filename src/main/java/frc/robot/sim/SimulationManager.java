@@ -76,20 +76,14 @@ public class SimulationManager {
             dt = 0.02;
         }
 
-        // Step 1: Get velocities from joystick commands (x, y, rotation) via SwerveSubsystem
-        // Joystick provides x (forward/back), y (strafe), and rotation speeds
-        // These are converted to individual module states (speed and angle for each of 4 wheels)
+        // Step 1: Get desired module states (from normal driving or individual module commands)
         SwerveModuleState[] desiredStates = swerveSubsystem.getDesiredStates();
-        ChassisSpeeds desiredChassisSpeeds;
-        if (desiredStates != null && desiredStates.length == 4 && 
-            desiredStates[0] != null && desiredStates[1] != null && 
-            desiredStates[2] != null && desiredStates[3] != null) {
-            // Convert desired module states back to chassis speeds (robot-level motion)
-            desiredChassisSpeeds = swerveSubsystem.getKinematics().toChassisSpeeds(desiredStates);
-        } else {
-            // Fallback: if no desired states available, use zero speeds
-            desiredChassisSpeeds = new ChassisSpeeds();
-        }
+
+        // Convert to chassis speeds for robot pose/gyro updates
+        // In test mode with single module, this will be zero (correct - robot doesn't move)
+        ChassisSpeeds desiredChassisSpeeds = (desiredStates != null && desiredStates.length == 4)
+            ? swerveSubsystem.getKinematics().toChassisSpeeds(desiredStates)
+            : new ChassisSpeeds();
         
         // Step 2: Update robot pose by adding distance traveled (velocity × time) to current position
         // Chassis speeds represent overall robot motion (one body moving as a unit)
@@ -104,32 +98,30 @@ public class SimulationManager {
         pigeonSimState.setRawYaw(simPose.getRotation().getDegrees());
         
         // Step 4: Update simulated module encoders
-        updateModuleEncoders(desiredChassisSpeeds, dt);
+        // Use desired states directly (not chassis speeds) to handle individual module commands
+        updateModuleEncoders(desiredStates, dt);
         
-        // Step 5: Update odometry based on simulated sensors
-        Rotation2d yaw = Rotation2d.fromDegrees(swerveSubsystem.getPigeon().getYaw().getValueAsDouble());
-        SwerveModulePosition[] positions = swerveSubsystem.getPositions();
-        swerveSubsystem.getOdometry().update(yaw, positions);
-        
-        // Step 6: Update Field2d visualization
-        swerveSubsystem.getField().setRobotPose(swerveSubsystem.getOdometry().getEstimatedPosition());
+        // Note: Odometry and Field2d are updated by SwerveSubsystem.periodic(), which runs
+        // automatically for both real robot and simulation. No need to update them here!
+        // The periodic() method reads the sensors we just simulated (gyro, encoders) and
+        // updates odometry and Field2d accordingly.
     }
     
     /**
-     * Updates simulated module encoders based on chassis motion.
-     * For each module, calculates the expected encoder position change based on
-     * the module's contribution to the overall motion.
+     * Updates simulated module encoders based on desired module states.
+     * For each module, updates encoder positions to match the desired states.
+     * This handles both normal driving (all modules coordinated) and test mode (individual module control).
      */
-    private void updateModuleEncoders(ChassisSpeeds chassisSpeeds, double dt) {
-        // Convert chassis speeds to individual module speeds using swerve kinematics
-        // Each of the 4 wheels can have different speeds (e.g., when turning, outside wheels move faster)
-        SwerveModuleState[] desiredStates = swerveSubsystem.getKinematics().toSwerveModuleStates(chassisSpeeds);
-        
+    private void updateModuleEncoders(SwerveModuleState[] desiredStates, double dt) {
         SwerveModule[] modules = swerveSubsystem.getModules();
         for (int i = 0; i < modules.length; i++) {
             SwerveModule module = modules[i];
             SwerveModuleState desiredState = desiredStates[i];
             
+            if (desiredState == null) {
+                continue;
+            }
+
             // Update drive encoder position: distance = velocity × time
             // * The encoder position represents distance traveled along the ground (in meters)
             // Each wheel can have a different speed (e.g., outside wheels move faster when turning)

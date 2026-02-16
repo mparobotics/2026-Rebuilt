@@ -35,19 +35,21 @@ public class SwerveAngleDriftTestCommand extends Command {
     private final int numberOfCycles;
     private final double angleToleranceDegrees;
     private final double maxWaitTimeSeconds;
+    private final double minHoldTimeSeconds;  // Minimum time to hold at each position (for visibility in simulation)
 
     // Test state machine - tracks where we are in the test cycle
     private enum TestState {
         MOVING_TO_TARGET,  // Module is rotating to the test angle
-        AT_TARGET,         // Module has reached test angle (unused, kept for clarity)
+        AT_TARGET,         // Module has reached test angle - holding for minimum time
         MOVING_TO_ZERO,    // Module is rotating back to zero
-        AT_ZERO,           // Module has reached zero (unused, kept for clarity)
+        AT_ZERO,           // Module has reached zero - holding for minimum time
         COMPLETE           // All cycles finished
     }
 
     private TestState currentState = TestState.MOVING_TO_TARGET;
     private int currentCycle = 0;  // Current cycle number (0-indexed, displayed as cycle+1)
     private double stateStartTime = 0.0;  // Timestamp when current state started (for timeout detection)
+    private double positionReachedTime = 0.0;  // Timestamp when we reached the current target position
     private SwerveModule testModule;  // The module being tested
     
     /**
@@ -106,6 +108,7 @@ public class SwerveAngleDriftTestCommand extends Command {
      * @param numberOfCycles The number of cycles to perform
      * @param angleToleranceDegrees The tolerance for considering the motor "at position" (default: 2.0)
      * @param maxWaitTimeSeconds Maximum time to wait for motor to reach position before timing out (default: 3.0)
+     * @param minHoldTimeSeconds Minimum time to hold at each position for visibility in simulation (default: 0.5)
      */
     public SwerveAngleDriftTestCommand(
             SwerveSubsystem swerveSubsystem,
@@ -113,19 +116,21 @@ public class SwerveAngleDriftTestCommand extends Command {
             double testAngleDegrees,
             int numberOfCycles,
             double angleToleranceDegrees,
-            double maxWaitTimeSeconds) {
+            double maxWaitTimeSeconds,
+            double minHoldTimeSeconds) {
         this.swerveSubsystem = swerveSubsystem;
         this.moduleNumber = moduleNumber;
         this.testAngleDegrees = testAngleDegrees;
         this.numberOfCycles = numberOfCycles;
         this.angleToleranceDegrees = angleToleranceDegrees;
         this.maxWaitTimeSeconds = maxWaitTimeSeconds;
+        this.minHoldTimeSeconds = minHoldTimeSeconds;
         
         addRequirements(swerveSubsystem);
     }
 
     /**
-     * Creates a new SwerveAngleDriftTestCommand with default tolerance and timeout.
+     * Creates a new SwerveAngleDriftTestCommand with default tolerance, timeout, and hold time.
      * 
      * @param swerveSubsystem The swerve subsystem containing the modules
      * @param moduleNumber The module number to test (0-3)
@@ -137,7 +142,7 @@ public class SwerveAngleDriftTestCommand extends Command {
             int moduleNumber,
             double testAngleDegrees,
             int numberOfCycles) {
-        this(swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 2.0, 1.0);
+        this(swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 2.0, 1.0, 0.5);
     }
 
     /**
@@ -180,6 +185,7 @@ public class SwerveAngleDriftTestCommand extends Command {
         currentCycle = 0;  // Start with cycle 0 (will display as cycle 1, also used as array index)
         currentState = TestState.MOVING_TO_TARGET;  // First action: move to test angle
         stateStartTime = Timer.getFPGATimestamp();  // Record start time for timeout detection
+        positionReachedTime = 0.0;  // Reset position reached time
         
         // Begin first cycle: command module to rotate to the test angle
         // Use setDesiredState to match production code behavior (includes optimization logic)
@@ -191,13 +197,16 @@ public class SwerveAngleDriftTestCommand extends Command {
         System.out.println("Test Angle: " + testAngleDegrees + " degrees");
         System.out.println("Cycles: " + numberOfCycles);
         System.out.println("Tolerance: " + angleToleranceDegrees + " degrees");
+        System.out.println("Min Hold Time: " + minHoldTimeSeconds + " seconds");
         System.out.println("----------------------------------------");
         
-        // Update SmartDashboard
-        SmartDashboard.putString("DriftTest/Status", "Running");
-        SmartDashboard.putNumber("DriftTest/Module", moduleNumber);
-        SmartDashboard.putNumber("DriftTest/Cycle", currentCycle);
-        SmartDashboard.putNumber("DriftTest/TotalCycles", numberOfCycles);
+        // Update SmartDashboard with organized groups (alphabetical sorting)
+        // Status group
+        SmartDashboard.putString("DriftTest/Status/Current", "Running");
+        // Test group
+        SmartDashboard.putNumber("DriftTest/Test/Cycle", currentCycle + 1);  // Display 1-indexed cycle number
+        SmartDashboard.putNumber("DriftTest/Test/Module", moduleNumber);
+        SmartDashboard.putNumber("DriftTest/Test/TotalCycles", numberOfCycles);
     }
 
     /**
@@ -227,24 +236,54 @@ public class SwerveAngleDriftTestCommand extends Command {
         switch (currentState) {
             case MOVING_TO_TARGET:
                 // Phase 1: Wait for module to reach the test angle (e.g., 90°)
-                // Once reached, store the encoder measurements and move to zero
+                // Once reached, transition to AT_TARGET state to hold for minimum time
                 if (SwerveModuleTestUtils.isAtAngle(testModule, testAngleDegrees, angleToleranceDegrees)) {
+                    // Reached target - transition to hold state
+                    currentState = TestState.AT_TARGET;
+                    positionReachedTime = currentTime;
                     recordTargetMeasurement(false);
-                    transitionToZero(currentTime);
+                    System.out.println(String.format("  Cycle %d: Reached target angle %.2f° - holding for %.2f seconds...",
+                        currentCycle + 1, testAngleDegrees, minHoldTimeSeconds));
                 } else if (elapsedTime > maxWaitTimeSeconds) {
+                    // Timeout - transition to hold state anyway
+                    currentState = TestState.AT_TARGET;
+                    positionReachedTime = currentTime;
                     recordTargetMeasurement(true);
+                }
+                break;
+
+            case AT_TARGET:
+                // Hold at target position for minimum time (for visibility in simulation)
+                double holdTime = currentTime - positionReachedTime;
+                if (holdTime >= minHoldTimeSeconds) {
+                    // Hold time complete - transition to moving to zero
                     transitionToZero(currentTime);
                 }
                 break;
 
             case MOVING_TO_ZERO:
                 // Phase 2: Wait for module to return to zero
-                // Once reached, we have both measurements (target + zero) and can create the complete cycle result
+                // Once reached, transition to AT_ZERO state to hold for minimum time
                 if (SwerveModuleTestUtils.isAtAngle(testModule, 0.0, angleToleranceDegrees)) {
+                    // Reached zero - transition to hold state
+                    currentState = TestState.AT_ZERO;
+                    positionReachedTime = currentTime;
                     recordZeroMeasurement(false);
-                    completeCycle(currentTime);
+                    System.out.println(String.format("  Cycle %d: Reached zero - holding for %.2f seconds...",
+                        currentCycle + 1, minHoldTimeSeconds));
                 } else if (elapsedTime > maxWaitTimeSeconds) {
+                    // Timeout - transition to hold state anyway
+                    currentState = TestState.AT_ZERO;
+                    positionReachedTime = currentTime;
                     recordZeroMeasurement(true);
+                }
+                break;
+
+            case AT_ZERO:
+                // Hold at zero position for minimum time (for visibility in simulation)
+                holdTime = currentTime - positionReachedTime;
+                if (holdTime >= minHoldTimeSeconds) {
+                    // Hold time complete - complete the cycle
                     completeCycle(currentTime);
                 }
                 break;
@@ -254,6 +293,7 @@ public class SwerveAngleDriftTestCommand extends Command {
         }
 
         // Update NetworkTables with real-time encoder and angle information for simulator testing
+        // This runs every 20ms regardless of state, so you can see the values updating
         updateNetworkTables();
     }
 
@@ -272,20 +312,43 @@ public class SwerveAngleDriftTestCommand extends Command {
         double currentDrift = Math.IEEEremainder(currentRelativeAngle - currentAbsoluteAngle, 360.0);
 
         // Determine target angle based on current state
-        double targetAngle = (currentState == TestState.MOVING_TO_TARGET) ? testAngleDegrees : 0.0;
+        double targetAngle;
+        if (currentState == TestState.MOVING_TO_TARGET || currentState == TestState.AT_TARGET) {
+            targetAngle = testAngleDegrees;
+        } else {
+            targetAngle = 0.0;
+        }
         double angleError = Math.IEEEremainder(currentRelativeAngle - targetAngle, 360.0);
 
         // Get current module state for additional information
         SwerveModuleState moduleState = testModule.getState();
 
         // Publish to NetworkTables (accessible via SmartDashboard or NetworkTables API)
-        SmartDashboard.putNumber("DriftTest/CurrentAngle", currentRelativeAngle);
-        SmartDashboard.putNumber("DriftTest/AbsoluteAngle", currentAbsoluteAngle);
-        SmartDashboard.putNumber("DriftTest/TargetAngle", targetAngle);
-        SmartDashboard.putNumber("DriftTest/AngleError", angleError);
-        SmartDashboard.putNumber("DriftTest/CurrentDrift", currentDrift);
-        SmartDashboard.putNumber("DriftTest/ModuleVelocity", moduleState.speedMetersPerSecond);
-        SmartDashboard.putString("DriftTest/State", currentState.toString());
+        // These update every 20ms so you can see real-time values in simulation
+        // Organized into groups for alphabetical sorting:
+
+        // Angle group - all angle-related values together
+        SmartDashboard.putNumber("DriftTest/Angle/Absolute", currentAbsoluteAngle);
+        SmartDashboard.putNumber("DriftTest/Angle/Current", currentRelativeAngle);
+        SmartDashboard.putNumber("DriftTest/Angle/Error", angleError);
+        SmartDashboard.putNumber("DriftTest/Angle/Target", targetAngle);
+
+        // Drift group - all drift measurements together
+        SmartDashboard.putNumber("DriftTest/Drift/Current", currentDrift);
+
+        // Motion group - movement-related values
+        SmartDashboard.putNumber("DriftTest/Motion/Velocity", moduleState.speedMetersPerSecond);
+
+        // Status group - test state information
+        SmartDashboard.putString("DriftTest/Status/State", currentState.toString());
+
+        // Timing group - time-related values
+        if (currentState == TestState.AT_TARGET || currentState == TestState.AT_ZERO) {
+            double holdTimeRemaining = minHoldTimeSeconds - (Timer.getFPGATimestamp() - positionReachedTime);
+            SmartDashboard.putNumber("DriftTest/Timing/HoldRemaining", Math.max(0.0, holdTimeRemaining));
+        } else {
+            SmartDashboard.putNumber("DriftTest/Timing/HoldRemaining", 0.0);
+        }
     }
 
     /**
@@ -305,10 +368,10 @@ public class SwerveAngleDriftTestCommand extends Command {
     public void end(boolean interrupted) {
         if (interrupted) {
             System.out.println("=== Swerve Angle Drift Test INTERRUPTED ===");
-            SmartDashboard.putString("DriftTest/Status", "Interrupted");
+            SmartDashboard.putString("DriftTest/Status/Current", "Interrupted");
         } else {
             System.out.println("=== Swerve Angle Drift Test COMPLETED ===");
-            SmartDashboard.putString("DriftTest/Status", "Complete");
+            SmartDashboard.putString("DriftTest/Status/Current", "Complete");
         }
     }
 
@@ -342,6 +405,7 @@ public class SwerveAngleDriftTestCommand extends Command {
     private void transitionToZero(double currentTime) {
         currentState = TestState.MOVING_TO_ZERO;
         stateStartTime = currentTime;
+        positionReachedTime = 0.0;  // Reset position reached time
         // Use setDesiredState to match production code behavior (includes optimization logic)
         testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(0.0)), false);
     }
@@ -354,9 +418,10 @@ public class SwerveAngleDriftTestCommand extends Command {
     private void transitionToNextCycle(double currentTime) {
         currentState = TestState.MOVING_TO_TARGET;
         stateStartTime = currentTime;
+        positionReachedTime = 0.0;  // Reset position reached time
         // Use setDesiredState to match production code behavior (includes optimization logic)
         testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(testAngleDegrees)), false);
-        SmartDashboard.putNumber("DriftTest/Cycle", currentCycle);
+        SmartDashboard.putNumber("DriftTest/Test/Cycle", currentCycle + 1);  // Display 1-indexed cycle number
     }
     
     /**
@@ -368,7 +433,8 @@ public class SwerveAngleDriftTestCommand extends Command {
         // Cycle complete! Increment cycle counter and check if we need to run more cycles or finish
         currentCycle++;
         if (currentCycle >= numberOfCycles) {
-            // All cycles completed - print final statistics and end test
+            // All cycles completed - update dashboard with final count and print final statistics
+            SmartDashboard.putNumber("DriftTest/Test/Cycle", currentCycle);  // Show total cycles completed
             currentState = TestState.COMPLETE;
             printResults();
         } else {
@@ -447,7 +513,7 @@ public class SwerveAngleDriftTestCommand extends Command {
             System.err.println(String.format(
                 "WARNING: Cycle %d timed out waiting to reach target angle %.2f° (within %.2f° tolerance)",
                 currentCycle + 1, testAngleDegrees, angleToleranceDegrees));
-            SmartDashboard.putString("DriftTest/Status", "Timeout at Target");
+            SmartDashboard.putString("DriftTest/Status/Current", "Timeout at Target");
         }
         
         System.out.println(String.format(
@@ -455,7 +521,7 @@ public class SwerveAngleDriftTestCommand extends Command {
             wasTimeout ? "  " : "", currentCycle + 1, testAngleDegrees, driftAtTarget, 
             relativeAtTarget, absoluteAtTarget));
         
-        SmartDashboard.putNumber("DriftTest/DriftAtTarget", driftAtTarget);
+        SmartDashboard.putNumber("DriftTest/Drift/AtTarget", driftAtTarget);
     }
     
     /**
@@ -472,7 +538,7 @@ public class SwerveAngleDriftTestCommand extends Command {
             System.err.println(String.format(
                 "WARNING: Cycle %d timed out waiting to reach zero (within %.2f° tolerance)",
                 currentCycle + 1, angleToleranceDegrees));
-            SmartDashboard.putString("DriftTest/Status", "Timeout at Zero");
+            SmartDashboard.putString("DriftTest/Status/Current", "Timeout at Zero");
         }
         
         System.out.println(String.format(
@@ -483,7 +549,7 @@ public class SwerveAngleDriftTestCommand extends Command {
             currentCycle + 1, wasTimeout ? " (with timeout)" : "",
             testResults[currentCycle].driftAtTarget(), driftAtZero));
         
-        SmartDashboard.putNumber("DriftTest/DriftAtZero", driftAtZero);
+        SmartDashboard.putNumber("DriftTest/Drift/AtZero", driftAtZero);
     }
     
     /**
@@ -553,10 +619,10 @@ public class SwerveAngleDriftTestCommand extends Command {
                 System.out.println(String.format("Average Drift per Cycle: %.3f°", totalDrift / (currentCycle - 1)));
             }
             
-            // Update SmartDashboard
-            SmartDashboard.putNumber("DriftTest/TotalDrift", totalDrift);
+            // Update SmartDashboard with organized drift results
+            SmartDashboard.putNumber("DriftTest/Drift/Total", totalDrift);
             if (currentCycle > 1) {
-                SmartDashboard.putNumber("DriftTest/AvgDriftPerCycle", totalDrift / (currentCycle - 1));
+                SmartDashboard.putNumber("DriftTest/Drift/AvgPerCycle", totalDrift / (currentCycle - 1));
             }
             
             // Warning if drift is significant

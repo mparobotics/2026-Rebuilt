@@ -57,14 +57,6 @@ public class SwerveSubsystem extends SubsystemBase {
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
 
-  // Store last desired module states for simulation access
-  // Initialize with zero states to avoid null pointer exceptions
-  private SwerveModuleState[] lastDesiredStates = new SwerveModuleState[]{
-    new SwerveModuleState(0, new Rotation2d()),
-    new SwerveModuleState(0, new Rotation2d()),
-    new SwerveModuleState(0, new Rotation2d()),
-    new SwerveModuleState(0, new Rotation2d())
-  };
 
   /** Creates a new SwerveSubsystem. */
   public SwerveSubsystem() { 
@@ -133,9 +125,6 @@ public class SwerveSubsystem extends SubsystemBase {
   public void driveFromChassisSpeeds(ChassisSpeeds driveSpeeds, boolean isOpenLoop){
     SwerveModuleState[] desiredStates = SwerveConstants.swerveKinematics.toSwerveModuleStates(driveSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.maxSpeed);
-
-    // Store desired states for simulation access
-    lastDesiredStates = desiredStates;
 
     desiredSwerveDataPublisher.set(desiredStates);
 
@@ -263,11 +252,16 @@ public class SwerveSubsystem extends SubsystemBase {
   // ============================================================================
 
   /**
-   * Gets the last desired module states. Used by simulation to track robot motion.
+   * Gets the desired module states. Used by simulation to track robot motion.
+   * Reads desired states from each module (modules store their own desired state).
    * @return Array of desired swerve module states
    */
   public SwerveModuleState[] getDesiredStates() {
-    return lastDesiredStates;
+    SwerveModuleState[] states = new SwerveModuleState[4];
+    for (SwerveModule mod : mSwerveMods) {
+      states[mod.moduleNumber] = mod.getDesiredState();
+    }
+    return states;
   }
 
   public Field2d getField() {

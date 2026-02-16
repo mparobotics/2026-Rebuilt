@@ -22,12 +22,13 @@ public class SwerveDriftTestManager {
      * Should be called once during robot initialization.
      */
     public static void initializeDashboard() {
-        SmartDashboard.putNumber(DASHBOARD_PREFIX + "ModuleNumber", 0);
-        SmartDashboard.putNumber(DASHBOARD_PREFIX + "TestAngle", 90.0);
-        SmartDashboard.putNumber(DASHBOARD_PREFIX + "NumberOfCycles", 10);
-        SmartDashboard.putNumber(DASHBOARD_PREFIX + "AngleTolerance", 2.0);
-        SmartDashboard.putNumber(DASHBOARD_PREFIX + "MaxWaitTime", 1.0);  // 1 second is sufficient for swerve angle motors
-        SmartDashboard.putBoolean(DASHBOARD_PREFIX + "StartTest", false);
+        SmartDashboard.putNumber(DASHBOARD_PREFIX + "Test/Module", 0);
+        SmartDashboard.putNumber(DASHBOARD_PREFIX + "Test/Angle", 90.0);
+        SmartDashboard.putNumber(DASHBOARD_PREFIX + "Test/NumberOfCycles", 10);
+        SmartDashboard.putNumber(DASHBOARD_PREFIX + "Test/AngleTolerance", 2.0);
+        SmartDashboard.putNumber(DASHBOARD_PREFIX + "Test/MaxWaitTime", 1.0);  // 1 second is sufficient for swerve angle motors
+        SmartDashboard.putNumber(DASHBOARD_PREFIX + "Test/MinHoldTime", 0.5);  // Minimum time to hold at each position (for visibility in simulation)
+        SmartDashboard.putBoolean(DASHBOARD_PREFIX + "Test/Start", false);
     }
     
     /**
@@ -38,13 +39,14 @@ public class SwerveDriftTestManager {
      * @return true if the test was started successfully, false if parameters were invalid
      */
     public static boolean startTestFromDashboard(SwerveSubsystem swerveSubsystem) {
-        int moduleNumber = (int) SmartDashboard.getNumber(DASHBOARD_PREFIX + "ModuleNumber", 0);
-        double testAngle = SmartDashboard.getNumber(DASHBOARD_PREFIX + "TestAngle", 90.0);
-        int numberOfCycles = (int) SmartDashboard.getNumber(DASHBOARD_PREFIX + "NumberOfCycles", 10);
-        double tolerance = SmartDashboard.getNumber(DASHBOARD_PREFIX + "AngleTolerance", 2.0);
-        double maxWait = SmartDashboard.getNumber(DASHBOARD_PREFIX + "MaxWaitTime", 1.0);
+        int moduleNumber = (int) SmartDashboard.getNumber(DASHBOARD_PREFIX + "Test/Module", 0);
+        double testAngle = SmartDashboard.getNumber(DASHBOARD_PREFIX + "Test/Angle", 90.0);
+        int numberOfCycles = (int) SmartDashboard.getNumber(DASHBOARD_PREFIX + "Test/NumberOfCycles", 10);
+        double tolerance = SmartDashboard.getNumber(DASHBOARD_PREFIX + "Test/AngleTolerance", 2.0);
+        double maxWait = SmartDashboard.getNumber(DASHBOARD_PREFIX + "Test/MaxWaitTime", 1.0);
+        double minHold = SmartDashboard.getNumber(DASHBOARD_PREFIX + "Test/MinHoldTime", 0.5);
         
-        return startTest(swerveSubsystem, moduleNumber, testAngle, numberOfCycles, tolerance, maxWait);
+        return startTest(swerveSubsystem, moduleNumber, testAngle, numberOfCycles, tolerance, maxWait, minHold);
     }
     
     /**
@@ -56,6 +58,7 @@ public class SwerveDriftTestManager {
      * @param numberOfCycles The number of test cycles
      * @param angleToleranceDegrees The angle tolerance in degrees
      * @param maxWaitTimeSeconds The maximum wait time per position in seconds
+     * @param minHoldTimeSeconds The minimum time to hold at each position in seconds (for visibility in simulation)
      * @return true if the test was started successfully, false if parameters were invalid
      */
     public static boolean startTest(
@@ -64,7 +67,8 @@ public class SwerveDriftTestManager {
             double testAngleDegrees,
             int numberOfCycles,
             double angleToleranceDegrees,
-            double maxWaitTimeSeconds) {
+            double maxWaitTimeSeconds,
+            double minHoldTimeSeconds) {
         
         // Validate parameters
         if (moduleNumber < 0 || moduleNumber > 3) {
@@ -82,7 +86,7 @@ public class SwerveDriftTestManager {
         // Schedule the test command
         SwerveAngleDriftTestCommand testCommand = new SwerveAngleDriftTestCommand(
             swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 
-            angleToleranceDegrees, maxWaitTimeSeconds);
+            angleToleranceDegrees, maxWaitTimeSeconds, minHoldTimeSeconds);
         CommandScheduler.getInstance().schedule(testCommand);
         
         System.out.println("Starting drift test: Module " + moduleNumber + 
@@ -92,7 +96,7 @@ public class SwerveDriftTestManager {
     }
     
     /**
-     * Starts the drift test with default tolerance and timeout values.
+     * Starts the drift test with default tolerance, timeout, and hold time values.
      * 
      * @param swerveSubsystem The swerve subsystem to test
      * @param moduleNumber The module number to test (0-3)
@@ -106,7 +110,7 @@ public class SwerveDriftTestManager {
             double testAngleDegrees,
             int numberOfCycles) {
         
-        return startTest(swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 2.0, 1.0);
+        return startTest(swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 2.0, 1.0, 0.5);
     }
     
     /**
@@ -116,10 +120,10 @@ public class SwerveDriftTestManager {
      * @param swerveSubsystem The swerve subsystem to test
      */
     public static void checkAndStartTest(SwerveSubsystem swerveSubsystem) {
-        boolean startTest = SmartDashboard.getBoolean(DASHBOARD_PREFIX + "StartTest", false);
+        boolean startTest = SmartDashboard.getBoolean(DASHBOARD_PREFIX + "Test/Start", false);
         if (startTest) {
             // Reset the flag immediately to prevent multiple triggers
-            SmartDashboard.putBoolean(DASHBOARD_PREFIX + "StartTest", false);
+            SmartDashboard.putBoolean(DASHBOARD_PREFIX + "Test/Start", false);
             startTestFromDashboard(swerveSubsystem);
         }
     }
