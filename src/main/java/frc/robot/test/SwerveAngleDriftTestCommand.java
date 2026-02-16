@@ -395,7 +395,8 @@ public class SwerveAngleDriftTestCommand extends Command {
         stateStartTime = currentTime;
         // Use setDesiredState to match production code behavior (includes optimization logic)
         testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(testAngleDegrees)), false);
-        SmartDashboard.putNumber("DriftTest/Cycle", currentCycle);
+        // Update SmartDashboard with new cycle number (1-indexed for display)
+        SmartDashboard.putNumber("DriftTest/Test/Cycle", currentCycle + 1);
     }
     
     /**
