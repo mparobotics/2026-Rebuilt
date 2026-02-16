@@ -53,14 +53,22 @@ public class IntakeSubsystem extends SubsystemBase {
     targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
   }
 
+  public void intakeOn() {
+    intakeOn = true;
+      intakeMotor.set(IntakeConstants.INTAKE_SPEED);
+  }
+  
+  public void intakeOff() {
+    intakeOn = false;
+      intakeMotor.set(0);
+  }
+
   public void toggleIntake() {
     if (!intakeOn) {
-      intakeOn = true;
-      intakeMotor.set(IntakeConstants.INTAKE_SPEED);
+      intakeOn();
     }
     else {
-      intakeOn = false;
-      intakeMotor.set(0);
+      intakeOff();
     }
   }
   
