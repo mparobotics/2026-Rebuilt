@@ -234,6 +234,7 @@ public class SwerveSubsystem extends SubsystemBase {
         canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
     }
     swerveDataPublisher.set(getStates());
+  }
 
   // ============================================================================
   // Simulation Support Methods

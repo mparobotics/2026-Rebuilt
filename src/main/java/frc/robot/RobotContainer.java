@@ -19,8 +19,9 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
-import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
+import frc.robot.Subsystems.SwerveSubsystem;
+
 
 public class RobotContainer {
 
@@ -45,6 +46,7 @@ public class RobotContainer {
   // IntakeSubsystem for intake
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
+  //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   /**
