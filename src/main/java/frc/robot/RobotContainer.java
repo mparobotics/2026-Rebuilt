@@ -19,8 +19,9 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
-import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
+import frc.robot.Subsystems.SwerveSubsystem;
+
 
 public class RobotContainer {
 
@@ -45,6 +46,7 @@ public class RobotContainer {
   // IntakeSubsystem for intake
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
+  //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   /**
@@ -151,16 +153,6 @@ public class RobotContainer {
   }
 
   /**
-   * Gets the swerve subsystem instance.
-   * Used for test code that needs access to the swerve subsystem.
-   *
-   * @return The SwerveSubsystem instance
-   */
-  public SwerveSubsystem getSwerveSubsystem() {
-    return m_drive;
-  }
-
-  /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
@@ -169,5 +161,14 @@ public class RobotContainer {
     return Commands.print("No autonomous command configured");
   }
 
-
+  /**
+   * Gets the swerve subsystem instance.
+   * Used for simulation and test code that needs access to the
+   * swerve subsystem.
+   *
+   * @return The SwerveSubsystem instance
+   */
+  public SwerveSubsystem getSwerveSubsystem() {
+    return m_drive;
+  }
 }
