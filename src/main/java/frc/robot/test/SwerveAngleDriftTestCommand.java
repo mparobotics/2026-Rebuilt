@@ -215,13 +215,13 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         System.out.println("Min Hold Time: " + minHoldTimeSeconds + " seconds");
         System.out.println("----------------------------------------");
 
-        // Update SmartDashboard with organized groups (alphabetical sorting)
-        // Status group
-        SmartDashboard.putString(RESULT_PREFIX + "Status/Current", "Running");
-        // Test group
-        SmartDashboard.putNumber(RESULT_PREFIX + "Test/Cycle", currentCycle + 1);  // Display 1-indexed cycle number
-        SmartDashboard.putNumber(RESULT_PREFIX + "Test/Module", moduleNumber);
-        SmartDashboard.putNumber(RESULT_PREFIX + "Test/TotalCycles", numberOfCycles);
+        // Update SmartDashboard with organized groups
+        // Config group (static test setup)
+        SmartDashboard.putNumber(RESULT_PREFIX + "Config/Module", moduleNumber);
+        SmartDashboard.putNumber(RESULT_PREFIX + "Config/TotalCycles", numberOfCycles);
+        // Progress group (current test progress)
+        SmartDashboard.putNumber(RESULT_PREFIX + "Progress/CurrentCycle", currentCycle + 1);  // Display 1-indexed cycle number
+        SmartDashboard.putString(RESULT_PREFIX + "Progress/State", currentState.toString());
     }
 
     /**
@@ -333,13 +333,15 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         SwerveModuleState moduleState = testModule.getState();
 
         // Publish to NetworkTables (accessible via SmartDashboard or NetworkTables API)
-        SmartDashboard.putNumber(RESULT_PREFIX + "CurrentAngle", currentRelativeAngle);
-        SmartDashboard.putNumber(RESULT_PREFIX + "AbsoluteAngle", currentAbsoluteAngle);
-        SmartDashboard.putNumber(RESULT_PREFIX + "TargetAngle", targetAngle);
-        SmartDashboard.putNumber(RESULT_PREFIX + "AngleError", angleError);
-        SmartDashboard.putNumber(RESULT_PREFIX + "CurrentDrift", currentDrift);
-        SmartDashboard.putNumber(RESULT_PREFIX + "ModuleVelocity", moduleState.speedMetersPerSecond);
-        SmartDashboard.putString(RESULT_PREFIX + "State", currentState.toString());
+        // RealTime group (live measurements during execution - alphabetical order)
+        SmartDashboard.putNumber(RESULT_PREFIX + "RealTime/AngleMotorVelocity", moduleState.speedMetersPerSecond);
+        SmartDashboard.putNumber(RESULT_PREFIX + "RealTime/CurrentAngleEncoderAbsolute", currentAbsoluteAngle);
+        SmartDashboard.putNumber(RESULT_PREFIX + "RealTime/CurrentAngleEncoderDrift", currentDrift);
+        SmartDashboard.putNumber(RESULT_PREFIX + "RealTime/CurrentAngleEncoderRelative", currentRelativeAngle);
+        SmartDashboard.putNumber(RESULT_PREFIX + "RealTime/TargetAngle", targetAngle);
+        SmartDashboard.putNumber(RESULT_PREFIX + "RealTime/TargetRelativeError", angleError);
+        // Progress group (update state)
+        SmartDashboard.putString(RESULT_PREFIX + "Progress/State", currentState.toString());
     }
 
     /**
@@ -359,10 +361,10 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     public void end(boolean interrupted) {
         if (interrupted) {
             System.out.println("=== Swerve Angle Drift Test INTERRUPTED ===");
-            SmartDashboard.putString(RESULT_PREFIX + "Status", "Interrupted");
+            SmartDashboard.putString(RESULT_PREFIX + "Status/Message", "Interrupted");
         } else {
             System.out.println("=== Swerve Angle Drift Test COMPLETED ===");
-            SmartDashboard.putString(RESULT_PREFIX + "Status", "Complete");
+            SmartDashboard.putString(RESULT_PREFIX + "Status/Message", "Complete");
         }
     }
 
@@ -411,7 +413,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         // Use setDesiredState to match production code behavior (includes optimization logic)
         testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(testAngleDegrees)), false);
         // Update SmartDashboard with new cycle number (1-indexed for display)
-        SmartDashboard.putNumber(RESULT_PREFIX + "Test/Cycle", currentCycle + 1);
+        SmartDashboard.putNumber(RESULT_PREFIX + "Progress/CurrentCycle", currentCycle + 1);
     }
 
     /**
@@ -502,7 +504,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             System.err.println(String.format(
                 "WARNING: Cycle %d timed out waiting to reach target angle %.2f° (within %.2f° tolerance)",
                 currentCycle + 1, testAngleDegrees, angleToleranceDegrees));
-            SmartDashboard.putString(RESULT_PREFIX + "Status", "Timeout at Target");
+            SmartDashboard.putString(RESULT_PREFIX + "Status/Message", "Timeout at Target");
         }
 
         System.out.println(String.format(
@@ -510,7 +512,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             wasTimeout ? "  " : "", currentCycle + 1, testAngleDegrees, driftAtTarget,
             relativeAtTarget, absoluteAtTarget));
 
-        SmartDashboard.putNumber(RESULT_PREFIX + "DriftAtTarget", driftAtTarget);
+        SmartDashboard.putNumber(RESULT_PREFIX + "LastCycle/DriftAtTarget", driftAtTarget);
     }
 
     /**
@@ -527,7 +529,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             System.err.println(String.format(
                 "WARNING: Cycle %d timed out waiting to reach zero (within %.2f° tolerance)",
                 currentCycle + 1, angleToleranceDegrees));
-            SmartDashboard.putString(RESULT_PREFIX + "Status", "Timeout at Zero");
+            SmartDashboard.putString(RESULT_PREFIX + "Status/Message", "Timeout at Zero");
         }
 
         System.out.println(String.format(
@@ -538,7 +540,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             currentCycle + 1, wasTimeout ? " (with timeout)" : "",
             testResults[currentCycle].driftAtTarget(), driftAtZero));
 
-        SmartDashboard.putNumber(RESULT_PREFIX + "DriftAtZero", driftAtZero);
+        SmartDashboard.putNumber(RESULT_PREFIX + "LastCycle/DriftAtZero", driftAtZero);
     }
 
     /**
@@ -609,10 +611,9 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             }
 
             // Update SmartDashboard
-            SmartDashboard.putNumber(RESULT_PREFIX + "TotalDrift", totalDrift);
-            if (currentCycle > 1) {
-                SmartDashboard.putNumber(RESULT_PREFIX + "AvgDriftPerCycle", totalDrift / (currentCycle - 1));
-            }
+            // Summary group (final statistics after test completes)
+            SmartDashboard.putNumber(RESULT_PREFIX + "Summary/AvgDriftPerCycle", currentCycle > 1 ? totalDrift / (currentCycle - 1) : 0.0);
+            SmartDashboard.putNumber(RESULT_PREFIX + "Summary/TotalDrift", totalDrift);
 
             // Warning if drift is significant
             if (Math.abs(totalDrift) > 5.0) {
