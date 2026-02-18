@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.lib.test.DiagnosticTest;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.SwerveModule;
 import frc.robot.test.SwerveModuleTestUtils;
@@ -28,7 +29,11 @@ import frc.robot.test.SwerveModuleTestUtils;
  * This test helps identify if the relative (integrated) encoder is accumulating
  * error over multiple cycles, which would indicate drift issues.
  */
-public class SwerveAngleDriftTestCommand extends Command {
+public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTest {
+
+    private static final String PARAM_PREFIX = "DiagnosticTests/Swerve Angle Drift Test/Parameters/";
+    private static final String RESULT_PREFIX = "DiagnosticTests/Swerve Angle Drift Test/Results/";
+
     private final SwerveSubsystem swerveSubsystem;
     private final int moduleNumber;
     private final double testAngleDegrees;
@@ -143,6 +148,33 @@ public class SwerveAngleDriftTestCommand extends Command {
             double testAngleDegrees,
             int numberOfCycles) {
         this(swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 2.0, 1.0, 0.5);
+    }
+
+    // ============================================================================
+    // DiagnosticTest Interface Implementation
+    // ============================================================================
+
+    @Override
+    public String getTestName() {
+        return "Swerve Angle Drift Test";
+    }
+
+    @Override
+    public String getTestDescription() {
+        return "Tests encoder drift by rotating a swerve module through multiple cycles and comparing "
+             + "relative encoder to absolute encoder measurements. This test helps identify if the relative "
+             + "(integrated) encoder is accumulating error over multiple cycles, which would indicate drift issues.";
+    }
+
+    @Override
+    public void initializeParameters() {
+        // Set up SmartDashboard parameters with default values
+        SmartDashboard.putNumber(PARAM_PREFIX + "ModuleNumber", 0);
+        SmartDashboard.putNumber(PARAM_PREFIX + "Angle", 90.0);
+        SmartDashboard.putNumber(PARAM_PREFIX + "NumberOfCycles", 10);
+        SmartDashboard.putNumber(PARAM_PREFIX + "AngleTolerance", 2.0);
+        SmartDashboard.putNumber(PARAM_PREFIX + "MaxWaitTime", 1.0);
+        SmartDashboard.putNumber(PARAM_PREFIX + "MinHoldTime", 0.5);
     }
 
     /**

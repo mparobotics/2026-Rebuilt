@@ -81,7 +81,9 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putData("Field", field);
 
     // Initialize drift test dashboard controls (test code - separate from production)
-    SwerveDriftTestManager.initializeDashboard();
+    // TODO: Phase 2 Migration - SwerveDriftTestManager is being replaced by DiagnosticTestManager
+    // Parameters are now initialized by the framework when the test is selected in the dropdown
+    // SwerveDriftTestManager.initializeDashboard();
   }
   
 
