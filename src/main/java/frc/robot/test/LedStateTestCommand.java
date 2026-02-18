@@ -29,8 +29,8 @@ import frc.robot.Subsystems.CandleSubsystem;
  */
 public class LedStateTestCommand extends Command implements DiagnosticTest {
     
-    private static final String PARAM_PREFIX = "DiagnosticTests/Parameters/LED State Test/";
-    private static final String RESULT_PREFIX = "LEDStateTest/";
+    private static final String PARAM_PREFIX = "DiagnosticTests/LED State Test/Parameters/";
+    private static final String RESULT_PREFIX = "DiagnosticTests/LED State Test/Results/";
     
     private final CandleSubsystem candleSubsystem;
     private final SendableChooser<String> ledStateChooser;
