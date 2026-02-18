@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.test.DiagnosticTest;
+import frc.lib.test.TestDashboard;
 import frc.robot.Subsystems.CandleSubsystem;
 
 /**
@@ -28,9 +29,6 @@ import frc.robot.Subsystems.CandleSubsystem;
  * the CandleSubsystem independent of other robot subsystems.
  */
 public class LedStateTestCommand extends Command implements DiagnosticTest {
-    
-    private static final String PARAM_PREFIX = "DiagnosticTests/LED State Test/Parameters/";
-    private static final String RESULT_PREFIX = "DiagnosticTests/LED State Test/Results/";
     
     private final CandleSubsystem candleSubsystem;
     private final SendableChooser<String> ledStateChooser;
@@ -69,6 +67,9 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
     
     @Override
     public void initializeParameters() {
+        // Set up duration parameter first
+        TestDashboard.putParamDouble(this, "Duration", 3.0);
+        
         // Set up SendableChooser dropdown for LedStates enum
         // Add all enum values as options
         CandleSubsystem.LedStates[] states = CandleSubsystem.LedStates.values();
@@ -78,10 +79,7 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
                 ledStateChooser.addOption(states[i].name(), states[i].name());
             }
         }
-        SmartDashboard.putData(PARAM_PREFIX + "LedState", ledStateChooser);
-        
-        // Set up duration parameter
-        SmartDashboard.putNumber(PARAM_PREFIX + "Duration", 3.0);
+        TestDashboard.putParamChooser(this, "LedState", ledStateChooser);
     }
     
     @Override
@@ -90,14 +88,11 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
         // Note: We retrieve the chooser from SmartDashboard because initializeParameters()
         // was called on a different (throwaway) instance. The chooser on SmartDashboard
         // contains the user's selection.
-        SendableChooser<String> chooser = (SendableChooser<String>) SmartDashboard.getData(PARAM_PREFIX + "LedState");
-        String selectedStateName = null;
-        if (chooser != null) {
-            selectedStateName = chooser.getSelected();
-        }
-        if (selectedStateName == null) {
-            selectedStateName = CandleSubsystem.LedStates.None.name();
-        }
+        String selectedStateName = TestDashboard.getParamChooserSelected(
+            this, 
+            "LedState", 
+            CandleSubsystem.LedStates.None.name()
+        );
         
         // Convert string to enum
         try {
@@ -107,7 +102,7 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
             selectedLedState = CandleSubsystem.LedStates.None;
         }
         
-        duration = SmartDashboard.getNumber(PARAM_PREFIX + "Duration", 3.0);
+        duration = TestDashboard.getParamDouble(this, "Duration", 3.0);
         
         // Validate duration
         if (duration <= 0) {
@@ -123,9 +118,9 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
         candleSubsystem.changeState(selectedLedState);
         
         // Initialize result display
-        SmartDashboard.putString(RESULT_PREFIX + "Status", "Running");
-        SmartDashboard.putString(RESULT_PREFIX + "SelectedState", selectedLedState.name());
-        SmartDashboard.putNumber(RESULT_PREFIX + "TargetDuration", duration);
+        TestDashboard.putResultString(this, "Status", "Running");
+        TestDashboard.putResultString(this, "SelectedState", selectedLedState.name());
+        TestDashboard.putResultDouble(this, "TargetDuration", duration);
         
         System.out.println("LED State Test started: State=" + selectedLedState.name() + ", Duration=" + duration + "s");
     }
@@ -135,7 +130,7 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
         // Test just waits - LED state is already set in initialize()
         // Update actual duration for display
         actualDuration = Timer.getFPGATimestamp() - startTime;
-        SmartDashboard.putNumber(RESULT_PREFIX + "ElapsedTime", actualDuration);
+        TestDashboard.putResultDouble(this, "ElapsedTime", actualDuration);
     }
     
     @Override
@@ -154,13 +149,13 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
         
         // Update result display
         if (interrupted) {
-            SmartDashboard.putString(RESULT_PREFIX + "Status", "Interrupted");
+            TestDashboard.putResultString(this, "Status", "Interrupted");
             System.out.println("LED State Test interrupted after " + String.format("%.2f", actualDuration) + "s");
         } else {
-            SmartDashboard.putString(RESULT_PREFIX + "Status", "Complete");
+            TestDashboard.putResultString(this, "Status", "Complete");
             System.out.println("LED State Test completed: Ran for " + String.format("%.2f", actualDuration) + "s");
         }
         
-        SmartDashboard.putNumber(RESULT_PREFIX + "ActualDuration", actualDuration);
+        TestDashboard.putResultDouble(this, "ActualDuration", actualDuration);
     }
 }
