@@ -2,6 +2,7 @@ package frc.lib.test;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
+import frc.robot.test.LedStateTestCommand;
 import frc.robot.test.SwerveAngleDriftTestCommand;
 
 /**
@@ -58,6 +59,23 @@ public enum DiagnosticTestRegistry {
                 90.0,   // testAngleDegrees - will come from SmartDashboard in Phase 2
                 10      // numberOfCycles - will come from SmartDashboard in Phase 2
             );
+        }
+    },
+
+    /**
+     * LED State Test - Diagnostic test for CandleSubsystem.
+     * Allows independent testing of LED states without other robot systems.
+     * Useful for verifying LED hardware functionality and visual feedback.
+     */
+    LED_STATE_TEST(
+        "LED State Test",
+        "Tests CandleSubsystem LED states independently. Sets the selected LED state for a "
+        + "specified duration, then turns LEDs off. Useful for verifying LED hardware functionality "
+        + "and testing visual feedback without other robot systems."
+    ) {
+        @Override
+        public Command createTest(RobotContainer robotContainer) {
+            return new LedStateTestCommand(robotContainer.getCandleSubsystem());
         }
     };
     
