@@ -241,6 +241,7 @@ public class SwerveSubsystem extends SubsystemBase {
    * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
    * without requiring direct access to the internal module array.
    */
+
   /**
    * Gets a specific swerve module by its module number.
    * Required for diagnostic tests to access individual modules for testing and diagnostics.
