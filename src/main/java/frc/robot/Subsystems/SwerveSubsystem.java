@@ -263,15 +263,33 @@ public class SwerveSubsystem extends SubsystemBase {
     return pigeon;
   }
 
-  public SwerveModule[] getModules() {
-    return mSwerveMods;
-  }
-
   public SwerveDrivePoseEstimator getOdometry() {
     return odometry;
   }
 
   public SwerveDriveKinematics getKinematics() {
     return Constants.SwerveConstants.swerveKinematics;
+  }
+
+  /* Diagnostic Test and Simulation Support
+   * The following method is required for diagnostic tests and simulation to access swerve modules.
+   * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
+   * and simulation code to iterate over all modules without requiring direct access to the
+   * internal module array.
+   */
+  /**
+   * Gets all swerve modules as an array.
+   *
+   * <p>Returns a defensive copy to prevent modification of the subsystem's internal
+   * module array structure. The {@link SwerveModule} instances inside the returned
+   * array are the same objects (their state remains mutable, which is intended).
+   *
+   * <p>Java arrays are always mutable, so this method returns a copy to prevent
+   * callers from replacing array elements (e.g., {@code getModules()[0] = null}).
+   *
+   * @return A copy of the array containing all swerve modules
+   */
+  public SwerveModule[] getModules() {
+    return mSwerveMods.clone();
   }
 }
