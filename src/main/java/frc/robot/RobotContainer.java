@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
+import frc.robot.Subsystems.CandleSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
@@ -48,6 +49,9 @@ public class RobotContainer {
 
   //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
+
+  //CandleSubsystem for LED control
+  private final CandleSubsystem m_candle = new CandleSubsystem();
   
   /**
    * Constructs the RobotContainer. Creates subsystems (which configure themselves)
@@ -161,6 +165,12 @@ public class RobotContainer {
     return Commands.print("No autonomous command configured");
   }
 
+  // ============================================================================
+  // Methods for Simulation and Testing
+  // ============================================================================
+  // The following methods are provided for simulation and test code to access
+  // subsystems. They are not used by production robot code.
+
   /**
    * Gets the swerve subsystem instance.
    * Used for simulation and test code that needs access to the
@@ -170,5 +180,15 @@ public class RobotContainer {
    */
   public SwerveSubsystem getSwerveSubsystem() {
     return m_drive;
+  }
+
+  /**
+   * Gets the candle subsystem instance.
+   * Used for test code that needs access to the LED subsystem.
+   *
+   * @return The CandleSubsystem instance
+   */
+  public CandleSubsystem getCandleSubsystem() {
+    return m_candle;
   }
 }
