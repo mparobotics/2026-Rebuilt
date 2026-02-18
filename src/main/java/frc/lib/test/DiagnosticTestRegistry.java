@@ -39,9 +39,6 @@ public enum DiagnosticTestRegistry {
      * Swerve angle drift test.
      * Tests encoder drift by rotating a swerve module through multiple cycles
      * and comparing relative encoder to absolute encoder measurements.
-     * 
-     * <p><b>Note:</b> This test will be refactored in Phase 2 to properly implement
-     * {@link DiagnosticTest} and use the framework's parameter management.
      */
     SWERVE_ANGLE_DRIFT(
         "Swerve Angle Drift Test",
@@ -49,16 +46,7 @@ public enum DiagnosticTestRegistry {
     ) {
         @Override
         public Command createTest(RobotContainer robotContainer) {
-            // TODO: Phase 2 - This will be refactored to take only SwerveSubsystem
-            // and read parameters from SmartDashboard in initialize()
-            // For now, using default parameters - test will need to be started via
-            // old SwerveDriftTestManager until Phase 2 migration is complete
-            return new SwerveAngleDriftTestCommand(
-                robotContainer.getSwerveSubsystem(),
-                0,      // moduleNumber - will come from SmartDashboard in Phase 2
-                90.0,   // testAngleDegrees - will come from SmartDashboard in Phase 2
-                10      // numberOfCycles - will come from SmartDashboard in Phase 2
-            );
+            return new SwerveAngleDriftTestCommand(robotContainer.getSwerveSubsystem());
         }
     },
 

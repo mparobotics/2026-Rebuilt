@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.LimelightHelpers;
 import frc.robot.Constants;
-import frc.robot.test.SwerveDriftTestManager;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
@@ -79,11 +78,6 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
-
-    // Initialize drift test dashboard controls (test code - separate from production)
-    // TODO: Phase 2 Migration - SwerveDriftTestManager is being replaced by DiagnosticTestManager
-    // Parameters are now initialized by the framework when the test is selected in the dropdown
-    // SwerveDriftTestManager.initializeDashboard();
   }
   
 
@@ -216,20 +210,6 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-  /**
-   * Gets a specific swerve module by its module number.
-   * Useful for testing and diagnostics.
-   *
-   * @param moduleNumber The module number (0-3)
-   * @return The SwerveModule instance, or null if moduleNumber is invalid
-   */
-  public SwerveModule getModule(int moduleNumber) {
-    if (moduleNumber >= 0 && moduleNumber < mSwerveMods.length) {
-      return mSwerveMods[moduleNumber];
-    }
-    return null;
-  }
-
   @Override
   public void periodic() {
     odometry.update(getYaw(), getPositions());
@@ -254,8 +234,24 @@ public class SwerveSubsystem extends SubsystemBase {
         canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
     }
     swerveDataPublisher.set(getStates());
+  }
 
-    // Check if drift test should be started from SmartDashboard (test code - separate from production)
-    SwerveDriftTestManager.checkAndStartTest(this);
+  /* Diagnostic Test Support
+   * The following method is required for diagnostic tests to access individual swerve modules.
+   * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
+   * without requiring direct access to the internal module array.
+   */
+  /**
+   * Gets a specific swerve module by its module number.
+   * Required for diagnostic tests to access individual modules for testing and diagnostics.
+   *
+   * @param moduleNumber The module number (0-3)
+   * @return The SwerveModule instance, or null if moduleNumber is invalid
+   */
+  public SwerveModule getModule(int moduleNumber) {
+    if (moduleNumber >= 0 && moduleNumber < mSwerveMods.length) {
+      return mSwerveMods[moduleNumber];
+    }
+    return null;
   }
 }

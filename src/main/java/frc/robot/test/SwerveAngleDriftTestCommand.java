@@ -16,7 +16,7 @@ import frc.robot.test.SwerveModuleTestUtils;
 
 /**
  * Test command to detect encoder drift in swerve module angle motors.
- * 
+ *
  * This command performs the following test sequence:
  * 1. Commands the angle motor to turn to a specific position
  * 2. Waits for the motor to reach the target position
@@ -25,7 +25,7 @@ import frc.robot.test.SwerveModuleTestUtils;
  * 5. Repeats this cycle N times
  * 6. Compares the relative encoder to the absolute encoder at each cycle
  * 7. Reports drift statistics
- * 
+ *
  * This test helps identify if the relative (integrated) encoder is accumulating
  * error over multiple cycles, which would indicate drift issues.
  */
@@ -35,12 +35,14 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     private static final String RESULT_PREFIX = "DiagnosticTests/Swerve Angle Drift Test/Results/";
 
     private final SwerveSubsystem swerveSubsystem;
-    private final int moduleNumber;
-    private final double testAngleDegrees;
-    private final int numberOfCycles;
-    private final double angleToleranceDegrees;
-    private final double maxWaitTimeSeconds;
-    private final double minHoldTimeSeconds;  // Minimum time to hold at each position (for visibility in simulation)
+
+    // Test parameters (read from SmartDashboard in initialize())
+    private int moduleNumber;
+    private double testAngleDegrees;
+    private int numberOfCycles;
+    private double angleToleranceDegrees;
+    private double maxWaitTimeSeconds;
+    private double minHoldTimeSeconds;  // Minimum time to hold at each position (for visibility in simulation)
 
     // Test state machine - tracks where we are in the test cycle
     private enum TestState {
@@ -56,7 +58,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     private double stateStartTime = 0.0;  // Timestamp when current state started (for timeout detection)
     private double positionReachedTime = 0.0;  // Timestamp when we reached the current target position
     private SwerveModule testModule;  // The module being tested
-    
+
     /**
      * Record to store the results of a single test cycle.
      * A complete cycle consists of:
@@ -92,11 +94,11 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             );
         }
     }
-    
+
     // Test results storage - one entry per complete cycle
     // Each cycle contains measurements at both target and zero positions
     private TestCycleResult[] testResults;
-    
+
     // Temporary storage for current cycle measurements at target position
     // These are stored when we reach the target, then combined with zero measurements
     // to create the complete TestCycleResult when we reach zero
@@ -106,48 +108,13 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
 
     /**
      * Creates a new SwerveAngleDriftTestCommand.
-     * 
+     * Parameters are read from SmartDashboard in the initialize() method.
+     *
      * @param swerveSubsystem The swerve subsystem containing the modules
-     * @param moduleNumber The module number to test (0-3)
-     * @param testAngleDegrees The angle to rotate to during each cycle (0-360)
-     * @param numberOfCycles The number of cycles to perform
-     * @param angleToleranceDegrees The tolerance for considering the motor "at position" (default: 2.0)
-     * @param maxWaitTimeSeconds Maximum time to wait for motor to reach position before timing out (default: 3.0)
-     * @param minHoldTimeSeconds Minimum time to hold at each position for visibility in simulation (default: 0.5)
      */
-    public SwerveAngleDriftTestCommand(
-            SwerveSubsystem swerveSubsystem,
-            int moduleNumber,
-            double testAngleDegrees,
-            int numberOfCycles,
-            double angleToleranceDegrees,
-            double maxWaitTimeSeconds,
-            double minHoldTimeSeconds) {
+    public SwerveAngleDriftTestCommand(SwerveSubsystem swerveSubsystem) {
         this.swerveSubsystem = swerveSubsystem;
-        this.moduleNumber = moduleNumber;
-        this.testAngleDegrees = testAngleDegrees;
-        this.numberOfCycles = numberOfCycles;
-        this.angleToleranceDegrees = angleToleranceDegrees;
-        this.maxWaitTimeSeconds = maxWaitTimeSeconds;
-        this.minHoldTimeSeconds = minHoldTimeSeconds;
-        
         addRequirements(swerveSubsystem);
-    }
-
-    /**
-     * Creates a new SwerveAngleDriftTestCommand with default tolerance, timeout, and hold time.
-     * 
-     * @param swerveSubsystem The swerve subsystem containing the modules
-     * @param moduleNumber The module number to test (0-3)
-     * @param testAngleDegrees The angle to rotate to during each cycle (0-360)
-     * @param numberOfCycles The number of cycles to perform
-     */
-    public SwerveAngleDriftTestCommand(
-            SwerveSubsystem swerveSubsystem,
-            int moduleNumber,
-            double testAngleDegrees,
-            int numberOfCycles) {
-        this(swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 2.0, 1.0, 0.5);
     }
 
     // ============================================================================
@@ -180,7 +147,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     /**
      * Called once by CommandScheduler when the command is first scheduled/started.
      * Sets up the test: validates parameters, initializes data structures, and begins the first cycle.
-     * 
+     *
      * <p>This is part of WPILib's Command framework lifecycle:
      * <ul>
      *   <li>Called automatically when command is scheduled (e.g., via button press or SmartDashboard trigger)</li>
@@ -190,11 +157,27 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
      */
     @Override
     public void initialize() {
-        // Validate module number
+        // Read parameters from SmartDashboard
+        moduleNumber = (int) SmartDashboard.getNumber(PARAM_PREFIX + "ModuleNumber", 0);
+        testAngleDegrees = SmartDashboard.getNumber(PARAM_PREFIX + "Angle", 90.0);
+        numberOfCycles = (int) SmartDashboard.getNumber(PARAM_PREFIX + "NumberOfCycles", 10);
+        angleToleranceDegrees = SmartDashboard.getNumber(PARAM_PREFIX + "AngleTolerance", 2.0);
+        maxWaitTimeSeconds = SmartDashboard.getNumber(PARAM_PREFIX + "MaxWaitTime", 1.0);
+        minHoldTimeSeconds = SmartDashboard.getNumber(PARAM_PREFIX + "MinHoldTime", 0.5);
+
+        // Validate parameters
         if (moduleNumber < 0 || moduleNumber > 3) {
             System.err.println("ERROR: Invalid module number: " + moduleNumber + ". Must be 0-3.");
             currentState = TestState.COMPLETE;
             return;
+        }
+        if (numberOfCycles < 1) {
+            System.err.println("ERROR: Number of cycles must be at least 1. Got: " + numberOfCycles);
+            currentState = TestState.COMPLETE;
+            return;
+        }
+        if (testAngleDegrees < 0 || testAngleDegrees >= 360) {
+            System.err.println("WARNING: Test angle should be 0-360 degrees. Using: " + testAngleDegrees);
         }
 
         // Get the module to test
@@ -204,25 +187,25 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             currentState = TestState.COMPLETE;
             return;
         }
-        
+
         // Initialize test results storage (one entry per complete cycle)
         testResults = new TestCycleResult[numberOfCycles];
-        
+
         // Reset temporary storage
         relativeAtTarget = 0.0;
         absoluteAtTarget = 0.0;
         timeoutAtTarget = false;
-        
+
         // Initialize test state machine
         currentCycle = 0;  // Start with cycle 0 (will display as cycle 1, also used as array index)
         currentState = TestState.MOVING_TO_TARGET;  // First action: move to test angle
         stateStartTime = Timer.getFPGATimestamp();  // Record start time for timeout detection
         positionReachedTime = 0.0;  // Reset position reached time
-        
+
         // Begin first cycle: command module to rotate to the test angle
         // Use setDesiredState to match production code behavior (includes optimization logic)
         testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(testAngleDegrees)), false);
-        
+
         // Log test start
         System.out.println("=== Swerve Angle Drift Test Started ===");
         System.out.println("Module: " + moduleNumber);
@@ -231,7 +214,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         System.out.println("Tolerance: " + angleToleranceDegrees + " degrees");
         System.out.println("Min Hold Time: " + minHoldTimeSeconds + " seconds");
         System.out.println("----------------------------------------");
-        
+
         // Update SmartDashboard with organized groups (alphabetical sorting)
         // Status group
         SmartDashboard.putString("DriftTest/Status/Current", "Running");
@@ -245,7 +228,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
      * Called repeatedly by CommandScheduler every 20ms while the command is active.
      * Manages the test state machine: checks if module has reached target positions,
      * records measurements, and transitions between states.
-     * 
+     *
      * <p>This is part of WPILib's Command framework lifecycle:
      * <ul>
      *   <li>Called automatically by CommandScheduler.run() (which runs in Robot.robotPeriodic())</li>
@@ -257,7 +240,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     public void execute() {
         // This method runs every 20ms while the command is active
         // It checks if the module has reached its target position and manages the test cycle
-        
+
         if (currentState == TestState.COMPLETE) {
             return;
         }
@@ -362,14 +345,14 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     /**
      * Called once by CommandScheduler when the command ends (either normally or interrupted).
      * Performs cleanup and final status updates.
-     * 
+     *
      * <p>This is part of WPILib's Command framework lifecycle:
      * <ul>
      *   <li>Called automatically when isFinished() returns true OR when command is interrupted/cancelled</li>
      *   <li>Runs once at the end of the command</li>
      *   <li>The interrupted parameter indicates if command was cancelled (true) or completed normally (false)</li>
      * </ul>
-     * 
+     *
      * @param interrupted true if command was cancelled/interrupted, false if it completed normally
      */
     @Override
@@ -386,14 +369,14 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     /**
      * Called by CommandScheduler every 20ms to check if the command should end.
      * When this returns true, the command will end and end() will be called.
-     * 
+     *
      * <p>This is part of WPILib's Command framework lifecycle:
      * <ul>
      *   <li>Called automatically by CommandScheduler after each execute() call</li>
      *   <li>If returns true, command ends and end() is called</li>
      *   <li>If returns false, command continues and execute() is called again next cycle</li>
      * </ul>
-     * 
+     *
      * @return true if command should end, false to continue running
      */
     @Override
@@ -404,10 +387,10 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     // ============================================================================
     // State Transition Methods
     // ============================================================================
-    
+
     /**
      * Transitions the state machine to moving to zero position.
-     * 
+     *
      * @param currentTime Current timestamp for state transition
      */
     private void transitionToZero(double currentTime) {
@@ -416,10 +399,10 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         // Use setDesiredState to match production code behavior (includes optimization logic)
         testModule.setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(0.0)), false);
     }
-    
+
     /**
      * Transitions to the next test cycle or completes the test if all cycles are done.
-     * 
+     *
      * @param currentTime Current timestamp for state transition
      */
     private void transitionToNextCycle(double currentTime) {
@@ -430,10 +413,10 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         // Update SmartDashboard with new cycle number (1-indexed for display)
         SmartDashboard.putNumber("DriftTest/Test/Cycle", currentCycle + 1);
     }
-    
+
     /**
      * Handles cycle completion: checks if more cycles are needed or finishes the test.
-     * 
+     *
      * @param currentTime Current timestamp for state transition
      */
     private void completeCycle(double currentTime) {
@@ -448,14 +431,14 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             transitionToNextCycle(currentTime);
         }
     }
-    
+
     // ============================================================================
     // Recording Methods
     // ============================================================================
-    
+
     /**
      * Records the target position measurement.
-     * 
+     *
      * @param wasTimeout true if this measurement was taken after a timeout
      */
     private void recordTargetMeasurement(boolean wasTimeout) {
@@ -464,31 +447,31 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         relativeAtTarget = SwerveModuleTestUtils.getRelativeEncoderDegrees(testModule);
         absoluteAtTarget = SwerveModuleTestUtils.getAbsoluteEncoderDegrees(testModule);
         timeoutAtTarget = wasTimeout;
-        
+
         // Print measurement results
         printTargetMeasurement(wasTimeout);
     }
-    
+
     /**
      * Records the zero position measurement and creates the complete cycle result.
-     * 
+     *
      * @param wasTimeout true if this measurement was taken after a timeout
      */
     private void recordZeroMeasurement(boolean wasTimeout) {
         // Get zero position measurements
         double relativeAtZero = SwerveModuleTestUtils.getRelativeEncoderDegrees(testModule);
         double absoluteAtZero = SwerveModuleTestUtils.getAbsoluteEncoderDegrees(testModule);
-        
+
         // Record the complete cycle result (contains both target and zero measurements)
         recordCycleResult(relativeAtZero, absoluteAtZero, wasTimeout);
-        
+
         // Print measurement results
         printZeroMeasurement(wasTimeout, relativeAtZero, absoluteAtZero);
     }
-    
+
     /**
      * Records the complete cycle result with both target and zero measurements.
-     * 
+     *
      * @param relativeAtZero Relative encoder value at zero position
      * @param absoluteAtZero Absolute encoder value at zero position
      * @param wasTimeoutAtZero true if zero measurement was taken after a timeout
@@ -502,51 +485,51 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             relativeAtZero, absoluteAtZero, wasTimeoutAtZero  // Zero position data
         );
     }
-    
+
     // ============================================================================
     // Printing Methods
     // ============================================================================
-    
+
     /**
      * Prints the target position measurement results.
-     * 
+     *
      * @param wasTimeout true if this measurement was taken after a timeout
      */
     private void printTargetMeasurement(boolean wasTimeout) {
         double driftAtTarget = Math.IEEEremainder(relativeAtTarget - absoluteAtTarget, 360.0);
-        
+
         if (wasTimeout) {
             System.err.println(String.format(
                 "WARNING: Cycle %d timed out waiting to reach target angle %.2f° (within %.2f° tolerance)",
                 currentCycle + 1, testAngleDegrees, angleToleranceDegrees));
             SmartDashboard.putString("DriftTest/Status", "Timeout at Target");
         }
-        
+
         System.out.println(String.format(
             "%sCycle %d: Reached target (%.2f°) - Drift: %.3f° (Rel: %.2f°, Abs: %.2f°)",
-            wasTimeout ? "  " : "", currentCycle + 1, testAngleDegrees, driftAtTarget, 
+            wasTimeout ? "  " : "", currentCycle + 1, testAngleDegrees, driftAtTarget,
             relativeAtTarget, absoluteAtTarget));
-        
+
         SmartDashboard.putNumber("DriftTest/DriftAtTarget", driftAtTarget);
     }
-    
+
     /**
      * Prints the zero position measurement results and cycle completion summary.
-     * 
+     *
      * @param wasTimeout true if this measurement was taken after a timeout
      * @param relativeAtZero Relative encoder value at zero position
      * @param absoluteAtZero Absolute encoder value at zero position
      */
     private void printZeroMeasurement(boolean wasTimeout, double relativeAtZero, double absoluteAtZero) {
         double driftAtZero = Math.IEEEremainder(relativeAtZero - absoluteAtZero, 360.0);
-        
+
         if (wasTimeout) {
             System.err.println(String.format(
                 "WARNING: Cycle %d timed out waiting to reach zero (within %.2f° tolerance)",
                 currentCycle + 1, angleToleranceDegrees));
             SmartDashboard.putString("DriftTest/Status", "Timeout at Zero");
         }
-        
+
         System.out.println(String.format(
             "%sCycle %d: Reached zero - Drift: %.3f° (Rel: %.2f°, Abs: %.2f°)",
             wasTimeout ? "  " : "", currentCycle + 1, driftAtZero, relativeAtZero, absoluteAtZero));
@@ -554,13 +537,13 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             "  Cycle %d complete%s - Target drift: %.3f°, Zero drift: %.3f°",
             currentCycle + 1, wasTimeout ? " (with timeout)" : "",
             testResults[currentCycle].driftAtTarget(), driftAtZero));
-        
+
         SmartDashboard.putNumber("DriftTest/DriftAtZero", driftAtZero);
     }
-    
+
     /**
      * Calculates and prints drift statistics from the collected test results.
-     * 
+     *
      * Analyzes the complete cycle results to show:
      * - Statistics for drift at target position (across all cycles)
      * - Statistics for drift at zero position (across all cycles)
@@ -572,20 +555,20 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         System.out.println("Module: " + moduleNumber);
         System.out.println("Test Angle: " + testAngleDegrees + " degrees");
         System.out.println("Cycles Completed: " + currentCycle);
-        
+
         if (currentCycle == 0) {
             System.out.println("No cycles completed.");
             System.out.println("==========================\n");
             return;
         }
-        
+
         // Extract drift values from each cycle for separate analysis
         // We analyze target and zero positions separately to see if drift patterns differ
         double[] driftAtTarget = new double[currentCycle];
         double[] driftAtZero = new double[currentCycle];
         int timeoutCountAtTarget = 0;
         int timeoutCountAtZero = 0;
-        
+
         for (int i = 0; i < currentCycle; i++) {
             if (testResults[i] != null) {
                 // Extract drift values from each complete cycle
@@ -596,19 +579,19 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
                 if (testResults[i].wasTimeoutAtZero()) timeoutCountAtZero++;
             }
         }
-        
+
         System.out.println("\n--- Drift at Target Position ---");
         printDriftStats(driftAtTarget, currentCycle);
         if (timeoutCountAtTarget > 0) {
             System.out.println(String.format("  (%d cycle(s) recorded after timeout at target)", timeoutCountAtTarget));
         }
-        
+
         System.out.println("\n--- Drift at Zero Position ---");
         printDriftStats(driftAtZero, currentCycle);
         if (timeoutCountAtZero > 0) {
             System.out.println(String.format("  (%d cycle(s) recorded after timeout at zero)", timeoutCountAtZero));
         }
-        
+
         // Calculate total accumulated drift over all cycles
         // Uses zero position measurements because we return to zero each cycle,
         // making it easier to see if drift accumulates over time
@@ -616,7 +599,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             double initialDrift = driftAtZero[0];  // Drift at zero in first cycle
             double finalDrift = driftAtZero[currentCycle - 1];  // Drift at zero in last cycle
             double totalDrift = finalDrift - initialDrift;  // How much drift accumulated
-            
+
             System.out.println("\n--- Total Drift Over Test ---");
             System.out.println(String.format("Initial Drift at Zero: %.3f°", initialDrift));
             System.out.println(String.format("Final Drift at Zero: %.3f°", finalDrift));
@@ -624,13 +607,13 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             if (currentCycle > 1) {
                 System.out.println(String.format("Average Drift per Cycle: %.3f°", totalDrift / (currentCycle - 1)));
             }
-            
+
             // Update SmartDashboard
             SmartDashboard.putNumber("DriftTest/TotalDrift", totalDrift);
             if (currentCycle > 1) {
                 SmartDashboard.putNumber("DriftTest/AvgDriftPerCycle", totalDrift / (currentCycle - 1));
             }
-            
+
             // Warning if drift is significant
             if (Math.abs(totalDrift) > 5.0) {
                 System.out.println("\n⚠️  WARNING: Significant drift detected! (>5°)");
@@ -645,13 +628,13 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
                 System.out.println("\n✓ Drift is within acceptable range (<2°)");
             }
         }
-        
+
         System.out.println("==========================\n");
     }
-    
+
     /**
      * Prints statistics for drift values.
-     * 
+     *
      * @param driftArray Array of drift values
      * @param count Number of valid values in the array
      */
@@ -673,7 +656,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         }
 
         double avg = sum / count;
-        
+
         // Calculate standard deviation
         double variance = 0.0;
         for (int i = 0; i < count; i++) {

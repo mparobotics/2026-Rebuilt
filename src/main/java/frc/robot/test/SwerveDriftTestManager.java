@@ -12,7 +12,12 @@ import frc.robot.Subsystems.SwerveSubsystem;
  * Manager class for the swerve angle drift test.
  * Handles SmartDashboard configuration and test triggering.
  * Keeps test code separate from production robot code.
+ * 
+ * @deprecated This class is being replaced by the DiagnosticTestManager framework.
+ *             Use the framework's test selection and execution instead.
+ *             This class will be removed in Phase 2 migration.
  */
+@Deprecated
 public class SwerveDriftTestManager {
     
     private static final String DASHBOARD_PREFIX = "DriftTest/";
@@ -84,9 +89,17 @@ public class SwerveDriftTestManager {
         }
         
         // Schedule the test command
-        SwerveAngleDriftTestCommand testCommand = new SwerveAngleDriftTestCommand(
-            swerveSubsystem, moduleNumber, testAngleDegrees, numberOfCycles, 
-            angleToleranceDegrees, maxWaitTimeSeconds, minHoldTimeSeconds);
+        // Note: The test now reads parameters from SmartDashboard in initialize(),
+        // so we need to set them up before creating the command
+        String paramPrefix = "DiagnosticTests/Swerve Angle Drift Test/Parameters/";
+        SmartDashboard.putNumber(paramPrefix + "ModuleNumber", moduleNumber);
+        SmartDashboard.putNumber(paramPrefix + "Angle", testAngleDegrees);
+        SmartDashboard.putNumber(paramPrefix + "NumberOfCycles", numberOfCycles);
+        SmartDashboard.putNumber(paramPrefix + "AngleTolerance", angleToleranceDegrees);
+        SmartDashboard.putNumber(paramPrefix + "MaxWaitTime", maxWaitTimeSeconds);
+        SmartDashboard.putNumber(paramPrefix + "MinHoldTime", minHoldTimeSeconds);
+        
+        SwerveAngleDriftTestCommand testCommand = new SwerveAngleDriftTestCommand(swerveSubsystem);
         CommandScheduler.getInstance().schedule(testCommand);
         
         System.out.println("Starting drift test: Module " + moduleNumber + 
