@@ -728,29 +728,43 @@ public class SimpleMotorTest extends Command implements DiagnosticTest {
 
 ## Implementation Plan
 
-### Phase 1: Core Framework
-1. Create `DiagnosticTest` interface
-2. Create `DiagnosticTestResult` class
-3. Create `TestParameterHelper` utility class
-4. Create `DiagnosticTestRegistry` (Enum-based)
-5. Create `DiagnosticTestManager` with parameter and result handling
-6. Integrate into `Robot.testInit/testPeriodic/testEnd`
-7. Test with minimal example
+### Phase 1: Core Framework (MVP)
+1. Create `DiagnosticTestRegistry` (Enum-based) with factory methods
+2. Create `DiagnosticTestManager` class:
+   - SmartDashboard UI initialization (dropdown, start button, status display)
+   - Test selection and parameter initialization (calls `initializeParameters()`)
+   - Test execution (creates test via registry, schedules via CommandScheduler)
+   - Test completion monitoring (tracks active test, updates status)
+   - Cleanup handling
+3. Integrate `DiagnosticTestManager` into `Robot.testInit/testPeriodic/testEnd`
+4. Create simple example test (e.g., motor speed test) to demonstrate framework usage
+5. Test end-to-end flow with example test
+
+**Note**: The `DiagnosticTest` interface already exists. For MVP, tests are responsible for managing their own parameters and results (no `TestParameterHelper` or `DiagnosticTestResult` yet).
 
 ### Phase 2: Migration
-1. Make `SwerveAngleDriftTestCommand` implement `DiagnosticTest`
-2. Add `initializeParameters()` method
-3. Modify to read parameters from SmartDashboard using `TestParameterHelper`
-4. Add `getResult()` method to return `DiagnosticTestResult`
-5. Register in `DiagnosticTestRegistry`
-6. Test end-to-end flow (parameter configuration, execution, result display)
-7. Remove `SwerveDriftTestManager` (replaced by framework)
+1. Refactor `SwerveAngleDriftTestCommand`:
+   - Implement `DiagnosticTest` interface
+   - Add `initializeParameters()` method (moves parameter setup from `SwerveDriftTestManager.initializeDashboard()`)
+   - Modify constructor to take only `SwerveSubsystem` (remove parameter arguments)
+   - Modify `initialize()` to read parameters from SmartDashboard (moves logic from `SwerveDriftTestManager.startTestFromDashboard()`)
+   - Keep existing test logic, state machine, and result reporting unchanged
+2. Register `SwerveAngleDriftTestCommand` in `DiagnosticTestRegistry`
+3. Test end-to-end flow (parameter configuration, execution, status display)
+4. Remove `SwerveDriftTestManager` (replaced by framework)
 
 ### Phase 3: Documentation & Examples
-1. Create example test templates
-2. Document test creation workflow
-3. Add inline code comments and JavaDoc
-4. Create README for test authors
+1. Document test creation workflow
+2. Add inline code comments and JavaDoc
+3. Create README for test authors
+4. Document MVP limitations and future enhancements
+
+### Future Phases (Deferred)
+The following components are deferred to later phases to keep the MVP simple:
+- `DiagnosticTestResult` class - Tests currently report results directly to SmartDashboard
+- `TestParameterHelper` utility class - Tests currently manage their own SmartDashboard parameters
+- `StateMachineTestCommand` base class - Not needed for MVP; tests can extend `Command` directly
+- Standardized `Results/` section in SmartDashboard - Tests use their own namespaces for now
 
 ## Design Decisions & Alternatives
 
