@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.test.DiagnosticTest;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.SwerveModule;
-import frc.robot.test.SwerveModuleTestUtils;
 
 /**
  * Test command to detect encoder drift in swerve module angle motors.
@@ -181,7 +180,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         }
 
         // Get the module to test
-        testModule = SwerveModuleTestUtils.getModule(swerveSubsystem, moduleNumber);
+        testModule = swerveSubsystem.getModule(moduleNumber);
         if (testModule == null) {
             System.err.println("ERROR: Module " + moduleNumber + " not found in swerve subsystem.");
             currentState = TestState.COMPLETE;
@@ -252,7 +251,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             case MOVING_TO_TARGET:
                 // Phase 1: Wait for module to reach the test angle (e.g., 90°)
                 // Once reached, transition to AT_TARGET state to hold for minimum time
-                if (SwerveModuleTestUtils.isAtAngle(testModule, testAngleDegrees, angleToleranceDegrees)) {
+                if (isAtAngle(testModule, testAngleDegrees, angleToleranceDegrees)) {
                     // Reached target - transition to hold state
                     currentState = TestState.AT_TARGET;
                     positionReachedTime = currentTime;
@@ -279,7 +278,7 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
             case MOVING_TO_ZERO:
                 // Phase 2: Wait for module to return to zero
                 // Once reached, transition to AT_ZERO state to hold for minimum time
-                if (SwerveModuleTestUtils.isAtAngle(testModule, 0.0, angleToleranceDegrees)) {
+                if (isAtAngle(testModule, 0.0, angleToleranceDegrees)) {
                     // Reached zero - transition to hold state
                     currentState = TestState.AT_ZERO;
                     positionReachedTime = currentTime;
@@ -321,8 +320,8 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
         }
 
         // Get current encoder values
-        double currentRelativeAngle = SwerveModuleTestUtils.getRelativeEncoderDegrees(testModule);
-        double currentAbsoluteAngle = SwerveModuleTestUtils.getAbsoluteEncoderDegrees(testModule);
+        double currentRelativeAngle = testModule.getRawTurnEncoder();
+        double currentAbsoluteAngle = testModule.getCanCoder().getDegrees();
         double currentDrift = Math.IEEEremainder(currentRelativeAngle - currentAbsoluteAngle, 360.0);
 
         // Determine target angle based on current state
@@ -387,6 +386,27 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     }
 
     // ============================================================================
+    // Helper Methods
+    // ============================================================================
+
+    /**
+     * Checks if a swerve module is at the specified angle within tolerance.
+     *
+     * This method compares the current relative encoder position to the target angle,
+     * accounting for the circular nature of angles (e.g., 359° is close to 1°).
+     *
+     * @param module The swerve module to check
+     * @param targetDegrees The target angle in degrees (0-360)
+     * @param toleranceDegrees The acceptable error in degrees
+     * @return true if the module is within tolerance of the target angle
+     */
+    private boolean isAtAngle(SwerveModule module, double targetDegrees, double toleranceDegrees) {
+        double currentDegrees = module.getRawTurnEncoder();
+        double error = Math.abs(Math.IEEEremainder(currentDegrees - targetDegrees, 360.0));
+        return error <= toleranceDegrees;
+    }
+
+    // ============================================================================
     // State Transition Methods
     // ============================================================================
 
@@ -446,8 +466,8 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
     private void recordTargetMeasurement(boolean wasTimeout) {
         // Store encoder measurements temporarily - we'll create the complete cycle result
         // when we also have the zero position measurement
-        relativeAtTarget = SwerveModuleTestUtils.getRelativeEncoderDegrees(testModule);
-        absoluteAtTarget = SwerveModuleTestUtils.getAbsoluteEncoderDegrees(testModule);
+        relativeAtTarget = testModule.getRawTurnEncoder();
+        absoluteAtTarget = testModule.getCanCoder().getDegrees();
         timeoutAtTarget = wasTimeout;
 
         // Print measurement results
@@ -461,8 +481,8 @@ public class SwerveAngleDriftTestCommand extends Command implements DiagnosticTe
      */
     private void recordZeroMeasurement(boolean wasTimeout) {
         // Get zero position measurements
-        double relativeAtZero = SwerveModuleTestUtils.getRelativeEncoderDegrees(testModule);
-        double absoluteAtZero = SwerveModuleTestUtils.getAbsoluteEncoderDegrees(testModule);
+        double relativeAtZero = testModule.getRawTurnEncoder();
+        double absoluteAtZero = testModule.getCanCoder().getDegrees();
 
         // Record the complete cycle result (contains both target and zero measurements)
         recordCycleResult(relativeAtZero, absoluteAtZero, wasTimeout);

@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import frc.robot.test.SwerveAngleDriftTestCommand;
-import frc.robot.test.SwerveModuleTestUtils;
 
 /**
  * Basic validation tests for the swerve drift test code.
@@ -77,31 +76,8 @@ class SwerveDriftTestValidationTest {
     }
 
     /**
-     * Tests that SwerveModuleTestUtils methods throw NullPointerException with null module.
-     * This is expected behavior - the methods don't check for null, which is fine
-     * since they're internal test utilities. This test documents the behavior.
-     */
-    @Test
-    void testNullHandling() {
-        // These methods will throw NullPointerException with null, which is expected
-        // This test documents that behavior
-        
-        assertThrows(NullPointerException.class, () -> {
-            SwerveModuleTestUtils.isAtAngle(null, 90.0, 2.0);
-        }, "isAtAngle should throw NPE with null module");
-        
-        assertThrows(NullPointerException.class, () -> {
-            SwerveModuleTestUtils.getRelativeEncoderDegrees(null);
-        }, "getRelativeEncoderDegrees should throw NPE with null module");
-        
-        assertThrows(NullPointerException.class, () -> {
-            SwerveModuleTestUtils.getAbsoluteEncoderDegrees(null);
-        }, "getAbsoluteEncoderDegrees should throw NPE with null module");
-    }
-
-    /**
-     * Tests the angle comparison logic in isAtAngle.
-     * This verifies the Math.IEEEremainder logic works correctly.
+     * Tests the angle comparison logic used in SwerveAngleDriftTestCommand.
+     * This verifies the Math.IEEEremainder logic works correctly for angle comparisons.
      */
     @Test
     void testAngleComparisonLogic() {
