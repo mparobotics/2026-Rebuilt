@@ -476,4 +476,23 @@ public class SwerveModule {
         // Reset encoder position to zero (sets starting position for odometry)
         driveEncoder.setPosition(0.0);
     }
+
+    /* Diagnostic Test Support
+     * The following methods are provided for diagnostic test code to access internal
+     * module state that is not needed during normal robot operation. They are not used
+     * by production robot code.
+     */
+
+    /**
+     * Gets the angle offset used to calibrate this module.
+     * <p>
+     * This is the offset subtracted from the CANcoder reading to determine the module's
+     * zero position. It may come from Constants.java or from a stored Preference.
+     * Useful for diagnostic tests to verify encoder calibration.
+     *
+     * @return The angle offset as a Rotation2d
+     */
+    public Rotation2d getAngleOffset() {
+        return angleOffset;
+    }
 }

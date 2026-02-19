@@ -3,7 +3,9 @@ package frc.lib.test;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.test.LedStateTestCommand;
+import frc.robot.test.SwerveAlignmentTestCommand;
 import frc.robot.test.SwerveAngleDriftTestCommand;
+import frc.robot.test.SwerveStraightLineTestCommand;
 
 /**
  * Central registry of available diagnostic tests.
@@ -47,6 +49,39 @@ public enum DiagnosticTestRegistry {
         @Override
         public Command createTest(RobotContainer robotContainer) {
             return new SwerveAngleDriftTestCommand(robotContainer.getSwerveSubsystem());
+        }
+    },
+
+    /**
+     * Swerve Alignment Test - Commands all modules to the same angle and measures accuracy.
+     * Reveals angle offset calibration errors that cause drift during driving.
+     */
+    SWERVE_ALIGNMENT(
+        "Swerve Alignment Test",
+        "Commands all four swerve modules to the same angle and measures how accurately each "
+        + "module reaches the target. Reveals angle offset calibration errors, failed encoder "
+        + "calibration, and module-specific issues that cause drift."
+    ) {
+        @Override
+        public Command createTest(RobotContainer robotContainer) {
+            return new SwerveAlignmentTestCommand(robotContainer.getSwerveSubsystem());
+        }
+    },
+
+    /**
+     * Swerve Straight Line Test - Drives the robot straight with known inputs.
+     * Bypasses the joystick to test whether the drive code, motors, and mechanics
+     * allow the robot to drive straight.
+     */
+    SWERVE_STRAIGHT_LINE(
+        "Swerve Straight Line Test",
+        "Commands the robot to drive straight forward with known inputs (bypassing the joystick) "
+        + "and measures each module's angle and velocity response. Reveals angle calibration errors, "
+        + "velocity mismatches, and heading drift that cause the robot to not drive straight."
+    ) {
+        @Override
+        public Command createTest(RobotContainer robotContainer) {
+            return new SwerveStraightLineTestCommand(robotContainer.getSwerveSubsystem());
         }
     },
 
