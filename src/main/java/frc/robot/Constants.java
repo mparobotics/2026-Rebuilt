@@ -111,14 +111,23 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
     /* Module Specific Constants */
     public record ModuleData(
-      int driveMotorID, int angleMotorID, int encoderID, double angleOffset, Translation2d location
+      int driveMotorID,
+      int angleMotorID,
+      int encoderID,
+      double angleOffset,
+      Translation2d location,
+      boolean driveInvert,
+      boolean angleInvert
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT), //Mod 0 Front left
-      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT), //Mod 2 Back right
-      new ModuleData(15, 14, 16, 8.52, BACK_LEFT) //Mod 3 Back left
+      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+      // Module 1 is currently the only module oscillating; flip its angle motor invert so its
+      // steering closed-loop sign matches the encoder direction.
+      // Module 1: also invert drive so +X command drives forward like the others.
+      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+      new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
     };
     
   }
@@ -172,10 +181,12 @@ public class FieldConstants {
       public static final double HOOD_TOLERANCE = 0.02;
   }
   public class IntakeConstants {
-    public static int INTAKE_ID = 60; // placeholder
+    // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
+    // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
+    public static int INTAKE_ID = 63; // TODO: set to your intake motor CAN ID
     public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
 
-    public static int INTAKE_ARM_ID = 62; //placeholder
+    public static int INTAKE_ARM_ID = 64; // TODO: set to your intake arm motor CAN ID
     public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
     public static double INTAKE_ARM_LOWERED_POSITION = 0;
     public static double INTAKE_ARM_MINIMUM = 0; // placeholders
