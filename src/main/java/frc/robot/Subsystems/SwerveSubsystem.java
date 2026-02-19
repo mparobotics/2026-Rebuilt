@@ -6,6 +6,8 @@ package frc.robot.Subsystems;
 
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -20,9 +22,12 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.LimelightHelpers;
 import frc.robot.Constants;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
@@ -38,23 +43,10 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private Field2d field;
 
-  /* NetworkTable Publishers for Swerve Module State Monitoring
-   * These publishers send swerve module state data to NetworkTables for visualization
-   * and debugging. The data can be viewed in tools like AdvantageScope, Shuffleboard,
-   * or custom dashboards. Publishing actual vs. desired states allows comparison to
-   * diagnose control issues, tuning problems, or mechanical issues.
-   */
-  // Publisher for actual/current swerve module states (speed and angle from encoders)
-  // * Get the default NetworkTable instance (shared across all NetworkTable operations)
-  // * Create a publisher for the "Swerve States" topic that sends arrays of SwerveModuleState
-  // * The struct format allows efficient serialization of the state data
+
   private final StructArrayPublisher<SwerveModuleState> swerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Swerve States", SwerveModuleState.struct).publish();
 
-  // Publisher for desired/target swerve module states (commanded speed and angle)
-  // * Get the default NetworkTable instance
-  // * Create a publisher for the "Desired Swerve States" topic that sends arrays of SwerveModuleState
-  // * This shows what the robot is trying to achieve, useful for comparing against actual states
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
 
@@ -78,6 +70,44 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+  }
+
+
+  private void configurePathPlanner(){
+    AutoBuilder.configure(this::getPose,
+    this::resetOdometry,
+    this::getChassisSpeeds,
+    (speeds, feedforwards)->driveFromChassisSpeeds(speeds, false),
+    AutoConstants.SWERV_DRIVE_CONTROLLER,
+    AutoConstants.ROBOT_CONFIG,
+    FieldConstants::isRedAlliance,
+    this);
+  }
+
+  public Command autoDrive(String filename){
+    try{
+      PathPlannerPath path = PathPlannerPath.fromPathFile(filename);
+      if (AutoConstants.isRightSideAuto()){
+        path = path.mirrorPath();
+      }
+      return AutoBuilder.followPath(path);
+    }
+    catch(Exception e){
+      DriverStation.reportError("PATHPLANNER ERROR" + e.getMessage(), e.getStackTrace());
+      return Commands.none();
+    }
+  }
+
+  public Command startAutoAt(double x, double y, double direction){
+    return runOnce(()->{
+      double newY = y;
+      if (AutoConstants.isRightSideAuto()){
+        newY = FieldConstants.FIELD_WIDTH - y;
+      }
+      Pose2d startPose2d = FieldConstants.flipForAlliance(new Pose2d(x, newY, Rotation2d.fromDegrees(direction)));
+      pigeon.setYaw(startPose2d.getRotation().getDegrees());
+      odometry.resetPosition(startPose2d.getRotation(),getPositions(),startPose2d);
+    });
   }
   
 
