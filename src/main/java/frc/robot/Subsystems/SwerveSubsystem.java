@@ -236,11 +236,11 @@ public class SwerveSubsystem extends SubsystemBase {
     swerveDataPublisher.set(getStates());
   }
 
-  /* Diagnostic Test Support
-   * The following method is required for diagnostic tests to access individual swerve modules.
-   * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
-   * without requiring direct access to the internal module array.
-   */
+  // ============================================================================
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
+  // ============================================================================
 
   /**
    * Gets a specific swerve module by its module number.

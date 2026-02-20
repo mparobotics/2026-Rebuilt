@@ -166,10 +166,10 @@ public class RobotContainer {
   }
 
   // ============================================================================
-  // Methods for Simulation and Testing
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
   // ============================================================================
-  // The following methods are provided for simulation and test code to access
-  // subsystems. They are not used by production robot code.
 
   /**
    * Gets the swerve subsystem instance.

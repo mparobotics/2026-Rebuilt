@@ -477,11 +477,11 @@ public class SwerveModule {
         driveEncoder.setPosition(0.0);
     }
 
-    /* Diagnostic Test Support
-     * The following methods are provided for diagnostic test code to access internal
-     * module state that is not needed during normal robot operation. They are not used
-     * by production robot code.
-     */
+    // ============================================================================
+    // Simulation and Test Support Methods
+    // The following methods are provided for simulation and diagnostic test
+    // support. They are not used by production robot code.
+    // ============================================================================
 
     /**
      * Gets the angle offset used to calibrate this module.
