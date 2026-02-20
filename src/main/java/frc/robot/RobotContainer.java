@@ -15,6 +15,9 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Auto.DriveTestAuto;
+import frc.robot.Auto.EightLemonAuto;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
@@ -53,18 +56,10 @@ public class RobotContainer {
   //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
-  /**
-   * Constructs the RobotContainer. Creates subsystems (which configure themselves)
-   * and sets up command bindings to map controller inputs to commands.
-   */
   public RobotContainer() {
     configureBindings();
   }
 
-  /**
-   * Configures command bindings for controller inputs.
-   * Maps buttons and triggers to commands and sets the default drive command.
-   */
   private void configureBindings() {
 
     // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
@@ -143,26 +138,21 @@ public class RobotContainer {
     );
   }
 
-
-  /**
-   * Determines if the driver has requested speed reduction for precise positioning
-   * or delicate tasks.
-   * @return Speed multiplier
-   */
   private double getSpeedMultiplier(){
     // getHID() accesses the underlying XboxController to read button states directly.
     // CommandXboxController doesn't provide a method for stick button presses, so we use
     // the HID (Human Interface Device) object's getRawButton() method instead.
     return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1;
   }
-
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
+  
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
+
+    return switch (selected) {
+      case DriveTestAuto -> new DriveTestAuto(m_drive);
+      case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
+      default -> Commands.none();
+    };
   }
 
 
