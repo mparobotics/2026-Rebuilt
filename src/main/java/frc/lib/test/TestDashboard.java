@@ -50,10 +50,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * 
  * <p><b>Prefix Format:</b>
  * <ul>
- *   <li>Params: {@code "DiagnosticTests/" + testName + "/Parameters/" + paramName}</li>
- *   <li>Results: {@code "DiagnosticTests/" + testName + "/Results/" + resultName}</li>
+ *   <li>Params: {@code "DiagnosticTests/Test: " + testName + "/Parameters/" + paramName}</li>
+ *   <li>Results: {@code "DiagnosticTests/Test: " + testName + "/Results/" + resultName}</li>
  * </ul>
  * 
+ * <p>The "Test: " prefix groups all test-related parameter and result fields together in SmartDashboard.
+ *
  * <p>Result names can include path separators (e.g., {@code "Config/Module"}) to organize results into groups.
  */
 public class TestDashboard {
@@ -74,9 +76,12 @@ public class TestDashboard {
     /**
      * Constructs the prefix for a test based on the test name and data type.
      * 
+     * <p>The test name is prefixed with "Test: " to group all test-related fields together
+     * in SmartDashboard (e.g., "DiagnosticTests/Test: My Test/Parameters/").
+     *
      * @param test The test instance (must not be null)
      * @param type Whether this is a PARAM or RESULT
-     * @return The constructed prefix (e.g., "DiagnosticTests/My Test/Parameters/")
+     * @return The constructed prefix (e.g., "DiagnosticTests/Test: My Test/Parameters/")
      * @throws IllegalArgumentException if test is null
      * @throws IllegalStateException if test name is null or empty
      */
@@ -89,7 +94,7 @@ public class TestDashboard {
             throw new IllegalStateException("Test name cannot be null or empty. Implement getTestName() properly.");
         }
         String suffix = (type == DataType.PARAM) ? PARAMS_SUFFIX : RESULTS_SUFFIX;
-        return BASE_PREFIX + testName + suffix;
+        return BASE_PREFIX + "Test: " + testName + suffix;
     }
     
     // ============================================================================
