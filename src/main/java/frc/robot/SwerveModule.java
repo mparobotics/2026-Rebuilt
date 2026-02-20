@@ -504,9 +504,9 @@ public class SwerveModule {
     }
 
     // ============================================================================
-    // Simulation Support Methods
-    // These methods are only used by SimulationManager.
-    // They expose internal objects needed for simulating robot motion.
+    // Simulation and Test Support Methods
+    // The following methods are provided for simulation and diagnostic test
+    // support. They are not used by production robot code.
     // ============================================================================
 
     /**
