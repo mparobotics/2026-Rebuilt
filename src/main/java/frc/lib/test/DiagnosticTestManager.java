@@ -388,13 +388,12 @@ public class DiagnosticTestManager {
             System.err.println("Unexpected error monitoring test: " + e.getMessage());
             e.printStackTrace();
 
-            // Cancel the test if it exists (defensive cleanup)
-            if (activeTest != null) {
-                try {
-                    activeTest.cancel();
-                } catch (Exception cancelException) {
-                    System.err.println("Error cancelling test after monitoring failure: " + cancelException.getMessage());
-                }
+            // Cancel the test (defensive cleanup)
+            // - activeTest cannot be null here
+            try {
+                activeTest.cancel();
+            } catch (Exception cancelException) {
+                System.err.println("Error cancelling test after monitoring failure: " + cancelException.getMessage());
             }
 
             currentStatus = TestStatus.ERROR;
