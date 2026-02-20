@@ -9,14 +9,17 @@ import frc.robot.test.SwerveStraightLineTestCommand;
 
 /**
  * Central registry of available diagnostic tests.
- * 
+ *
  * <p>This enum-based registry provides compile-time safety and makes all available tests
  * visible in one place. Each enum value represents a test and provides:
  * <ul>
- *   <li>Display name and description for the SmartDashboard UI</li>
+ *   <li>Display name for the SmartDashboard UI</li>
  *   <li>Factory method to create test instances</li>
  * </ul>
- * 
+ *
+ * <p><b>Note:</b> Test descriptions are provided by each test's
+ * {@link DiagnosticTest#getTestDescription()} method, not by the registry.
+ *
  * <p>To add a new test:
  * <ol>
  *   <li>Create a test class that extends {@link edu.wpi.first.wpilibj2.command.Command}
@@ -24,10 +27,10 @@ import frc.robot.test.SwerveStraightLineTestCommand;
  *   <li>Add a new enum value to this registry</li>
  *   <li>Implement the factory method to create your test instance</li>
  * </ol>
- * 
+ *
  * <p><b>Example:</b>
  * <pre>{@code
- * MY_NEW_TEST("My New Test", "Description of what this test does") {
+ * MY_NEW_TEST("My New Test") {
  *     @Override
  *     public Command createTest(RobotContainer robotContainer) {
  *         return new MyNewTestCommand(robotContainer.getSwerveSubsystem());
@@ -36,16 +39,13 @@ import frc.robot.test.SwerveStraightLineTestCommand;
  * }</pre>
  */
 public enum DiagnosticTestRegistry {
-    
+
     /**
      * Swerve angle drift test.
      * Tests encoder drift by rotating a swerve module through multiple cycles
      * and comparing relative encoder to absolute encoder measurements.
      */
-    SWERVE_ANGLE_DRIFT(
-        "Swerve Angle Drift Test",
-        "Tests encoder drift by rotating a swerve module through multiple cycles and comparing relative encoder to absolute encoder measurements."
-    ) {
+    SWERVE_ANGLE_DRIFT("Swerve Angle Drift Test") {
         @Override
         public Command createTest(RobotContainer robotContainer) {
             return new SwerveAngleDriftTestCommand(robotContainer.getSwerveSubsystem());
@@ -56,12 +56,7 @@ public enum DiagnosticTestRegistry {
      * Swerve Alignment Test - Commands all modules to the same angle and measures accuracy.
      * Reveals angle offset calibration errors that cause drift during driving.
      */
-    SWERVE_ALIGNMENT(
-        "Swerve Alignment Test",
-        "Commands all four swerve modules to the same angle and measures how accurately each "
-        + "module reaches the target. Reveals angle offset calibration errors, failed encoder "
-        + "calibration, and module-specific issues that cause drift."
-    ) {
+    SWERVE_ALIGNMENT("Swerve Alignment Test") {
         @Override
         public Command createTest(RobotContainer robotContainer) {
             return new SwerveAlignmentTestCommand(robotContainer.getSwerveSubsystem());
@@ -73,12 +68,7 @@ public enum DiagnosticTestRegistry {
      * Bypasses the joystick to test whether the drive code, motors, and mechanics
      * allow the robot to drive straight.
      */
-    SWERVE_STRAIGHT_LINE(
-        "Swerve Straight Line Test",
-        "Commands the robot to drive straight forward with known inputs (bypassing the joystick) "
-        + "and measures each module's angle and velocity response. Reveals angle calibration errors, "
-        + "velocity mismatches, and heading drift that cause the robot to not drive straight."
-    ) {
+    SWERVE_STRAIGHT_LINE("Swerve Straight Line Test") {
         @Override
         public Command createTest(RobotContainer robotContainer) {
             return new SwerveStraightLineTestCommand(robotContainer.getSwerveSubsystem());
@@ -90,72 +80,55 @@ public enum DiagnosticTestRegistry {
      * Allows independent testing of LED states without other robot systems.
      * Useful for verifying LED hardware functionality and visual feedback.
      */
-    LED_STATE_TEST(
-        "LED State Test",
-        "Tests CandleSubsystem LED states independently. Sets the selected LED state for a "
-        + "specified duration, then turns LEDs off. Useful for verifying LED hardware functionality "
-        + "and testing visual feedback without other robot systems."
-    ) {
+    LED_STATE_TEST("LED State Test") {
         @Override
         public Command createTest(RobotContainer robotContainer) {
             return new LedStateTestCommand(robotContainer.getCandleSubsystem());
         }
     };
-    
+
     private final String displayName;
-    private final String description;
-    
+
     /**
      * Creates a new registry entry.
-     * 
+     *
      * @param displayName The name to display in the SmartDashboard dropdown
-     * @param description A description of what this test does
      */
-    DiagnosticTestRegistry(String displayName, String description) {
+    DiagnosticTestRegistry(String displayName) {
         this.displayName = displayName;
-        this.description = description;
     }
-    
+
     /**
      * Gets the display name for this test.
      * This name will be shown in the SmartDashboard test selector dropdown.
-     * 
+     *
      * @return The display name
      */
     public String getDisplayName() {
         return displayName;
     }
-    
-    /**
-     * Gets the description of what this test does.
-     * 
-     * @return The test description
-     */
-    public String getDescription() {
-        return description;
-    }
-    
+
     /**
      * Factory method to create an instance of this test.
-     * 
+     *
      * <p>Each enum value must implement this method to create its specific test instance.
      * The test should be configured with dependencies from the RobotContainer, but
      * parameters should be read from SmartDashboard in the test's {@code initialize()}
      * method (after {@link DiagnosticTest#initializeParameters()} has been called).
-     * 
+     *
      * <p><b>Note:</b> Return type is {@link Command} for now to allow tests that haven't
      * yet implemented {@link DiagnosticTest} (e.g., during Phase 2 migration). Once all
      * tests implement the interface, this should be changed to return {@link DiagnosticTest}.
-     * 
+     *
      * @param robotContainer The robot container providing access to subsystems
      * @return A new instance of the diagnostic test command
      */
     public abstract Command createTest(RobotContainer robotContainer);
-    
+
     /**
      * Gets an array of all test display names.
      * Useful for populating dropdowns or listing available tests.
-     * 
+     *
      * @return Array of all test display names
      */
     public static String[] getAllDisplayNames() {
@@ -166,10 +139,10 @@ public enum DiagnosticTestRegistry {
         }
         return names;
     }
-    
+
     /**
      * Finds a test registry entry by its display name.
-     * 
+     *
      * @param displayName The display name to search for
      * @return The matching registry entry, or null if not found
      */

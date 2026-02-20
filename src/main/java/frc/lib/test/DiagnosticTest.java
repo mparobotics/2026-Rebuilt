@@ -21,12 +21,14 @@ package frc.lib.test;
  *     
  *     @Override
  *     public void initializeParameters() {
- *         TestParameterHelper.putDouble("DiagnosticTests/Parameters/My Test/Speed", 0.5);
+ *         TestDashboard.putParamDouble(this, "Speed", 0.5);
+ *         TestDashboard.putParamInt(this, "Cycles", 10);
  *     }
  *     
  *     @Override
- *     public DiagnosticTestResult getResult() {
- *         return DiagnosticTestResult.pass("Test completed successfully");
+ *     public void initialize() {
+ *         double speed = TestDashboard.getParamDouble(this, "Speed", 0.5);
+ *         int cycles = TestDashboard.getParamInt(this, "Cycles", 10);
  *     }
  * }
  * }</pre>
@@ -56,18 +58,14 @@ public interface DiagnosticTest {
      * 
      * <p>This method is called by the framework when a test is selected in the dashboard,
      * allowing the test to set up its parameter UI before execution. Tests should use
-     * {@link TestParameterHelper} to initialize parameters with default values.
-     * 
-     * <p>Parameters should be placed under {@code DiagnosticTests/Parameters/[TestName]/}
-     * to match the framework's SmartDashboard layout.
+     * {@link TestDashboard} to initialize parameters with default values.
      * 
      * <p>This method has a default empty implementation. Override it to set up parameters:
      * <pre>{@code
      * @Override
      * public void initializeParameters() {
-     *     String prefix = "DiagnosticTests/Parameters/" + getTestName() + "/";
-     *     TestParameterHelper.putDouble(prefix + "Speed", 0.5);
-     *     TestParameterHelper.putInt(prefix + "Cycles", 10);
+     *     TestDashboard.putParamDouble(this, "Speed", 0.5);
+     *     TestDashboard.putParamInt(this, "Cycles", 10);
      * }
      * }</pre>
      */
