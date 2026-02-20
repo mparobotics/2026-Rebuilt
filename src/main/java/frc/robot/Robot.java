@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sim.SimulationManager;
+import frc.lib.test.DiagnosticTestManager;
 
 /**
  * Main robot class that extends TimedRobot. This is the entry point for the robot program
@@ -24,6 +25,7 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+  private DiagnosticTestManager m_testManager;
 
   // Simulation support
   private SimulationManager simManager;
@@ -92,13 +94,26 @@ public class Robot extends TimedRobot {
   public void testInit() {
     // Cancel all commands when entering test mode.
     CommandScheduler.getInstance().cancelAll();
+    // Initialize diagnostic test manager
+    m_testManager = new DiagnosticTestManager(m_robotContainer);
   }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    // Update diagnostic test manager (handles test selection, execution, and status monitoring)
+    if (m_testManager != null) {
+      m_testManager.periodic();
+    }
+  }
 
   @Override
-  public void testExit() {}
+  public void testExit() {
+    // Cleanup diagnostic test manager
+    if (m_testManager != null) {
+      m_testManager.cleanup();
+      m_testManager = null;
+    }
+  }
 
   @Override
   public void simulationInit() {

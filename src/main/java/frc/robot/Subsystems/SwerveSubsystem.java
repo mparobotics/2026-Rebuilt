@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.LimelightHelpers;
 import frc.robot.Constants;
-import frc.robot.test.SwerveDriftTestManager;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
@@ -79,9 +78,6 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
-
-    // Initialize drift test dashboard controls (test code - separate from production)
-    SwerveDriftTestManager.initializeDashboard();
   }
   
 
@@ -190,7 +186,7 @@ public class SwerveSubsystem extends SubsystemBase {
   public void resyncModuleEncoders(){
     if(!DriverStation.isDisabled()){
       DriverStation.reportWarning
-        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",  
+        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",
         false); //NEED CONFIRM
       return;
     }
@@ -199,7 +195,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-    public void saveModuleOffsets(){
+  public void saveModuleOffsets(){
     saveModuleOffsets(new Rotation2d());
   }
   public void saveModuleOffsets(Rotation2d desiredAngle){
@@ -212,20 +208,6 @@ public class SwerveSubsystem extends SubsystemBase {
     for (SwerveModule mod : mSwerveMods){
       mod.saveCanCoderOffset(desiredAngle);
     }
-  }
-
-  /**
-   * Gets a specific swerve module by its module number.
-   * Useful for testing and diagnostics.
-   *
-   * @param moduleNumber The module number (0-3)
-   * @return The SwerveModule instance, or null if moduleNumber is invalid
-   */
-  public SwerveModule getModule(int moduleNumber) {
-    if (moduleNumber >= 0 && moduleNumber < mSwerveMods.length) {
-      return mSwerveMods[moduleNumber];
-    }
-    return null;
   }
 
   @Override
@@ -252,15 +234,12 @@ public class SwerveSubsystem extends SubsystemBase {
         canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
     }
     swerveDataPublisher.set(getStates());
-
-    // Check if drift test should be started from SmartDashboard (test code - separate from production)
-    SwerveDriftTestManager.checkAndStartTest(this);
   }
 
   // ============================================================================
-  // Simulation Support Methods
-  // These methods are only used by SimulationManager.
-  // They expose internal objects needed for simulating robot motion.
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
   // ============================================================================
 
   /**
@@ -292,12 +271,20 @@ public class SwerveSubsystem extends SubsystemBase {
     return Constants.SwerveConstants.swerveKinematics;
   }
 
-  /* Diagnostic Test and Simulation Support
-   * The following method is required for diagnostic tests and simulation to access swerve modules.
-   * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
-   * and simulation code to iterate over all modules without requiring direct access to the
-   * internal module array.
+  /**
+   * Gets a specific swerve module by its module number.
+   * Required for diagnostic tests to access individual modules for testing and diagnostics.
+   *
+   * @param moduleNumber The module number (0-3)
+   * @return The SwerveModule instance, or null if moduleNumber is invalid
    */
+  public SwerveModule getModule(int moduleNumber) {
+    if (moduleNumber >= 0 && moduleNumber < mSwerveMods.length) {
+      return mSwerveMods[moduleNumber];
+    }
+    return null;
+  }
+
   /**
    * Gets all swerve modules as an array.
    *

@@ -541,4 +541,23 @@ public class SwerveModule {
     public SwerveModuleState getDesiredState() {
         return desiredState;
     }
+
+  // ============================================================================
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
+  // ============================================================================
+
+    /**
+     * Gets the angle offset used to calibrate this module.
+     * <p>
+     * This is the offset subtracted from the CANcoder reading to determine the module's
+     * zero position. It may come from Constants.java or from a stored Preference.
+     * Useful for diagnostic tests to verify encoder calibration.
+     *
+     * @return The angle offset as a Rotation2d
+     */
+    public Rotation2d getAngleOffset() {
+        return angleOffset;
+    }
 }

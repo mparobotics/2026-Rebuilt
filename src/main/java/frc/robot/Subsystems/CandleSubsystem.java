@@ -33,7 +33,7 @@ public class CandleSubsystem extends SubsystemBase {
 
 
    // Initialize LEDs to off
-   LightConfig(AnimationType.Off, LED_START_INDEX, LED_END_INDEX, Colors.Black);
+   lightConfig(AnimationType.Off, LED_START_INDEX, LED_END_INDEX, Colors.Black);
  }
 
 
@@ -83,7 +83,7 @@ public class CandleSubsystem extends SubsystemBase {
 
 
  //Some Color Presets
- public void ChangeColor(Colors Color, int R, int G, int B, int W) {
+ public void changeColor(Colors Color, int R, int G, int B, int W) {
    switch(Color) {
      default:
      case Red:
@@ -114,46 +114,46 @@ public class CandleSubsystem extends SubsystemBase {
  }
 
 
- public void ChangeState(LedStates State) {
-   ClearAnimations();
-   LightConfig(AnimationType.Off, LED_START_INDEX, LED_END_INDEX, Colors.Black);
+ public void changeState(LedStates State) {
+   clearAnimations();
+   lightConfig(AnimationType.Off, LED_START_INDEX, LED_END_INDEX, Colors.Black);
    switch(State) {
      default:
      case None:
      break;
      case OutOfRange:
-       LightConfig(AnimationType.Solid, LED_START_INDEX, LED_END_INDEX, Colors.Red);
+       lightConfig(AnimationType.Solid, LED_START_INDEX, LED_END_INDEX, Colors.Red);
        break;
      case InRange:
-       LightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
+       lightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
        break;
      case Aligned:
-       LightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
+       lightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
        break;
      case ShooterUpToSpeed:
-       LightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
+       lightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
        break;
      case ReadyToShoot:
-       LightConfig(AnimationType.Solid, LED_START_INDEX, LED_END_INDEX, Colors.Green);
+       lightConfig(AnimationType.Solid, LED_START_INDEX, LED_END_INDEX, Colors.Green);
        break;
      case HopperFull:
-       LightConfig(AnimationType.ColorFlow, LED_START_INDEX, LED_END_INDEX, Colors.Blue);
+       lightConfig(AnimationType.ColorFlow, LED_START_INDEX, LED_END_INDEX, Colors.Blue);
        break;
      case InRangeAligned:
-       LightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
-       LightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
+       lightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
+       lightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
        break;
      case InRangeShooterSpeed:
-       LightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
-       LightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
+       lightConfig(AnimationType.Solid, 0, 20, Colors.Yellow);
+       lightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
        break;
      case ShooterSpeedAligned:
-       LightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
-       LightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
+       lightConfig(AnimationType.Solid, 21, 40, Colors.Orange);
+       lightConfig(AnimationType.ColorFlow, 41, 60, Colors.Yellow);
        break;
    }
  }
- public void ClearAnimations() {
+ public void clearAnimations() {
    for (int i = 0; i < 8; ++i) {
      candle.setControl(new EmptyAnimation(i));
    }
@@ -162,9 +162,8 @@ public class CandleSubsystem extends SubsystemBase {
 
 
 
-  public void LightConfig(AnimationType type, int kSlot1StartIdx, int kSlot1EndIdx, Colors NewColor) {
-     ChangeColor(NewColor, 0,0,0,0);
-
+  public void lightConfig(AnimationType type, int kSlot1StartIdx, int kSlot1EndIdx, Colors NewColor) {
+     changeColor(NewColor, 0,0,0,0);
      switch (type) {
        default:
        case ColorFlow:
@@ -178,7 +177,7 @@ public class CandleSubsystem extends SubsystemBase {
          );
          break;
        case Off:
-         ChangeColor(Colors.Black, 0,0,0,0);
+         changeColor(Colors.Black, 0,0,0,0);
          candle.setControl(
            new SolidColor(kSlot1StartIdx + 7, kSlot1EndIdx + 7).withColor(LedColor)
          );
