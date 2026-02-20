@@ -237,9 +237,9 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   // ============================================================================
-  // Simulation Support Methods
-  // These methods are only used by SimulationManager.
-  // They expose internal objects needed for simulating robot motion.
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
   // ============================================================================
 
   /**
@@ -271,12 +271,6 @@ public class SwerveSubsystem extends SubsystemBase {
     return Constants.SwerveConstants.swerveKinematics;
   }
 
-  /* Diagnostic Test and Simulation Support
-   * The following method is required for diagnostic tests and simulation to access swerve modules.
-   * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
-   * and simulation code to iterate over all modules without requiring direct access to the
-   * internal module array.
-   */
   /**
    * Gets all swerve modules as an array.
    *

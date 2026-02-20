@@ -160,6 +160,12 @@ public class RobotContainer {
     return Commands.print("No autonomous command configured");
   }
 
+  // ============================================================================
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
+  // ============================================================================
+
   /**
    * Gets the swerve subsystem instance.
    * Used for simulation and test code that needs access to the
