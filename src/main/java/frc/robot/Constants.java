@@ -153,12 +153,12 @@ public static final class AutoConstants {
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{
+    DriveTestAuto,
     EightLemonAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
   private static SendableChooser<AutoMode> autoModeChooser = new SendableChooser<AutoMode>();
-  private static SendableChooser<AutoMode> eightLemonAutoChooser = new SendableChooser<AutoMode>();
   static{
     sideChooser.addOption("RIGHT", true);
     sideChooser.setDefaultOption("LEFT", false);
@@ -167,15 +167,14 @@ public static final class AutoConstants {
       autoModeChooser.addOption(mode.toString(), mode);
     }
 
-    autoModeChooser.setDefaultOption(AutoMode.EightLemonAuto.toString(), AutoMode.EightLemonAuto);
-    SmartDashboard.putData("Eight_Lemon_Auto_Chooser", eightLemonAutoChooser);
+    autoModeChooser.setDefaultOption(AutoMode.DriveTestAuto.toString(), AutoMode.DriveTestAuto);
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
   }
   
   public static AutoMode getSelectedAutoMode(){
     AutoMode selection = autoModeChooser.getSelected();
-    return selection != null ? selection : AutoMode.EightLemonAuto;
+    return selection != null ? selection : AutoMode.DriveTestAuto;
   }
   public static boolean isRightSideAuto(){
     return Boolean.TRUE.equals(sideChooser.getSelected());

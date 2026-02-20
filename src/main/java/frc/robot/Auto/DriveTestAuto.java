@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-
+/*
 public class DriveTestAuto extends SequentialCommandGroup {
   public DriveTestAuto (SwerveSubsystem drive) {
         addCommands(
@@ -19,8 +19,9 @@ public class DriveTestAuto extends SequentialCommandGroup {
         );
     }
 }
+*/
 
-/*
+
 public class DriveTestAuto extends SequentialCommandGroup {
   public DriveTestAuto (SwerveSubsystem drive){
     addCommands(
@@ -29,4 +30,4 @@ public class DriveTestAuto extends SequentialCommandGroup {
     );
   }
 }
-*/
+

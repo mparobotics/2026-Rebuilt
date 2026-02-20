@@ -70,6 +70,8 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+
+    configurePathPlanner();
   }
 
 
