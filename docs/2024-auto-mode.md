@@ -15,25 +15,31 @@ The 2024 code did NOT blindly trust PathPlanner. It used three layers of compens
 The `periodic()` method in `SwerveSubsystem` runs every robot cycle, **including during autonomous**. It continuously fuses encoder-based odometry with AprilTag vision from **two Limelights**:
 
 ```java
-// 2024 SwerveSubsystem.periodic() — runs every 20ms, even during auto
-odometry.update(getYaw(), getPositions());  // encoder + gyro update
+// File: 2024-Season/src/main/java/frc/robot/subsystems/SwerveSubsystem.java
+// Method: periodic(), lines 332–374 (condensed — SmartDashboard calls omitted)
 
-// Fuse vision from two cameras
-LimelightHelpers.PoseEstimate estimateA = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-a");
-LimelightHelpers.PoseEstimate estimateB = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-b");
-
-// If both cameras see one tag each, trust the combined estimate
-if(estimateA.tagCount == 1 && estimateB.tagCount == 1 && AisValid && BisValid){
-    odometry.addVisionMeasurement(estimateA.pose, estimateA.timestampSeconds);
-    odometry.addVisionMeasurement(estimateB.pose, estimateB.timestampSeconds);
-}
-// If either camera sees 2+ tags, trust that camera alone
-else if(AisValid && estimateA.tagCount >= 2){
-    odometry.addVisionMeasurement(estimateA.pose, estimateA.timestampSeconds);
-}
-
-// Sanity check: snap position back if it drifts outside field bounds
-keepOdometryOnField();
+332  public void periodic() {
+         // ...
+336      odometry.update(getYaw(), getPositions());  // encoder + gyro update
+338      LimelightHelpers.PoseEstimate estimateA = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-a");
+339      LimelightHelpers.PoseEstimate estimateB = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-b");
+         // ...
+         // If both cameras see one tag each, trust the combined estimate
+352      if(estimateA.tagCount == 1 && estimateB.tagCount == 1 && AisValid && BisValid){
+355          odometry.addVisionMeasurement(estimateA.pose, estimateA.timestampSeconds);
+356          odometry.addVisionMeasurement(estimateB.pose, estimateB.timestampSeconds);
+357      }
+358      else{
+             // If either camera sees 2+ tags, trust that camera alone
+360          if(AisValid){
+361              if(estimateA.tagCount >= 2){
+362                  odometry.addVisionMeasurement(estimateA.pose, estimateA.timestampSeconds);
+                 }
+             }
+             // ... (similar check for limelight-b, lines 366–371)
+372      }
+         // Sanity check: snap position back if it drifts outside field bounds
+374      keepOdometryOnField();
 ```
 
 This means every time PathPlanner asked "where am I?" via `getPose()`, it got a **vision-corrected answer** — not just raw wheel odometry.
@@ -43,27 +49,33 @@ This means every time PathPlanner asked "where am I?" via `getPose()`, it got a 
 PathPlanner was configured with translation and rotation PID controllers, plus replanning:
 
 ```java
-// 2024 Constants.AutoConstants
-public static final HolonomicPathFollowerConfig pathConfig = new HolonomicPathFollowerConfig(
-    new PIDConstants(5.0, 0.00001, 0.0),  // Translation PID (P=5.0, I=0.00001)
-    new PIDConstants(5.0, 0.0005, 0.001), // Rotation PID (P=5.0, I=0.0005, D=0.001)
-    SwerveConstants.maxSpeed,              // 5 m/s max module speed
-    SwerveConstants.driveBaseRadius,       // drive base geometry
-    new ReplanningConfig()                 // enables on-the-fly replanning when robot deviates
-);
+// File: 2024-Season/src/main/java/frc/robot/Constants.java
+// Class: AutoConstants, lines 135–164
+
+137  public static final HolonomicPathFollowerConfig pathConfig = new HolonomicPathFollowerConfig(
+138      new PIDConstants(5.0, 0.00001, 0.0),  // Translation PID (P=5.0, I=0.00001)
+139      new PIDConstants(5.0, 0.0005, 0.001), // Rotation PID (P=5.0, I=0.0005, D=0.001)
+140      SwerveConstants.maxSpeed,              // 5 m/s max module speed
+141      SwerveConstants.driveBaseRadius,       // Drive base radius in meters
+142      new ReplanningConfig()                 // enables on-the-fly replanning when robot deviates
+143  );
 ```
 
 ```java
-// 2024 SwerveSubsystem.configPathPlanner()
-AutoBuilder.configureHolonomic(
-    this::getPose,               // ← pose supplier (returns vision-fused estimate)
-    this::resetOdometry,         // ← pose reset
-    this::getRobotRelativeSpeed, // ← current chassis speeds
-    this::closedLoopDrive,       // ← drive consumer (closed-loop, not open-loop)
-    AutoConstants.pathConfig,    // ← PID + replanning config
-    () -> (DriverStation.getAlliance().get() == Alliance.Red),
-    this
-);
+// File: 2024-Season/src/main/java/frc/robot/subsystems/SwerveSubsystem.java
+// Method: configPathPlanner(), lines 223–233
+
+223  public void configPathPlanner(){
+224      AutoBuilder.configureHolonomic(
+225          this::getPose,               // ← pose supplier (returns vision-fused estimate)
+226          this::resetOdometry,         // ← pose reset
+227          this::getRobotRelativeSpeed, // ← current chassis speeds
+228          this::closedLoopDrive,       // ← drive consumer (closed-loop, not open-loop)
+229          AutoConstants.pathConfig,    // ← PID + replanning config
+230          () -> (DriverStation.getAlliance().get() == Alliance.Red),
+231          this
+232      );
+233  }
 ```
 
 Key design decisions:
@@ -77,10 +89,12 @@ Key design decisions:
 PathPlanner drove the robot through `closedLoopDrive()`, which used PID + feedforward motor control:
 
 ```java
-// 2024 SwerveSubsystem
-public void closedLoopDrive(ChassisSpeeds speeds){
-    driveFromChassisSpeeds(speeds, false);  // false = closed-loop
-}
+// File: 2024-Season/src/main/java/frc/robot/subsystems/SwerveSubsystem.java
+// Method: closedLoopDrive(), lines 96–98
+
+ 96  public void closedLoopDrive(ChassisSpeeds speeds){
+ 97      driveFromChassisSpeeds(speeds, false);  // false = closed-loop
+ 98  }
 ```
 
 In closed-loop mode, each drive motor uses its onboard PID controller + feedforward to hit the exact commanded velocity. In teleop, the robot uses open-loop (voltage percentage) for driver feel. The closed-loop mode during auto ensures each wheel actually spins at the speed PathPlanner requests, not just "approximately" that speed.
