@@ -198,7 +198,7 @@ public class TestDashboard {
      * 
      * @param test The test instance
      * @param paramName The name of the param
-     * @param chooser The SendableChooser to put (can be null)
+     * @param chooser The SendableChooser to put (must not be null)
      */
     public static void putParamChooser(DiagnosticTest test, String paramName, SendableChooser<?> chooser) {
         SmartDashboard.putData(getPrefix(test, DataType.PARAM) + paramName, chooser);
