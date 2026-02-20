@@ -542,12 +542,6 @@ public class SwerveModule {
         return desiredState;
     }
 
-  // ============================================================================
-  // Simulation and Test Support Methods
-  // The following methods are provided for simulation and diagnostic test
-  // support. They are not used by production robot code.
-  // ============================================================================
-
     /**
      * Gets the angle offset used to calibrate this module.
      * <p>
