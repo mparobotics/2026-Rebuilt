@@ -19,8 +19,9 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
-import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
+import frc.robot.Subsystems.SwerveSubsystem;
+
 
 public class RobotContainer {
 
@@ -45,6 +46,7 @@ public class RobotContainer {
   // IntakeSubsystem for intake
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
 
+  //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   /**
@@ -61,7 +63,14 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    driveController.button(Button.kX.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+    // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
+    driveController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_drive.zeroGyro(), m_drive));
+
+    //Back button (view) = resync integrated angle encoders to CANcoders (DISABLED ONLY)
+    driveController.button(Button.kBack.value).onTrue(new InstantCommand(()->m_drive.resyncModuleEncoders(), m_drive));
+    //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
+    driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
+   
 
 
     // SHOOTER CONTROLLER
@@ -143,6 +152,20 @@ public class RobotContainer {
   }
 
   /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
+  public Command getAutonomousCommand() {
+    return Commands.print("No autonomous command configured");
+  }
+
+  // ============================================================================
+  // Simulation and Test Support Methods
+  // These methods expose subsystems for simulation and diagnostic test code.
+  // ============================================================================
+
+  /**
    * Gets the swerve subsystem instance.
    * Used for simulation and test code that needs access to the
    * swerve subsystem.
@@ -151,14 +174,5 @@ public class RobotContainer {
    */
   public SwerveSubsystem getSwerveSubsystem() {
     return m_drive;
-  }
-
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
-  public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
   }
 }

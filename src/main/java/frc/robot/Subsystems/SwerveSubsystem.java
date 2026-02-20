@@ -29,6 +29,8 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
 import frc.robot.SwerveModule;
 
+
+// Manges swerve drivetrain hardware, odometry, and vision-assisted pose up dates.
 public class SwerveSubsystem extends SubsystemBase {
   private final Pigeon2 pigeon;
 
@@ -56,7 +58,6 @@ public class SwerveSubsystem extends SubsystemBase {
   // * This shows what the robot is trying to achieve, useful for comparing against actual states
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
-
 
   /** Creates a new SwerveSubsystem. */
   public SwerveSubsystem() { 
@@ -129,7 +130,7 @@ public class SwerveSubsystem extends SubsystemBase {
     desiredSwerveDataPublisher.set(desiredStates);
 
     for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(desiredStates[mod.moduleNumber], false);
+      mod.setDesiredState(desiredStates[mod.moduleNumber], isOpenLoop); //NEED CONFIRM
     }
   }
 
@@ -187,15 +188,20 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void resyncModuleEncoders(){
+    if(!DriverStation.isDisabled()){
+      DriverStation.reportWarning
+        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",  
+        false); //NEED CONFIRM
+      return;
+    }
     for (SwerveModule mod : mSwerveMods){
       mod.resyncToAbsolute();
     }
   }
 
-  public void saveModuleOffsets(){
+    public void saveModuleOffsets(){
     saveModuleOffsets(new Rotation2d());
   }
-
   public void saveModuleOffsets(Rotation2d desiredAngle){
     if(!DriverStation.isDisabled()){
       DriverStation.reportWarning(
@@ -232,12 +238,18 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
 
     for (SwerveModule mod : mSwerveMods) {
+
+      double canCoderDegrees = mod.getCanCoder().getDegrees();
+
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Integrated", mod.getState().angle.getDegrees());
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+      SmartDashboard.putNumber(
+          "Mod " + mod.moduleNumber + " New Cancoder Offset", 
+        canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
     }
     swerveDataPublisher.set(getStates());
 
@@ -272,15 +284,33 @@ public class SwerveSubsystem extends SubsystemBase {
     return pigeon;
   }
 
-  public SwerveModule[] getModules() {
-    return mSwerveMods;
-  }
-
   public SwerveDrivePoseEstimator getOdometry() {
     return odometry;
   }
 
   public SwerveDriveKinematics getKinematics() {
     return Constants.SwerveConstants.swerveKinematics;
+  }
+
+  /* Diagnostic Test and Simulation Support
+   * The following method is required for diagnostic tests and simulation to access swerve modules.
+   * This allows test code to perform module-specific diagnostics (e.g., encoder drift tests)
+   * and simulation code to iterate over all modules without requiring direct access to the
+   * internal module array.
+   */
+  /**
+   * Gets all swerve modules as an array.
+   *
+   * <p>Returns a defensive copy to prevent modification of the subsystem's internal
+   * module array structure. The {@link SwerveModule} instances inside the returned
+   * array are the same objects (their state remains mutable, which is intended).
+   *
+   * <p>Java arrays are always mutable, so this method returns a copy to prevent
+   * callers from replacing array elements (e.g., {@code getModules()[0] = null}).
+   *
+   * @return A copy of the array containing all swerve modules
+   */
+  public SwerveModule[] getModules() {
+    return mSwerveMods.clone();
   }
 }
