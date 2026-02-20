@@ -46,10 +46,11 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
     public static final SwerveDriveKinematics swerveKinematics =
     new SwerveDriveKinematics(
-        new Translation2d(-halfTrackWidth, halfWheelBase), //Back Right
-        new Translation2d(halfTrackWidth,halfWheelBase), // Front Right
-        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Left
-        new Translation2d(-halfTrackWidth,-halfWheelBase)); // Back Left
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
+        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
+        new Translation2d(halfTrackWidth,halfWheelBase), // Front Left
+        new Translation2d(-halfTrackWidth,halfWheelBase)); // Back Left
+        
     //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
     //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
@@ -100,10 +101,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean angleInvert = true;
 
     //Location of modules
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
     /* Module Specific Constants */
     public record ModuleData(
@@ -111,10 +112,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 52, 19, 340.32, BACK_RIGHT), //Mod 0 Back right
-      new ModuleData(17, 53, 22, 51.59, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(15, 16, 21, 130.16, FRONT_LEFT), //Mod 2 Front left
-      new ModuleData(13, 12, 20, 118.47, BACK_LEFT) //Mod 3 Back left
+      new ModuleData(11, 52, 19, 157.06, BACK_RIGHT), //Mod 0 Back right
+      new ModuleData(17, 53, 22, 54.94, FRONT_RIGHT), //Mod 1 Front right
+      new ModuleData(15, 16, 21, 132.28, FRONT_LEFT), //Mod 2 Front left
+      new ModuleData(13, 12, 20, 117.34, BACK_LEFT) //Mod 3 Back left
     };
     
   }
@@ -168,10 +169,10 @@ public class FieldConstants {
       public static final double HOOD_TOLERANCE = 0.02;
   }
   public class IntakeConstants {
-    public static int INTAKE_ID = 60; // placeholder
+    public static int INTAKE_ID = 70; // placeholder
     public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
 
-    public static int INTAKE_ARM_ID = 62; //placeholder
+    public static int INTAKE_ARM_ID = 71; //placeholder
     public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
     public static double INTAKE_ARM_LOWERED_POSITION = 0;
     public static double INTAKE_ARM_MINIMUM = 0; // placeholders
