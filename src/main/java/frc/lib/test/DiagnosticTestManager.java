@@ -28,9 +28,10 @@ import frc.robot.RobotContainer;
  * <pre>
  * DiagnosticTests/
  *   ├── TestSelector/ (SendableChooser - dropdown)
- *   ├── Start-Cancel Test/ (Boolean - button, behavior changes based on test state)
+ *   ├── CurrentTest Start-Cancel/ (Boolean - button, behavior changes based on test state)
  *   ├── CurrentTest/ (String - name of running test or "None")
- *   ├── TestStatus/ (String - Idle, Running, Complete, Cancelled, Error)
+ *   ├── CurrentTest Description/ (String - description of the selected test)
+ *   ├── CurrentTest Status/ (String - Idle, Running, Complete, Cancelled, Error)
  *   └── Message/ (String - status messages and error information)
  * </pre>
  *
@@ -47,10 +48,11 @@ public class DiagnosticTestManager {
 
     private static final String DASHBOARD_PREFIX = "DiagnosticTests/";
     private static final String KEY_TEST_SELECTOR = DASHBOARD_PREFIX + "TestSelector";
-    private static final String KEY_START_CANCEL_TEST = DASHBOARD_PREFIX + "Start-Cancel Test";
+    private static final String KEY_START_CANCEL_TEST = DASHBOARD_PREFIX + "CurrentTest Start-Cancel";
     private static final String KEY_CURRENT_TEST = DASHBOARD_PREFIX + "CurrentTest";
-    private static final String KEY_TEST_STATUS = DASHBOARD_PREFIX + "TestStatus";
+    private static final String KEY_TEST_STATUS = DASHBOARD_PREFIX + "CurrentTest Status";
     private static final String KEY_MESSAGE = DASHBOARD_PREFIX + "Message";
+    private static final String KEY_DESCRIPTION = DASHBOARD_PREFIX + "CurrentTest Description";
 
     private final RobotContainer robotContainer;
     private final SendableChooser<String> testChooser;
@@ -117,7 +119,8 @@ public class DiagnosticTestManager {
         SmartDashboard.putBoolean(KEY_START_CANCEL_TEST, false);
         SmartDashboard.putString(KEY_CURRENT_TEST, "None");
         SmartDashboard.putString(KEY_TEST_STATUS, TestStatus.IDLE.toString());
-        SmartDashboard.putString(KEY_MESSAGE, "Select a test and press Start-Cancel Test to begin");
+        SmartDashboard.putString(KEY_MESSAGE, "Select a test and press Start-Cancel to begin");
+        SmartDashboard.putString(KEY_DESCRIPTION, "");
     }
 
     /**
@@ -214,13 +217,15 @@ public class DiagnosticTestManager {
                 if (testCommand instanceof DiagnosticTest) {
                     DiagnosticTest diagnosticTest = (DiagnosticTest) testCommand;
                     diagnosticTest.initializeParameters();
+                    SmartDashboard.putString(KEY_DESCRIPTION, diagnosticTest.getTestDescription());
                     // Instance is discarded here - not stored or reused
                     System.out.println("Initialized parameters for: " + selectedTest);
-                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + selectedTest + ". Press Start-Cancel Test to begin.");
+                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + selectedTest + ". Press Start-Cancel to begin.");
                 } else {
                     // Test doesn't implement DiagnosticTest yet (e.g., during Phase 2 migration)
+                    SmartDashboard.putString(KEY_DESCRIPTION, "");
                     System.out.println("Note: " + selectedTest + " does not implement DiagnosticTest interface yet");
-                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + selectedTest + ". Press Start-Cancel Test to begin.");
+                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + selectedTest + ". Press Start-Cancel to begin.");
                 }
             } catch (Exception e) {
                 System.err.println("Error creating test instance for parameter initialization: " + e.getMessage());
@@ -232,9 +237,10 @@ public class DiagnosticTestManager {
         } else if (selectedTest == null && lastSelectedTest != null) {
             // Selection was cleared (shouldn't normally happen, but handle it)
             lastSelectedTest = null;
+            SmartDashboard.putString(KEY_DESCRIPTION, "");
             // Update message when selection is cleared (only if no test is running)
             if (!isTestRunning()) {
-                SmartDashboard.putString(KEY_MESSAGE, "Select a test and press Start-Cancel Test to begin");
+                SmartDashboard.putString(KEY_MESSAGE, "Select a test and press Start-Cancel to begin");
             }
         }
     }
@@ -295,7 +301,7 @@ public class DiagnosticTestManager {
     private void startSelectedTest() {
         // Don't start if a test is already running
         if (isTestRunning()) {
-            String message = "A test is already running. Press Start-Cancel Test to cancel it first.";
+            String message = "A test is already running. Press Start-Cancel to cancel it first.";
             SmartDashboard.putString(KEY_MESSAGE, message);
             System.out.println("Warning: " + message);
             return;
@@ -354,6 +360,7 @@ public class DiagnosticTestManager {
             suppressedSelectionWarning = null;
             SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
             SmartDashboard.putString(KEY_CURRENT_TEST, "None");
+            SmartDashboard.putString(KEY_DESCRIPTION, "");
             SmartDashboard.putString(KEY_MESSAGE, "Error starting test: " + e.getMessage());
         }
     }
@@ -457,6 +464,7 @@ public class DiagnosticTestManager {
         // They'll be recreated with proper values on next testInit()
         SmartDashboard.putBoolean(KEY_START_CANCEL_TEST, false);
         SmartDashboard.putString(KEY_CURRENT_TEST, "");
+        SmartDashboard.putString(KEY_DESCRIPTION, "");
         SmartDashboard.putString(KEY_TEST_STATUS, "");
         SmartDashboard.putString(KEY_MESSAGE, "");
         // Note: SendableChooser (TestSelector) cannot be easily removed, but it will be overwritten
