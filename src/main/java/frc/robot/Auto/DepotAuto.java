@@ -5,6 +5,7 @@
 package frc.robot.Auto;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Subsystems.IntakeSubsystem;
@@ -15,18 +16,28 @@ import frc.robot.Subsystems.SwerveSubsystem;
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class DepotAuto extends SequentialCommandGroup { 
-  public DepotAuto(SwerveSubsystem m_drive, ShooterSubsystem m_shooter, IntakeSubsystem m_intake) {
+  private SwerveSubsystem m_drive;
+  private ShooterSubsystem m_shooter;
+  private IntakeSubsystem m_intake;
+  public DepotAuto(SwerveSubsystem drive, ShooterSubsystem shooter, IntakeSubsystem intake) {
+    m_drive = drive;
+    m_shooter = shooter;
+    m_intake = intake;
     addCommands(
-      m_drive.startAutoAt(0, 0, 0), // placeholders
-      new InstantCommand(() -> m_intake.lowerIntake()),
-      new InstantCommand(() -> m_intake.intakeOn()),
+      new ParallelCommandGroup(
+        m_drive.startAutoAt(0, 0, 0), // placeholders
+        new InstantCommand(() -> m_intake.lowerIntake()),
+        new InstantCommand(() -> m_intake.intakeOn())
+      ),
       m_drive.autoDrive("intake from depot"),
-      new InstantCommand(() -> m_intake.intakeOff()),
-      new InstantCommand(() -> m_intake.raiseIntake()),
-      new InstantCommand (() -> m_shooter.runShooter(true)),
-      new WaitCommand(1.85),
+      new ParallelCommandGroup(
+        new InstantCommand(() -> m_intake.intakeOff()),
+        new InstantCommand(() -> m_intake.raiseIntake()),
+        new InstantCommand (() -> m_shooter.runShooter(true))
+      ),
       m_drive.autoDrive("depot-score (close)"),
-      new InstantCommand(() -> m_shooter.runFeeder(true))
+      new InstantCommand(() -> m_shooter.runFeeder(true)),
+      new WaitCommand(0) // time to shoot
     );
   }
 }
