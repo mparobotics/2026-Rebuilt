@@ -15,6 +15,9 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Auto.DriveTestAuto;
+import frc.robot.Auto.EightLemonAuto;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
@@ -161,7 +164,13 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
+
+    return switch (selected) {
+      case DriveTestAuto -> new DriveTestAuto(m_drive);
+      case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
+      default -> Commands.none();
+    };
   }
 
   // ============================================================================

@@ -42,6 +42,8 @@ public class SwerveModule {
     private Rotation2d lastAngle;
     private Rotation2d angleOffset;
     private final String angleOffsetPreferenceKey;
+    private final boolean driveInvert;
+    private final boolean angleInvert;
 
     // Store desired state for simulation access
     private SwerveModuleState desiredState;
@@ -79,6 +81,8 @@ public class SwerveModule {
     public SwerveModule(int moduleNumber, ModuleData moduleConstants){
         this.moduleNumber = moduleNumber;
         this.angleOffsetPreferenceKey = "Swerve/Module" + moduleNumber + "/AngleOffsetDegrees";
+        this.driveInvert = moduleConstants.driveInvert();
+        this.angleInvert = moduleConstants.angleInvert();
         this.m_angleKP = SwerveConstants.angleKP;
         this.m_angleKI = SwerveConstants.angleKI;
         this.m_angleKD = SwerveConstants.angleKD;
@@ -395,7 +399,7 @@ public class SwerveModule {
         // Set maximum current draw to protect motor and wiring
         sparkMaxConfig.smartCurrentLimit(SwerveConstants.angleContinuousCurrentLimit);
         // Set motor direction (may need to be inverted based on physical mounting)
-        sparkMaxConfig.inverted(SwerveConstants.angleInvert);
+        sparkMaxConfig.inverted(angleInvert);
         // Set idle mode: brake (holds position) or coast (free rotation)
         sparkMaxConfig.idleMode(SwerveConstants.angleNeutralMode);
         // Convert encoder counts to degrees so encoder position matches module rotation angle
@@ -482,7 +486,7 @@ public class SwerveModule {
         // Set maximum current draw to protect motor and wiring
         sparkFlexConfig.smartCurrentLimit(SwerveConstants.driveContinuousCurrentLimit);
         // Set motor direction (may need to be inverted based on physical mounting)
-        sparkFlexConfig.inverted(SwerveConstants.driveInvert);
+        sparkFlexConfig.inverted(driveInvert);
         // Set idle mode: brake (holds position) or coast (free rotation)
         sparkFlexConfig.idleMode(SwerveConstants.driveNeutralMode);
         // Convert encoder counts to meters per second for velocity readings

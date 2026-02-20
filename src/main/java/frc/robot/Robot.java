@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sim.SimulationManager;
 import frc.lib.test.DiagnosticTestManager;
-
 /**
  * Main robot class that extends TimedRobot. This is the entry point for the robot program
  * and manages the robot lifecycle across different modes (disabled, autonomous, teleop, test).

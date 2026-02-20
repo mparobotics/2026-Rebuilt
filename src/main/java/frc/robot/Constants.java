@@ -4,17 +4,22 @@
 
 package frc.robot;
 
-
-
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
@@ -111,27 +116,77 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
     /* Module Specific Constants */
     public record ModuleData(
-      int driveMotorID, int angleMotorID, int encoderID, double angleOffset, Translation2d location
+      int driveMotorID,
+      int angleMotorID,
+      int encoderID,
+      double angleOffset,
+      Translation2d location,
+      boolean driveInvert,
+      boolean angleInvert
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT), //Mod 0 Front left
-      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT), //Mod 2 Back right
-      new ModuleData(15, 14, 16, 8.52, BACK_LEFT) //Mod 3 Back left
+      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+      // Module 1 is currently the only module oscillating; flip its angle motor invert so its
+      // steering closed-loop sign matches the encoder direction.
+      // Module 1: also invert drive so +X command drives forward like the others.
+      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+      new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
     };
     
   }
+
+
+public static final class AutoConstants {
+  public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
+  SwerveConstants.maxSpeed,
+  1.2,
+  DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
+  SwerveConstants.driveContinuousCurrentLimit,
+  1);
+
+  public static final RobotConfig ROBOT_CONFIG = new RobotConfig (52, 6.8, MODULE_CONFIG,
+  SwerveConstants.FRONT_LEFT, SwerveConstants.FRONT_RIGHT, SwerveConstants.BACK_LEFT, SwerveConstants.BACK_RIGHT);
+
+  public static final PPHolonomicDriveController SWERV_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
+  new PIDConstants(5.0, 0.005, 0.001) );
+
+  public enum AutoMode{
+    DriveTestAuto,
+    EightLemonAuto
+  }
+
+  private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
+  private static SendableChooser<AutoMode> autoModeChooser = new SendableChooser<AutoMode>();
+  static{
+    sideChooser.addOption("RIGHT", true);
+    sideChooser.setDefaultOption("LEFT", false);
+
+    for(AutoMode mode : AutoMode.values()){
+      autoModeChooser.addOption(mode.toString(), mode);
+    }
+
+    autoModeChooser.setDefaultOption(AutoMode.DriveTestAuto.toString(), AutoMode.DriveTestAuto);
+    SmartDashboard.putData("Auto Starting Location", sideChooser);
+    SmartDashboard.putData("Auto Mode", autoModeChooser);
+  }
+  
+  public static AutoMode getSelectedAutoMode(){
+    AutoMode selection = autoModeChooser.getSelected();
+    return selection != null ? selection : AutoMode.DriveTestAuto;
+  }
+  public static boolean isRightSideAuto(){
+    return Boolean.TRUE.equals(sideChooser.getSelected());
+  }
+}
 
 
 public class FieldConstants {
       public static final double FIELD_LENGTH = 17.54824934;
       public static final double FIELD_WIDTH = 8.052;
 
-      public static final Translation2d BLUE_REEF_CENTER = new Translation2d(4.48933684,4.02587697);
-
-      public static final Rotation2d RIGHT_CORAL_STATION_ANGLE = Rotation2d.fromDegrees(234.011392);
-      public static final Rotation2d LEFT_CORAL_STATION_ANGLE = Rotation2d.fromDegrees(-234.011392);
+      public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
 
       public static boolean isRedAlliance(){
           return DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
@@ -158,7 +213,7 @@ public class FieldConstants {
   }
   /* Shooter Constants */
   public class ShooterConstants {
-      public static final int SHOOTER_ID = 60; //Placeholder ID
+      public static final int SHOOTER_ID = 70; //Placeholder ID
       public static final int FEEDER_ID = 61; //Feeder ID
       public static final int HOOD_ID = 62; //Hood ID
 
@@ -172,10 +227,12 @@ public class FieldConstants {
       public static final double HOOD_TOLERANCE = 0.02;
   }
   public class IntakeConstants {
-    public static int INTAKE_ID = 63; // Changed from 60 to avoid conflict with SHOOTER_ID
+    // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
+    // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
+    public static int INTAKE_ID = 63; // TODO: set to your intake motor CAN ID
     public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
 
-    public static int INTAKE_ARM_ID = 64; // Changed from 62 to avoid conflict with HOOD_ID
+    public static int INTAKE_ARM_ID = 64; // TODO: set to your intake arm motor CAN ID
     public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
     public static double INTAKE_ARM_LOWERED_POSITION = 0;
     public static double INTAKE_ARM_MINIMUM = 0; // placeholders
