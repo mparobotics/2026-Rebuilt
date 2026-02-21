@@ -20,101 +20,94 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.SwerveConstants;
 
 /** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
 
+  public static final class SwerveConstants {
+    private static final boolean isCompDrivebase = true;
 
-public static final double motorSpeedMultiplier = 0.5; // Used to scale down motor output if needed
-
-
-// Swerve Constants
-  public static final class SwerveConstants{
+    
+    /* Global Swerve Constants */
     public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
-    public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
-    public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
-    /* Drivetrain Constants */
-    public static final double halfTrackWidth = Units.inchesToMeters(27/2.0);//to find
-    public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
-    public static final double wheelDiameter = Units.inchesToMeters(4.0);
-    public static final double wheelCircumference = wheelDiameter * Math.PI;
-    //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
-    //public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
-    public static final double driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
+    /* Inverts */
+    public static final boolean invertPigeon = false; //gyro readings
+    public static final boolean canCoderInvert = false; //CANcoder readings
+    public static final boolean driveInvert = false; //drive motor
+    public static final boolean angleInvert = true; //angle motor
 
 
-    public static final double openLoopRamp = 0.25;
-    public static final double closedLoopRamp = 0.0;
-
-    public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1 L2 Mk4 Modules
-    //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
-    public static final double angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
-    //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
-
-    public static final SwerveDriveKinematics swerveKinematics =
-    new SwerveDriveKinematics(
-        //WPILib coordinate system: +X = forward, +Y = left
-        new Translation2d(halfTrackWidth, halfWheelBase), //Front left
-        new Translation2d(halfTrackWidth, -halfWheelBase), //Front right
-        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back right
-        new Translation2d(-halfTrackWidth, halfWheelBase)); //Back Left
-    //translation 2d locates the swerve module in cords
-    //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
-    //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
-    //which contains velocities and angles for each swerve module of a swerve drive robot.
-        
-    /* Swerve Voltage Compensation */
-    public static final double voltageComp = 12.0;
-       
-    //Swerve Current Limiting for neos
-    public static final int angleContinuousCurrentLimit = 20; //limits current draw of turning motor
-    public static final int driveContinuousCurrentLimit = 40; //limits current draw of drive motor
-  
-
-
-    /* Drive Motor PID Values */
-    public static final double driveKP = 0.1; //to tune
-    public static final double driveKI = 0.0; //to tune
-    public static final double driveKD = 0.0; //to tune 
-  
-    /* Drive Motor Characterization Values */
-    //values to calculate the drive feedforward (KFF)
-    public static final double driveKS = 0.667; //to calculate
-    public static final double driveKV = 2.4; //to calculate
-    public static final double driveKA = 0.5; //to calculate
-
-    /* Angle Motor PID Values */
-    public static final double angleKP = 0.01; //to tune
-    public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
-    public static final double angleKD = 0.0; //to tune
-
+    /* Global Drivetrain Definitions */
+    public static final double wheelCircumference;
+    public static final double driveBaseRadius;
+    
     /* Drive Motor Conversion Factors */
-    public static final double driveConversionPositionFactor =
-    (wheelDiameter * Math.PI) / driveGearRatio;
-    public static final double driveConversionVelocityFactor = driveConversionPositionFactor / 60.0;
-    public static final double angleConversionFactor = 360.0 / angleGearRatio;
-
-    /* Swerve Profiling Values */
-    public static final double maxSpeed = 3; // meters per second
-    public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
-
-    /* Neutral Modes */
+    public static final double driveConversionPositionFactor;
+    public static final double driveConversionVelocityFactor;
+    public static final double angleConversionFactor;
+    
+    /* Motor Idle Modes */
     public static final IdleMode angleNeutralMode = IdleMode.kBrake;
     public static final IdleMode driveNeutralMode = IdleMode.kBrake;
 
-    /* Motor Inverts */
-    public static final boolean canCoderInvert = false;
-    public static final boolean driveInvert = false;
-    public static final boolean angleInvert = true;
+    /* Location of modules (make sure this and moduleData are in same order) */
+    public static final Translation2d FRONT_LEFT;
+    public static final Translation2d FRONT_RIGHT;
+    public static final Translation2d BACK_RIGHT;
+    public static final Translation2d BACK_LEFT;
 
-    //Location of modules
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
+    /* Translation2d - Kinematics */
+    /* SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
+     * which contains velocities and angles for each swerve module of a swerve drive robot.
+     * make sure things in this section line up if the robot is driving weird check this first
+     * more info see https://www.notion.so/Swerve-Module-Positioning-Translation2d-2ec665d348f580e48612c9a5bd315fb7 
+     * and https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
+     */
+    public static final SwerveDriveKinematics swerveKinematics;
+    public static final ModuleData[] moduleData;
 
-    /* Module Specific Constants */
+    /* Swerve Specific Definitions */
+
+    public static final int PIGEON_ID; //CAN ID for Pigeon
+
+    /* Drivetrain Dimention Constants */
+    public static final double halfTrackWidth;
+    public static final double halfWheelBase;
+    public static final double wheelDiameter;
+    
+    public static final double driveGearRatio;
+    //L2 Mk4 Modules are 6.75:1, L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
+    public static final double angleGearRatio;
+    //MK4i Modules are 21.4:1, SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
+    
+    /* Swerve Profiling Values */
+    public static final double maxSpeed; // meters per second
+    public static final double maxAngularVelocity; //radians per second how fast the robot spin
+    
+    /* Motor Config */
+    public static final double voltageComp; //Swerve Voltage Compensation
+    public static final int angleContinuousCurrentLimit; //limits current draw of turning motor
+    public static final int driveContinuousCurrentLimit; //limits current draw of drive motor
+    
+    /* PID Values */
+    
+    /* Drive Motor PIDF Values */
+    public static final double driveKP; //Proportional
+    public static final double driveKI; //Integral, keep it at zero unless you see a persistent offset
+    public static final double driveKD; //Derivitive
+    //Feedforward - uses precalculated values
+    public static final double driveKS;
+    public static final double driveKV;
+    public static final double driveKA;
+
+    /* Angle Motor PID Values */
+    public static final double angleKP; //Proportional
+    public static final double angleKI; //Integral, keep it at zero unless you see a persistent offset
+    public static final double angleKD; //Derivitive
+
+    /* ModuleData Record */
     public record ModuleData(
       int driveMotorID,
       int angleMotorID,
@@ -125,18 +118,132 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
       boolean angleInvert
     ){}
 
-    public static ModuleData[] moduleData = {
-      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-      // Module 1 is currently the only module oscillating; flip its angle motor invert so its
-      // steering closed-loop sign matches the encoder direction.
-      // Module 1: also invert drive so +X command drives forward like the others.
-      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-      new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
-    };
-    
-  }
+    static {
+      if(isCompDrivebase){
+        PIGEON_ID = 17; //CAN ID for Pigeon
 
+        /* Drivetrain Dimention Constants */
+        halfTrackWidth = Units.inchesToMeters(27/2.0);
+        halfWheelBase = Units.inchesToMeters(27/2.0);
+        wheelDiameter = Units.inchesToMeters(4.0);
+
+        driveGearRatio = (6.75 / 1.0); // L2 Mk4 Modules are 6.75:1
+        //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
+        angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
+        //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
+
+        /* Swerve Profiling Values */
+        maxSpeed = 3; // meters per second
+
+        /* Motor Config */
+        voltageComp = 12.0; //Swerve Voltage Compensation
+        angleContinuousCurrentLimit = 20; //limits current draw of turning motor
+        driveContinuousCurrentLimit = 40; //limits current draw of drive motor
+
+        /* PID Values */
+
+        /* Drive Motor PIDF Values */
+        driveKP = 0.1; //Proportional
+        driveKI = 0.0; //Integral, keep it at zero unless you see a persistent offset
+        driveKD = 0.0; //Derivitive
+        //Feedforward - uses precalculated values
+        driveKS = 0.667;
+        driveKV = 2.4;
+        driveKA = 0.5;
+
+        /* Angle Motor PID Values */
+        angleKP = 0.01; //Proportional
+        angleKI = 0.0; //Integral, keep it at zero unless you see a persistent offset
+        angleKD = 0.0; //Derivitive
+
+        /* Location of modules (make sure this and moduleData are in same order) */
+        FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+        FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+        BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+        BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
+
+        /* Translation2d - Kinematics */
+        /* SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
+        * which contains velocities and angles for each swerve module of a swerve drive robot.
+        * make sure things in this section line up if the robot is driving weird check this first
+        * more info see https://www.notion.so/Swerve-Module-Positioning-Translation2d-2ec665d348f580e48612c9a5bd315fb7 
+        * and https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
+        */
+        new SwerveDriveKinematics(FRONT_LEFT, FRONT_RIGHT, BACK_RIGHT, BACK_LEFT);
+
+        moduleData = new ModuleData[] {
+          new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+          new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+          new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+          new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+        };
+
+    } else {
+        
+        PIGEON_ID = 23; //CAN ID for Pigeon
+
+        /* Drivetrain Dimention Constants */
+        halfTrackWidth = Units.inchesToMeters(28/2.0);
+        halfWheelBase = Units.inchesToMeters(28/2.0);
+        wheelDiameter = Units.inchesToMeters(4.0);
+
+        driveGearRatio = (8.14 / 1.0); 
+        // L2 Mk4 Modules are 6.75:1 L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
+        angleGearRatio = (12.8 / 1.0); 
+        // MK4i Modules are 21.4:1 SDS Mk4 is 12.8:1, Mk4i is 21.4:1
+
+        /* Swerve Profiling Values */
+        maxSpeed = 3; // meters per second
+
+        /* Motor Config */
+        voltageComp = 12.0; //Swerve Voltage Compensation
+        angleContinuousCurrentLimit = 20; //limits current draw of turning motor
+        driveContinuousCurrentLimit = 40; //limits current draw of drive motor
+
+        /* PID Values */
+
+        /* Drive Motor PIDF Values */
+        driveKP = 0.1; //Proportional
+        driveKI = 0.0; //Integral, keep it at zero unless you see a persistent offset
+        driveKD = 0.0; //Derivitive
+        //Feedforward - uses precalculated values
+        driveKS = 0.667;
+        driveKV = 2.4;
+        driveKA = 0.5;
+
+        /* Angle Motor PID Values */
+        angleKP = 0.01; //Proportional
+        angleKI = 0.0; //Integral, keep it at zero unless you see a persistent offset
+        angleKD = 0.0; //Derivitive
+
+        /* Location of modules (make sure this and moduleData are in same order) */
+        FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+        FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+        BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+        BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
+
+        swerveKinematics = new SwerveDriveKinematics(BACK_RIGHT, FRONT_RIGHT, FRONT_LEFT, BACK_LEFT);
+        
+        moduleData = new ModuleData[] {
+          new ModuleData(11, 52, 19, 156.09, BACK_RIGHT, driveInvert, angleInvert), //Mod 0 Front left
+          new ModuleData(17, 53, 22, 50.80, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+          new ModuleData(15, 16, 21, 132.53, FRONT_LEFT, driveInvert, angleInvert), //Mod 2 Back right
+          new ModuleData(13, 12, 20, 115.40, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+        };
+      }
+
+      /* Derived Global Constants */
+      wheelCircumference = wheelDiameter * Math.PI;
+      driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
+      maxAngularVelocity = maxSpeed / driveBaseRadius;
+      driveConversionPositionFactor = (wheelDiameter * Math.PI) / driveGearRatio;
+      driveConversionVelocityFactor = driveConversionPositionFactor / 60.0;
+      angleConversionFactor = 360.0 / angleGearRatio;
+
+      }
+    }
+  
+  
 
 public static final class AutoConstants {
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
@@ -149,7 +256,7 @@ public static final class AutoConstants {
   public static final RobotConfig ROBOT_CONFIG = new RobotConfig (52, 6.8, MODULE_CONFIG,
   SwerveConstants.FRONT_LEFT, SwerveConstants.FRONT_RIGHT, SwerveConstants.BACK_LEFT, SwerveConstants.BACK_RIGHT);
 
-  public static final PPHolonomicDriveController SWERV_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
+  public static final PPHolonomicDriveController SWERVE_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{

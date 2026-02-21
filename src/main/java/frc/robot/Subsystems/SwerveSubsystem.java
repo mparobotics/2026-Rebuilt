@@ -80,7 +80,7 @@ public class SwerveSubsystem extends SubsystemBase {
     this::resetOdometry,
     this::getChassisSpeeds,
     (speeds, feedforwards)->driveFromChassisSpeeds(speeds, false),
-    AutoConstants.SWERV_DRIVE_CONTROLLER,
+    AutoConstants.SWERVE_DRIVE_CONTROLLER,
     AutoConstants.ROBOT_CONFIG,
     FieldConstants::isRedAlliance,
     this);
