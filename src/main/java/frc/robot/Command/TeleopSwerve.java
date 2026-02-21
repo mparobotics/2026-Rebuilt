@@ -63,10 +63,8 @@ public class TeleopSwerve extends Command {
     double rotationVal =
         rotationLimiter.calculate(
             MathUtil.applyDeadband(m_rotationSupplier.getAsDouble(), SwerveConstants.inputDeadband));
-    int invert = 1;
-      if (FieldConstants.isRedAlliance()){
-        invert = -1;
-      }
+    boolean isFieldOriented = !m_robotCentricSupplier.getAsBoolean();
+    int invert = (isFieldOriented && FieldConstants.isRedAlliance()) ? -1 : 1;
 
     /* Command closed-loop swerve drive */
     m_SwerveSubsystem.drive(

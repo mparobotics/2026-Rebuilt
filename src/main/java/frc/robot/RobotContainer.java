@@ -117,14 +117,15 @@ public class RobotContainer {
         () -> robotCentric.getAsBoolean(),
         // isAutoAlignSupplier - Auto-align active flag
         () -> driveController.getRightTriggerAxis() > 0.1
-      ));
+      )
+    );
 
     //INTAKE
     // raises the intake using the A button on the helms controller
-    m_intake.setDefaultCommand(
-        new RunCommand(
-            () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
-            m_intake));
+    //m_intake.setDefaultCommand(
+        //new RunCommand(
+           // () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
+            //m_intake));
     
     
     //lowers the intake using the A button on the helms controller
