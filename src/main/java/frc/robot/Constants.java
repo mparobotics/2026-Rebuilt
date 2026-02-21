@@ -27,7 +27,6 @@ public final class Constants {
 
   public static final class SwerveConstants {
     private static final boolean isCompDrivebase = true;
-
     
     /* Global Swerve Constants */
     public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
@@ -240,6 +239,7 @@ public final class Constants {
       driveConversionVelocityFactor = driveConversionPositionFactor / 60.0;
       angleConversionFactor = 360.0 / angleGearRatio;
 
+      SmartDashboard.putBoolean("Competition Drivebase?", isCompDrivebase);
       }
     }
   
@@ -355,3 +355,4 @@ public class FieldConstants {
     public static final int CANDLE_ID = 18; //Placeholder ID
   }
 }
+
