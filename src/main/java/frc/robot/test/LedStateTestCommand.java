@@ -6,8 +6,8 @@ package frc.robot.test;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.lib.SendableChooserUtil;
 import frc.lib.test.DiagnosticTest;
 import frc.lib.test.TestDashboard;
 import frc.robot.Subsystems.CandleSubsystem;
@@ -31,7 +31,7 @@ import frc.robot.Subsystems.CandleSubsystem;
 public class LedStateTestCommand extends Command implements DiagnosticTest {
     
     private final CandleSubsystem candleSubsystem;
-    private final SendableChooser<String> ledStateChooser;
+    private SendableChooser<CandleSubsystem.LedStates> ledStateChooser;
     
     // Test parameters (read from SmartDashboard in initialize())
     private CandleSubsystem.LedStates selectedLedState;
@@ -48,7 +48,6 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
      */
     public LedStateTestCommand(CandleSubsystem candleSubsystem) {
         this.candleSubsystem = candleSubsystem;
-        this.ledStateChooser = new SendableChooser<>();
         
         addRequirements(candleSubsystem);
     }
@@ -70,15 +69,8 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
         // Set up duration parameter first
         TestDashboard.putParamDouble(this, "Duration", 3.0);
         
-        // Set up SendableChooser dropdown for LedStates enum
-        // Add all enum values as options
-        CandleSubsystem.LedStates[] states = CandleSubsystem.LedStates.values();
-        if (states.length > 0) {
-            ledStateChooser.setDefaultOption(states[0].name(), states[0].name());
-            for (int i = 1; i < states.length; i++) {
-                ledStateChooser.addOption(states[i].name(), states[i].name());
-            }
-        }
+        // Set up SendableChooser dropdown for LedStates enum — stores enum values directly
+        ledStateChooser = SendableChooserUtil.fromEnum(CandleSubsystem.LedStates.class);
         TestDashboard.putParamChooser(this, "LedState", ledStateChooser);
     }
     
@@ -88,19 +80,12 @@ public class LedStateTestCommand extends Command implements DiagnosticTest {
         // Note: We retrieve the chooser from SmartDashboard because initializeParameters()
         // was called on a different (throwaway) instance. The chooser on SmartDashboard
         // contains the user's selection.
-        String selectedStateName = TestDashboard.getParamChooserSelected(
-            this, 
-            "LedState", 
-            CandleSubsystem.LedStates.None.name()
+        // The chooser stores enum values directly — no string-to-enum conversion needed.
+        selectedLedState = TestDashboard.getParamChooserSelected(
+            this,
+            "LedState",
+            CandleSubsystem.LedStates.None
         );
-        
-        // Convert string to enum
-        try {
-            selectedLedState = CandleSubsystem.LedStates.valueOf(selectedStateName);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: Invalid LED state: " + selectedStateName + ". Using None.");
-            selectedLedState = CandleSubsystem.LedStates.None;
-        }
         
         duration = TestDashboard.getParamDouble(this, "Duration", 3.0);
         

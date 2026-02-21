@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.lib.SendableChooserUtil;
 import frc.robot.RobotContainer;
 
 /**
@@ -55,11 +56,11 @@ public class DiagnosticTestManager {
     private static final String KEY_DESCRIPTION = DASHBOARD_PREFIX + "CurrentTest Description";
 
     private final RobotContainer robotContainer;
-    private final SendableChooser<String> testChooser;
+    private final SendableChooser<DiagnosticTestRegistry> testChooser;
 
     private Command activeTest = null;
-    private String lastSelectedTest = null;
-    private String suppressedSelectionWarning = null; // Tracks which selection we've already warned about during a running test
+    private DiagnosticTestRegistry lastSelectedTest = null;
+    private DiagnosticTestRegistry suppressedSelectionWarning = null; // Tracks which selection we've already warned about during a running test
     private TestStatus currentStatus = TestStatus.IDLE;
 
     /**
@@ -91,7 +92,10 @@ public class DiagnosticTestManager {
      */
     public DiagnosticTestManager(RobotContainer robotContainer) {
         this.robotContainer = robotContainer;
-        this.testChooser = new SendableChooser<>();
+        this.testChooser = SendableChooserUtil.fromEnum(
+            DiagnosticTestRegistry.class,
+            DiagnosticTestRegistry.values()[0],
+            DiagnosticTestRegistry::getDisplayName);
 
         initializeDashboard();
     }
@@ -101,18 +105,7 @@ public class DiagnosticTestManager {
      * Called once during construction.
      */
     private void initializeDashboard() {
-        // Populate dropdown with all available tests
-        String[] testNames = DiagnosticTestRegistry.getAllDisplayNames();
-        if (testNames.length > 0) {
-            testChooser.setDefaultOption(testNames[0], testNames[0]);
-            for (int i = 1; i < testNames.length; i++) {
-                testChooser.addOption(testNames[i], testNames[i]);
-            }
-        } else {
-            // No tests available - add a placeholder
-            testChooser.setDefaultOption("No tests available", "No tests available");
-        }
-
+        // testChooser is already populated by SendableChooserUtil.fromEnum() in constructor
         SmartDashboard.putData(KEY_TEST_SELECTOR, testChooser);
 
         // Initialize button and status display
@@ -166,23 +159,22 @@ public class DiagnosticTestManager {
      */
     private void updateTestSelection() {
         // Get current selection and update Current Test field
-        String selectedTest = testChooser.getSelected();
-        if (selectedTest != null && !selectedTest.equals("No tests available")) {
-            SmartDashboard.putString(KEY_CURRENT_TEST, selectedTest);
+        DiagnosticTestRegistry selectedTest = testChooser.getSelected();
+        if (selectedTest != null) {
+            SmartDashboard.putString(KEY_CURRENT_TEST, selectedTest.getDisplayName());
         } else {
             SmartDashboard.putString(KEY_CURRENT_TEST, "None");
-            selectedTest = null; // Normalize to null for easier comparison
         }
 
-        // Check if selection has changed
-        if (selectedTest != null && !selectedTest.equals(lastSelectedTest)) {
+        // Check if selection has changed (enums use == for identity comparison)
+        if (selectedTest != null && selectedTest != lastSelectedTest) {
             // Selection changed - check if we can allow the change
 
             // Don't allow selection change if a test is currently running
             // Ignore the change and keep showing the running test
             if (isTestRunning()) {
                 // Print warning once per selection change (suppress repeats)
-                if (!selectedTest.equals(suppressedSelectionWarning)) {
+                if (selectedTest != suppressedSelectionWarning) {
                     System.out.println("Warning: Cannot change test selection while a test is running. " +
                         "Please wait for the current test to complete or cancel it first.");
                     suppressedSelectionWarning = selectedTest;
@@ -199,13 +191,8 @@ public class DiagnosticTestManager {
                 return;
             }
 
-            DiagnosticTestRegistry registryEntry = DiagnosticTestRegistry.findByDisplayName(selectedTest);
-            if (registryEntry == null) {
-                System.err.println("Error: Test not found in registry: " + selectedTest);
-                SmartDashboard.putString(KEY_MESSAGE, "Error: Test not found in registry");
-                lastSelectedTest = selectedTest;
-                return;
-            }
+            // selectedTest IS the registry entry — no findByDisplayName() lookup needed
+            String displayName = selectedTest.getDisplayName();
 
             // Create a temporary throwaway instance solely to initialize SmartDashboard parameters.
             // This instance is discarded immediately after calling initializeParameters().
@@ -213,19 +200,19 @@ public class DiagnosticTestManager {
             // parameter values from SmartDashboard, ensuring any parameter changes made after
             // selection are respected.
             try {
-                Command testCommand = registryEntry.createTest(robotContainer);
+                Command testCommand = selectedTest.createTest(robotContainer);
                 if (testCommand instanceof DiagnosticTest) {
                     DiagnosticTest diagnosticTest = (DiagnosticTest) testCommand;
                     diagnosticTest.initializeParameters();
                     SmartDashboard.putString(KEY_DESCRIPTION, diagnosticTest.getTestDescription());
                     // Instance is discarded here - not stored or reused
-                    System.out.println("Initialized parameters for: " + selectedTest);
-                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + selectedTest + ". Press Start-Cancel to begin.");
+                    System.out.println("Initialized parameters for: " + displayName);
+                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + displayName + ". Press Start-Cancel to begin.");
                 } else {
                     // Test doesn't implement DiagnosticTest yet (e.g., during Phase 2 migration)
                     SmartDashboard.putString(KEY_DESCRIPTION, "");
-                    System.out.println("Note: " + selectedTest + " does not implement DiagnosticTest interface yet");
-                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + selectedTest + ". Press Start-Cancel to begin.");
+                    System.out.println("Note: " + displayName + " does not implement DiagnosticTest interface yet");
+                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + displayName + ". Press Start-Cancel to begin.");
                 }
             } catch (Exception e) {
                 System.err.println("Error creating test instance for parameter initialization: " + e.getMessage());
@@ -307,8 +294,8 @@ public class DiagnosticTestManager {
             return;
         }
 
-        // Get selected test from chooser (Current Test field is already kept in sync by updateTestSelection())
-        String selectedTest = testChooser.getSelected();
+        // Get selected test from chooser — returns the enum directly, no string lookup needed
+        DiagnosticTestRegistry selectedTest = testChooser.getSelected();
         if (selectedTest == null) {
             String message = "No test selected. Please select a test from the dropdown.";
             SmartDashboard.putString(KEY_MESSAGE, message);
@@ -316,13 +303,7 @@ public class DiagnosticTestManager {
             return;
         }
 
-        DiagnosticTestRegistry registryEntry = DiagnosticTestRegistry.findByDisplayName(selectedTest);
-        if (registryEntry == null) {
-            String message = "Test not found in registry: " + selectedTest;
-            SmartDashboard.putString(KEY_MESSAGE, message);
-            System.err.println("Error: " + message);
-            return;
-        }
+        String displayName = selectedTest.getDisplayName();
 
         // Cancel any existing test (shouldn't be necessary, but be safe)
         if (activeTest != null) {
@@ -331,16 +312,16 @@ public class DiagnosticTestManager {
 
         // Create and schedule the test
         try {
-            activeTest = registryEntry.createTest(robotContainer);
+            activeTest = selectedTest.createTest(robotContainer);
             CommandScheduler.getInstance().schedule(activeTest);
 
             // Update status display
             currentStatus = TestStatus.RUNNING;
-            SmartDashboard.putString(KEY_CURRENT_TEST, selectedTest);
+            SmartDashboard.putString(KEY_CURRENT_TEST, displayName);
             SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
-            SmartDashboard.putString(KEY_MESSAGE, "Test running: " + selectedTest);
+            SmartDashboard.putString(KEY_MESSAGE, "Test running: " + displayName);
 
-            System.out.println("Started test: " + selectedTest);
+            System.out.println("Started test: " + displayName);
         } catch (Exception e) {
             // Handle exceptions during test creation or scheduling
             System.err.println("Error starting test: " + e.getMessage());

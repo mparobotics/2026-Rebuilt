@@ -206,27 +206,39 @@ public class TestDashboard {
     
     /**
      * Gets a SendableChooser param from SmartDashboard.
-     * 
+     *
+     * <p>The type parameter {@code T} is inferred from usage context. For example:
+     * <pre>{@code
+     * SendableChooser<LedStates> chooser = TestDashboard.getParamChooser(this, "LedState");
+     * }</pre>
+     *
+     * @param <T> The value type stored in the chooser
      * @param test The test instance
      * @param paramName The name of the param
      * @return The SendableChooser, or null if not found
      */
     @SuppressWarnings("unchecked")
-    public static SendableChooser<String> getParamChooser(DiagnosticTest test, String paramName) {
-        return (SendableChooser<String>) SmartDashboard.getData(getPrefix(test, DataType.PARAM) + paramName);
+    public static <T> SendableChooser<T> getParamChooser(DiagnosticTest test, String paramName) {
+        return (SendableChooser<T>) SmartDashboard.getData(getPrefix(test, DataType.PARAM) + paramName);
     }
     
     /**
      * Gets the selected value from a SendableChooser param.
      * Handles null checking and returns the default value if the chooser or selection is null.
-     * 
+     *
+     * <p>The type parameter {@code T} is inferred from the {@code defaultValue}. For example:
+     * <pre>{@code
+     * LedStates state = TestDashboard.getParamChooserSelected(this, "LedState", LedStates.None);
+     * }</pre>
+     *
+     * @param <T> The value type stored in the chooser
      * @param test The test instance
      * @param paramName The name of the param
      * @param defaultValue The default value to return if chooser is null or no selection
      * @return The selected value, or defaultValue if not available
      */
-    public static String getParamChooserSelected(DiagnosticTest test, String paramName, String defaultValue) {
-        SendableChooser<String> chooser = getParamChooser(test, paramName);
+    public static <T> T getParamChooserSelected(DiagnosticTest test, String paramName, T defaultValue) {
+        SendableChooser<T> chooser = getParamChooser(test, paramName);
         if (chooser != null && chooser.getSelected() != null) {
             return chooser.getSelected();
         }

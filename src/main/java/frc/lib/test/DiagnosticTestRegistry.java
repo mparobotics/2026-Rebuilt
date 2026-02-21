@@ -125,33 +125,4 @@ public enum DiagnosticTestRegistry {
      */
     public abstract Command createTest(RobotContainer robotContainer);
 
-    /**
-     * Gets an array of all test display names.
-     * Useful for populating dropdowns or listing available tests.
-     *
-     * @return Array of all test display names
-     */
-    public static String[] getAllDisplayNames() {
-        DiagnosticTestRegistry[] values = values();
-        String[] names = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            names[i] = values[i].getDisplayName();
-        }
-        return names;
-    }
-
-    /**
-     * Finds a test registry entry by its display name.
-     *
-     * @param displayName The display name to search for
-     * @return The matching registry entry, or null if not found
-     */
-    public static DiagnosticTestRegistry findByDisplayName(String displayName) {
-        for (DiagnosticTestRegistry test : values()) {
-            if (test.getDisplayName().equals(displayName)) {
-                return test;
-            }
-        }
-        return null;
-    }
 }
