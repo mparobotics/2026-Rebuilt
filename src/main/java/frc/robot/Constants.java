@@ -108,14 +108,20 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
     /* Module Specific Constants */
     public record ModuleData(
-      int driveMotorID, int angleMotorID, int encoderID, double angleOffset, Translation2d location
+      int driveMotorID,
+      int angleMotorID,
+      int encoderID,
+      double angleOffset,
+      Translation2d location,
+      boolean driveMotorInverted
     ){}
 
     public static ModuleData[] moduleData = {
-      new ModuleData(11, 52, 19, 157.06, BACK_RIGHT), //Mod 0 Back right
-      new ModuleData(17, 53, 22, 54.94, FRONT_RIGHT), //Mod 1 Front right
-      new ModuleData(15, 16, 21, 132.28, FRONT_LEFT), //Mod 2 Front left
-      new ModuleData(13, 12, 20, 117.34, BACK_LEFT) //Mod 3 Back left
+      // If a single module drives "backward" vs the others, flip that module's driveMotorInverted.
+      new ModuleData(11, 52, 19, 157.06, BACK_RIGHT, true), //Mod 0 Back right
+      new ModuleData(17, 53, 22, 54.94, FRONT_RIGHT, false), //Mod 1 Front right
+      new ModuleData(15, 16, 21, 132.28, FRONT_LEFT, false), //Mod 2 Front left
+      new ModuleData(13, 12, 20, 117.34, BACK_LEFT, false) //Mod 3 Back left
     };
     
   }
