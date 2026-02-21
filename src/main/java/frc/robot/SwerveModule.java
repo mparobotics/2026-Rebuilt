@@ -458,7 +458,7 @@ public class SwerveModule {
         // Set maximum current draw to protect motor and wiring
         sparkFlexConfig.smartCurrentLimit(SwerveConstants.driveContinuousCurrentLimit);
         // Set motor direction (may need to be inverted based on physical mounting)
-        sparkFlexConfig.inverted(driveMotorInverted);
+        sparkFlexConfig.inverted(SwerveConstants.driveInvert ^ driveMotorInverted);
         // Set idle mode: brake (holds position) or coast (free rotation)
         sparkFlexConfig.idleMode(SwerveConstants.driveNeutralMode);
         // Convert encoder counts to meters per second for velocity readings

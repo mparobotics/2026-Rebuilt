@@ -34,7 +34,8 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double halfWheelBase = Units.inchesToMeters(28/2.0);//to find
     public static final double wheelDiameter = Units.inchesToMeters(4.0);
     public static final double wheelCircumference = wheelDiameter * Math.PI;
-    public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+    // Distance from robot center to a module (used for max angular velocity scaling).
+    public static final double driveBaseRadius = Math.hypot(halfTrackWidth, halfWheelBase);
 
     public static final double openLoopRamp = 0.25;
     public static final double closedLoopRamp = 0.0;
@@ -44,12 +45,14 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double angleGearRatio = (12.8 / 1.0); // 12.8:1 MK4 SDS Modules
     //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
+    // Location of modules (x = forward, y = left).
+    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
+
     public static final SwerveDriveKinematics swerveKinematics =
-    new SwerveDriveKinematics(
-        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back Right
-        new Translation2d(halfTrackWidth,-halfWheelBase), // Front Right
-        new Translation2d(halfTrackWidth,halfWheelBase), // Front Left
-        new Translation2d(-halfTrackWidth,halfWheelBase)); // Back Left
+        new SwerveDriveKinematics(BACK_RIGHT, FRONT_RIGHT, FRONT_LEFT, BACK_LEFT);
         
     //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
@@ -99,12 +102,6 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final boolean canCoderInvert = false;
     public static final boolean driveInvert = false;
     public static final boolean angleInvert = true;
-
-    //Location of modules
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
     /* Module Specific Constants */
     public record ModuleData(

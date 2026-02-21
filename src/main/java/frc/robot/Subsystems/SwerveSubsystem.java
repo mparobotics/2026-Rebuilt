@@ -124,7 +124,7 @@ public class SwerveSubsystem extends SubsystemBase {
     desiredSwerveDataPublisher.set(desiredStates);
 
     for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(desiredStates[mod.moduleNumber], false);
+      mod.setDesiredState(desiredStates[mod.moduleNumber], isOpenLoop);
     }
   }
 
