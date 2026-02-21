@@ -169,7 +169,7 @@ public final class Constants {
         * more info see https://www.notion.so/Swerve-Module-Positioning-Translation2d-2ec665d348f580e48612c9a5bd315fb7 
         * and https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
         */
-        new SwerveDriveKinematics(FRONT_LEFT, FRONT_RIGHT, BACK_RIGHT, BACK_LEFT);
+        swerveKinematics = new SwerveDriveKinematics(FRONT_LEFT, FRONT_RIGHT, BACK_RIGHT, BACK_LEFT);
 
         moduleData = new ModuleData[] {
           new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
