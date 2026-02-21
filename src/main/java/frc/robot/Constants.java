@@ -39,8 +39,10 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
     public static final double wheelDiameter = Units.inchesToMeters(4.0);
     public static final double wheelCircumference = wheelDiameter * Math.PI;
-    // Distance from robot center to a module (used for max angular velocity scaling).
-    public static final double driveBaseRadius = Math.hypot(halfTrackWidth, halfWheelBase);
+    //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
+    //public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+    public static final double driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
+
 
     public static final double openLoopRamp = 0.25;
     public static final double closedLoopRamp = 0.0;
@@ -50,15 +52,13 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
     //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
-    // Location of modules (x = forward, y = left).
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
-
     public static final SwerveDriveKinematics swerveKinematics =
-        new SwerveDriveKinematics(BACK_RIGHT, FRONT_RIGHT, FRONT_LEFT, BACK_LEFT);
-        
+    new SwerveDriveKinematics(
+        //WPILib coordinate system: +X = forward, +Y = left
+        new Translation2d(halfTrackWidth, halfWheelBase), //Front left
+        new Translation2d(halfTrackWidth, -halfWheelBase), //Front right
+        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back right
+        new Translation2d(-halfTrackWidth, halfWheelBase)); //Back Left
     //translation 2d locates the swerve module in cords
     //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
     //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
