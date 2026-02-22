@@ -19,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -49,6 +50,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
+  private final StructPublisher<Pose2d> robotPose = NetworkTableInstance.getDefault()
+      .getStructTopic("Robot Pose", Pose2d.struct).publish();
 
   /** Creates a new SwerveSubsystem. */
   public SwerveSubsystem() { 
@@ -248,6 +251,8 @@ public class SwerveSubsystem extends SubsystemBase {
     updateOdometryWithVision("limelight-a");
     updateOdometryWithVision("limelight-b");
     field.setRobotPose(getPose());
+    // required by AdvantageScope - to visualize the robot pose without "spinning"
+    robotPose.set(getPose());
 
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
 
