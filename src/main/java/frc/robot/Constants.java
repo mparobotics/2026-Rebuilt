@@ -96,7 +96,16 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double angleConversionFactor = 360.0 / angleGearRatio;
 
     /* Swerve Profiling Values */
-    public static final double maxSpeed = 3; // meters per second
+    public static final double maxSpeed = 3; // meters per second — software speed limit for teleop
+
+    // Physical max speed at the wheel, derived from the motor's free speed through the gearbox.
+    // This is what the motor can physically achieve, NOT a software limit.
+    // Used by PathPlanner's ModuleConfig to model motor physics (torque, current, acceleration).
+    // freeSpeedRadPerSec (after gear reduction) × wheel radius
+    public static final double maxDriveVelocityMPS =
+        DCMotor.getNeoVortex(1).withReduction(driveGearRatio).freeSpeedRadPerSec
+        * (wheelDiameter / 2.0);
+
     public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
 
     /* Neutral Modes */
@@ -140,7 +149,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
 public static final class AutoConstants {
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
-  SwerveConstants.maxSpeed,
+  SwerveConstants.maxDriveVelocityMPS,  // physical max speed, NOT the software speed limit (maxSpeed)
   1.2,
   DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
   SwerveConstants.driveContinuousCurrentLimit,
