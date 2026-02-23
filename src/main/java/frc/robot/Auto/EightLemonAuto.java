@@ -9,7 +9,7 @@ import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-
+//With PATHPLANNER
 public class EightLemonAuto extends SequentialCommandGroup {
   public EightLemonAuto (SwerveSubsystem drive, ShooterSubsystem shooter, IntakeSubsystem intake){
     addCommands(

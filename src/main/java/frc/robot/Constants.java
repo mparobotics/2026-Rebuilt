@@ -150,6 +150,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 public static final class AutoConstants {
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
   SwerveConstants.maxDriveVelocityMPS,  // physical max speed, NOT the software speed limit (maxSpeed)
+  SwerveConstants.maxSpeed,
   1.2,
   DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
   SwerveConstants.driveContinuousCurrentLimit,
@@ -197,7 +198,20 @@ public class FieldConstants {
 
       public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
 
+      /**
+       * If true, the robot will behave as if it is always on the Blue alliance (no field mirroring),
+       * even when connected to FMS / Driver Station reports Red.
+       *
+       * WARNING: Enabling this for real matches while actually on Red will make autos/field-oriented
+       * behavior mirror incorrectly.
+       */
+      public static final boolean FORCE_BLUE_ALLIANCE = true;
+
       public static boolean isRedAlliance(){
+          if (FORCE_BLUE_ALLIANCE) {
+              return false;
+          }
+          // Default to Blue when alliance is unknown (common in sim/practice).
           return DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
       }
       
