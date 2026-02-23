@@ -21,8 +21,6 @@ import frc.lib.test.DiagnosticTestManager;
  *   <li>Handles mode transitions (autonomous, teleop, test) and manages command lifecycle</li>
  * </ul>
  */
-
-
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
@@ -32,6 +30,10 @@ public class Robot extends TimedRobot {
   // Simulation support
   private SimulationManager simManager;
 
+  /**
+   * Constructs the Robot. Initializes the RobotContainer which creates subsystems
+   * (subsystems configure themselves) and sets up command bindings.
+   */
   public Robot() {
     m_robotContainer = new RobotContainer();
   }
@@ -44,7 +46,6 @@ public class Robot extends TimedRobot {
    * Called every 20ms during all robot modes. Runs the CommandScheduler which
    * executes active commands, checks button/trigger bindings, and updates subsystems.
    */
-
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
