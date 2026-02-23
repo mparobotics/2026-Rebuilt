@@ -21,6 +21,9 @@ import frc.robot.test.SwerveAngleDriftTestCommand;
  */
 class DiagnosticTestValidationTest {
 
+    /** Set to true to enable verbose output for debugging. */
+    private static final boolean DEBUG = false;
+
     /**
      * Simple test command that validates parameters.  This allows testing parameter
      * validation logic without requiring the full command or hardware.
@@ -58,17 +61,17 @@ class DiagnosticTestValidationTest {
 
             // Validate parameters (same validation logic as SwerveAngleDriftTestCommand)
             if (moduleNumber < 0 || moduleNumber > 3) {
-                System.err.println("ERROR: Invalid module number: " + moduleNumber + ". Must be 0-3.");
+                if (DEBUG) System.err.println("ERROR: Invalid module number: " + moduleNumber + ". Must be 0-3.");
                 state = ValidationState.COMPLETE;
                 return;
             }
             if (numberOfCycles < 1) {
-                System.err.println("ERROR: Number of cycles must be at least 1. Got: " + numberOfCycles);
+                if (DEBUG) System.err.println("ERROR: Number of cycles must be at least 1. Got: " + numberOfCycles);
                 state = ValidationState.COMPLETE;
                 return;
             }
             if (testAngleDegrees < 0 || testAngleDegrees >= 360) {
-                System.err.println("WARNING: Test angle should be 0-360 degrees. Using: " + testAngleDegrees);
+                if (DEBUG) System.err.println("WARNING: Test angle should be 0-360 degrees. Using: " + testAngleDegrees);
             }
 
             // Simulate module null check (in real command, this would call swerveSubsystem.getModule())
