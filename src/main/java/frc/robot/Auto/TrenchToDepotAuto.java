@@ -15,7 +15,7 @@ public class TrenchToDepotAuto extends SequentialCommandGroup {
   public TrenchToDepotAuto (SwerveSubsystem drive){
     final double[] startYawRad = new double[1];
       addCommands(
-        drive.startAutoAt(4.61, 6.9, 0),
+        drive.startAutoAt(3.5, 6.9, 0),
         new InstantCommand(()->drive.drive(-0.5,0,0, false), drive),
         Commands.waitSeconds(2),
         new InstantCommand(()->drive.drive(0,0,0, false),drive),

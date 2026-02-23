@@ -13,9 +13,11 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+  private final RobotSimulation m_robotSimulation;
 
   public Robot() {
     m_robotContainer = new RobotContainer();
+    m_robotSimulation = new RobotSimulation(m_robotContainer);
   }
 
 
@@ -74,4 +76,14 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testExit() {}
+
+  @Override
+  public void simulationInit() {
+    m_robotSimulation.simulationInit();
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    m_robotSimulation.simulationPeriodic();
+  }
 }

@@ -139,6 +139,8 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
 
 public static final class AutoConstants {
+  private static boolean dashboardInitialized = false;
+
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
   SwerveConstants.maxSpeed,
   1.2,
@@ -153,36 +155,47 @@ public static final class AutoConstants {
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{
+    None,
     DriveTestAuto,
-    EightLemonAuto
+    EightLemonAuto,
+    TrenchToDepotAuto,
+    CenterToDepotAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
   private static SendableChooser<AutoMode> autoModeChooser = new SendableChooser<AutoMode>();
-  static{
+  public static void initDashboard() {
+    if (dashboardInitialized) {
+      return;
+    }
+    dashboardInitialized = true;
+
     sideChooser.addOption("RIGHT", true);
     sideChooser.setDefaultOption("LEFT", false);
 
-    for(AutoMode mode : AutoMode.values()){
-      autoModeChooser.addOption(mode.toString(), mode);
-    }
+    autoModeChooser.setDefaultOption("TrenchToDepotAuto", AutoMode.TrenchToDepotAuto);
+    autoModeChooser.addOption("None", AutoMode.None);
+    autoModeChooser.addOption("EightLemonAuto (PathPlanner)", AutoMode.EightLemonAuto);
+    autoModeChooser.addOption("TrenchToDepotAuto", AutoMode.TrenchToDepotAuto);
+    autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
 
-    autoModeChooser.setDefaultOption(AutoMode.DriveTestAuto.toString(), AutoMode.DriveTestAuto);
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
   }
   
   public static AutoMode getSelectedAutoMode(){
+    initDashboard();
     AutoMode selection = autoModeChooser.getSelected();
     return selection != null ? selection : AutoMode.DriveTestAuto;
   }
   public static boolean isRightSideAuto(){
+    initDashboard();
     return Boolean.TRUE.equals(sideChooser.getSelected());
   }
 }
 
 
-public class FieldConstants {
+public static final class FieldConstants {
       public static final double FIELD_LENGTH = 17.54824934;
       public static final double FIELD_WIDTH = 8.052;
 
@@ -225,7 +238,7 @@ public class FieldConstants {
       
   }
   /* Shooter Constants */
-  public class ShooterConstants {
+  public static final class ShooterConstants {
       public static final int SHOOTER_ID = 70; //Placeholder ID
       public static final int FEEDER_ID = 61; //Feeder ID
       public static final int HOOD_ID = 62; //Hood ID (NEED CHANGE)
@@ -239,7 +252,7 @@ public class FieldConstants {
       public static final double HOOD_MAX_OUTPUT = 0.4;
       public static final double HOOD_TOLERANCE = 0.02;
   }
-  public class IntakeConstants {
+  public static final class IntakeConstants {
     // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
     // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
     public static int INTAKE_ID = 63; // TODO: set to your intake motor CAN ID
@@ -257,7 +270,7 @@ public class FieldConstants {
     public static double INTAKE_ARM_kD = 0;
   }
 
-  public class CANdleConstants {
+  public static final class CANdleConstants {
     public static final int CANDLE_ID = 18; //Placeholder ID
   }
 }

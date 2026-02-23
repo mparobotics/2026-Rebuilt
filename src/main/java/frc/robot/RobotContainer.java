@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Auto.EightLemonAuto;
+import frc.robot.Auto.TrenchToDepotAuto;
+import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
@@ -57,6 +59,7 @@ public class RobotContainer {
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   
   public RobotContainer() {
+    AutoConstants.initDashboard();
     configureBindings();
   }
 
@@ -149,11 +152,17 @@ public class RobotContainer {
     AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
 
     return switch (selected) {
+      case None -> Commands.none();
       case DriveTestAuto -> new DriveTestAuto(m_drive);
       case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
+      case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
+      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
       default -> Commands.none();
     };
   }
 
+  public SwerveSubsystem getDriveSubsystem() {
+    return m_drive;
+  }
 
 }
