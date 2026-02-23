@@ -3,6 +3,7 @@ package frc.lib.test;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.test.LedStateTestCommand;
+import frc.robot.test.OdometryResetTestCommand;
 import frc.robot.test.SwerveAlignmentTestCommand;
 import frc.robot.test.SwerveAngleDriftTestCommand;
 import frc.robot.test.SwerveStraightLineTestCommand;
@@ -84,6 +85,19 @@ public enum DiagnosticTestRegistry {
         @Override
         public Command createTest(RobotContainer robotContainer) {
             return new LedStateTestCommand(robotContainer.getCandleSubsystem());
+        }
+    },
+
+    /**
+     * Odometry Reset Test - Demonstrates the pose reset bug (issue 8.1/8.2).
+     * Resets the robot's pose and observes whether the heading stays correct
+     * across subsequent cycles. Reveals bugs where the odometry baseline or
+     * SimulationManager stale data corrupt the heading.
+     */
+    ODOMETRY_RESET("Odometry Reset Test") {
+        @Override
+        public Command createTest(RobotContainer robotContainer) {
+            return new OdometryResetTestCommand(robotContainer.getSwerveSubsystem());
         }
     };
 
