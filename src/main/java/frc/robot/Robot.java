@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -116,6 +117,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void simulationInit() {
+    // Suppress joystick-not-found warnings in sim (no physical controller).
+    // Controlled by -Dsim.silenceJoystick=true|false in user-specific ~/.gradle/init.gradle file.
+    if (Boolean.parseBoolean(System.getProperty("sim.silenceJoystick", "true"))) {
+      DriverStation.silenceJoystickConnectionWarning(true);
+    }
+
     // Initialize simulation manager for driver practice simulation
     simManager = new SimulationManager(m_robotContainer.getSwerveSubsystem());
   }
