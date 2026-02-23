@@ -149,6 +149,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
 public static final class AutoConstants {
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
+  SwerveConstants.maxDriveVelocityMPS,  // physical max speed, NOT the software speed limit (maxSpeed)
   SwerveConstants.maxSpeed,
   1.2,
   DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
