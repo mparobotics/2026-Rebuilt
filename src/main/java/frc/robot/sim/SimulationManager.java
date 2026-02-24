@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -76,11 +77,10 @@ public class SimulationManager {
         double dt = currentTime - lastTime;
         lastTime = currentTime;
         
-        // Safety check: clamp invalid time deltas (negative, zero, or unreasonably large)
-        // Fallback to 20ms (standard robot loop period) if calculation is invalid
-        if (dt <= 0 || dt > 1.0) {
-            dt = 0.02;
-        }
+        // Clamp dt to [0, 50ms]. Zero or negative dt produces no motion (correct).
+        // 50ms upper bound (2.5× the nominal 20ms loop) limits pose jumps during
+        // GC pauses or debugger breakpoints — the robot loses time rather than teleporting.
+        dt = MathUtil.clamp(dt, 0.0, 0.05);
 
         // Disabled-state guard: when the robot transitions from enabled to disabled,
         // the CommandScheduler stops running commands but each module's desiredState
