@@ -373,17 +373,19 @@ This establishes a known initial state: driver station connected, robot disabled
 
 **Is it worth integrating into `SimulationManager`?**
 
-Minimal value.  The WPILib Sim GUI already provides interactive controls for all of these states.  When the sim GUI launches, it displays buttons for Disabled / Autonomous / Teleoperated / Test, and shows the DS connection status.  The default state when the Sim GUI opens is DS connected + robot disabled — which is exactly what the `RobotSimulation` code sets programmatically.
+This programmatic setup is redundant with functionality provided by the existing simulation infrastructure.  Two mechanisms already control DriverStation state without any code in the simulation framework:
 
-The programmatic setup would matter if:
-- The sim were started without the Sim GUI (headless mode for CI/CD testing).
-- The default Sim GUI state did not match the desired initial state.
+1. **Sim GUI (`halsim_gui`)** — enabled by `wpi.sim.addGui()` in `build.gradle`.  The Sim GUI displays a "Robot State" widget with clickable buttons for Disabled / Autonomous / Teleoperated / Test, and shows DS connection status.  Its default startup state is DS connected + robot disabled — identical to what the `RobotSimulation` code sets programmatically.
 
-Neither of these applies to our current workflow.  Driver practice and autonomous testing both start through the Sim GUI.
+2. **Real FRC Driver Station via `halsim_ds_socket`** — enabled by `wpi.sim.addDriverstation()` in `build.gradle`.  When the real Driver Station application connects to the simulation (Windows only), it takes over control of all DriverStation state: enabled/disabled, mode selection, joystick data, match time, and alliance info.  Any values set programmatically by `DriverStationSim` are overridden by the real DS on connection.
 
-There is one nuance worth noting: `SimulationManager` on the current branch already handles joystick warning suppression in `Robot.simulationInit()` (via the `sim.silenceJoystick` system property), which addresses the most disruptive sim startup annoyance.
+In both cases, the DriverStation state is managed externally — by the Sim GUI interactively, or by the real DS application via the socket protocol.  The programmatic `DriverStationSim` calls in `RobotSimulation` set the same defaults that these mechanisms already establish.
 
-**Assessment:** Not worth integrating.  The Sim GUI provides the same functionality interactively, and the programmatic defaults match the Sim GUI defaults.
+The programmatic setup would provide independent value if the simulation were run headless (no Sim GUI, no real DS) — for example, in a CI/CD pipeline.  That does not apply to the current workflow.
+
+Note: `SimulationManager` on the current branch already handles joystick warning suppression in `Robot.simulationInit()` (via the `sim.silenceJoystick` system property), which addresses the most common sim startup annoyance.
+
+**Assessment:** Not integrating.  The functionality is already provided by the Sim GUI and the `halsim_ds_socket` extension, both of which are configured in `build.gradle`.
 
 #### 3. Simulation Reset
 
