@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.SwerveModule;
@@ -38,6 +39,11 @@ public class SimulationManager {
     // Internal simulated pose
     private Pose2d simPose = new Pose2d();
     private double lastTime = 0;
+
+    // Disabled-state tracking: used to detect the enabled→disabled transition
+    // so we can zero out stale module desired states once (edge-triggered).
+    // Starts true because the robot boots into disabled mode.
+    private boolean wasDisabled = true;
 
     /**
      * Creates a new SimulationManager.
@@ -75,6 +81,21 @@ public class SimulationManager {
         if (dt <= 0 || dt > 1.0) {
             dt = 0.02;
         }
+
+        // Disabled-state guard: when the robot transitions from enabled to disabled,
+        // the CommandScheduler stops running commands but each module's desiredState
+        // field retains its last commanded velocity. Without this guard, SimulationManager
+        // would keep integrating those stale speeds, causing the simulated robot to drift.
+        // We clear once on the transition edge — zeroing drive speed while preserving
+        // wheel angles (realistic: wheels stop spinning but hold their orientation).
+        boolean isDisabled = DriverStation.isDisabled();
+        if (isDisabled && !wasDisabled) {
+            for (SwerveModule module : swerveSubsystem.getModules()) {
+                Rotation2d currentAngle = module.getDesiredState().angle;
+                module.setDesiredState(new SwerveModuleState(0.0, currentAngle), false);
+            }
+        }
+        wasDisabled = isDisabled;
 
         // Step 1: Get desired module states (from normal driving or individual module commands)
         SwerveModuleState[] desiredStates = swerveSubsystem.getDesiredStates();
