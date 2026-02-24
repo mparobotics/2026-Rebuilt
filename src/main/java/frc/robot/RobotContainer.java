@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Auto.EightLemonAuto;
+import frc.robot.Auto.TrenchToDepotAuto;
+import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
@@ -61,6 +63,7 @@ public class RobotContainer {
    * and sets up command bindings to map controller inputs to commands.
    */
   public RobotContainer() {
+    AutoConstants.initDashboard();
     configureBindings();
   }
 
@@ -155,7 +158,7 @@ public class RobotContainer {
     // getHID() accesses the underlying XboxController to read button states directly.
     // CommandXboxController doesn't provide a method for stick button presses, so we use
     // the HID (Human Interface Device) object's getRawButton() method instead.
-    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1;
+    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.85: 1;
   }
 
   /**
@@ -167,8 +170,11 @@ public class RobotContainer {
     AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
 
     return switch (selected) {
+      case None -> Commands.none();
       case DriveTestAuto -> new DriveTestAuto(m_drive);
       case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
+      case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
+      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
       default -> Commands.none();
     };
   }
