@@ -12,6 +12,7 @@ This document compares the two simulation implementations present in our codebas
 4. [Summary Comparison Matrix](#summary-comparison-matrix)
 5. [Analysis](#analysis)
 6. [Appendix A — Feature Portability and Calculation Review](#appendix-a--feature-portability-and-calculation-review)
+7. [Appendix B — SimulationManager Data Flow and Code Path Analysis](#appendix-b--simulationmanager-data-flow-and-code-path-analysis)
 
 ---
 
@@ -540,3 +541,222 @@ In `SimulationManager`, direct module commands from diagnostic tests bypass `dri
 | **Wheel desaturation** | Not needed | N/A | N/A |
 
 The two changes recommended for near-term integration (disabled-state guard and tighter dt clamping) are both small, isolated, and do not affect the `SimulationManager` architecture or its relationship with the subsystem.
+
+---
+
+## Appendix B — `SimulationManager` Data Flow and Code Path Analysis
+
+This appendix explains how the `SimulationManager` approach achieves its goal of reusing production code paths in simulation.  It provides side-by-side comparisons of the data flow and code execution in real robot mode vs. simulation mode, showing that the production code is identical in both modes.
+
+### The Core Idea
+
+On the real robot, physical motors turn physical wheels, physical encoders measure how far the wheels have moved, and a physical gyro measures which direction the robot is facing.  The subsystem reads these sensors every 20 ms and feeds the readings into the pose estimator to determine where the robot is on the field.
+
+In simulation, there are no physical motors, wheels, encoders, or gyro.  The `SimulationManager` fills the gap by computing what the sensor readings *would be* if the robot were moving as commanded, and writing those computed values into the vendor simulation APIs.  When the subsystem's `periodic()` method runs — the exact same code as on the real robot — it reads those simulated sensor values and updates the pose estimator as usual.
+
+The result: the subsystem does not know or care whether it is running on a real robot or in simulation.  Its `periodic()` method, its odometry, and its Field2d visualization all work identically in both modes.
+
+### Data Flow Comparison
+
+The following diagrams show the complete data flow for a single 20 ms loop cycle in each mode.  **Bold** text marks the steps that differ between real and simulation mode.  All other steps are identical code.
+
+#### Real Robot Mode
+
+```
+Driver Input (joystick)
+    │
+    ▼
+TeleopSwerve.execute()
+    │  applies deadband, slew rate limiting, scales by max speed
+    ▼
+SwerveSubsystem.drive(x, y, rot, fieldOriented)
+    │  converts to ChassisSpeeds (field-relative or robot-relative)
+    ▼
+SwerveSubsystem.driveFromChassisSpeeds(speeds, openLoop)
+    │  kinematics.toSwerveModuleStates() → desaturateWheelSpeeds()
+    ▼
+SwerveModule.setDesiredState(state, openLoop)          ← ×4 modules
+    │  optimize() → stores desiredState → setAngle() → setSpeed()
+    ▼
+Motor controllers execute PID commands
+    │  ▪ angle motor rotates wheel to target angle
+    │  ▪ drive motor spins wheel at target speed
+    ▼
+Physical wheels move → physical sensors update
+    │  ▪ drive encoder position increases as wheel rolls
+    │  ▪ angle encoder position reflects current wheel angle
+    │  ▪ Pigeon2 gyro yaw reflects current robot heading
+    ▼
+SwerveSubsystem.periodic()
+    │  getYaw()       → pigeon.getYaw()           → reads physical gyro
+    │  getPositions() → driveEncoder.getPosition() → reads physical encoder
+    │                 → angleEncoder.getPosition()  → reads physical encoder
+    │  odometry.update(yaw, positions)             → fuses into pose estimate
+    │  field.setRobotPose(getPose())               → updates Field2d
+    │  robotPose.set(getPose())                    → publishes pose for AdvantageScope
+    ▼
+Dashboard / AdvantageScope shows robot position on field
+```
+
+#### Simulation Mode
+
+```
+Driver Input (joystick — real or simulated)
+    │
+    ▼
+TeleopSwerve.execute()                                  ← SAME CODE
+    │  applies deadband, slew rate limiting, scales by max speed
+    ▼
+SwerveSubsystem.drive(x, y, rot, fieldOriented)         ← SAME CODE
+    │  converts to ChassisSpeeds (field-relative or robot-relative)
+    ▼
+SwerveSubsystem.driveFromChassisSpeeds(speeds, openLoop) ← SAME CODE
+    │  kinematics.toSwerveModuleStates() → desaturateWheelSpeeds()
+    ▼
+SwerveModule.setDesiredState(state, openLoop)          ← ×4, SAME CODE
+    │  optimize() → stores desiredState → setAngle() → setSpeed()
+    ▼
+Motor controllers NO-OP (no physical hardware)
+    │  ▪ PID commands are issued but have no effect
+    │  ▪ No physical wheels move
+    │  ▪ desiredState field retains the commanded state
+    ▼
+ ╔══════════════════════════════════════════════════════════╗
+ ║  SimulationManager.simulationPeriodic()  — SIM ONLY      ║
+ ║                                                          ║
+ ║  1. Read desired states from modules                     ║
+ ║     desiredStates = swerveSubsystem.getDesiredStates()   ║
+ ║                                                          ║
+ ║  2. Compute what the robot would do                      ║
+ ║     chassisSpeeds = kinematics.toChassisSpeeds(states)   ║
+ ║     simPose = simPose.exp(Twist2d(vx*dt, vy*dt, ω*dt))   ║
+ ║                                                          ║
+ ║  3. Write simulated sensor values                        ║
+ ║     pigeonSimState.setRawYaw(simPose heading)            ║
+ ║     driveEncoder.setPosition(position + speed*dt)        ║
+ ║     angleEncoder.setPosition(desired angle)              ║
+ ║     cancoderSimState.setRawPosition(desired angle)       ║
+ ╚══════════════════════════════════════════════════════════╝
+    │
+    ▼
+SwerveSubsystem.periodic()                              ← SAME CODE
+    │  getYaw()       → pigeon.getYaw()           → reads SIMULATED gyro
+    │  getPositions() → driveEncoder.getPosition() → reads SIMULATED encoder
+    │                 → angleEncoder.getPosition()  → reads SIMULATED encoder
+    │  odometry.update(yaw, positions)             → fuses into pose estimate
+    │  field.setRobotPose(getPose())               → updates Field2d
+    │  robotPose.set(getPose())                    → publishes pose for AdvantageScope
+    ▼
+Dashboard / AdvantageScope shows robot position on field  ← SAME CODE
+```
+
+The only difference is the boxed section: `SimulationManager` runs between the motor commands and the sensor reads, filling in the sensor values that physical hardware would have produced.  Everything above the box (command processing) and everything below the box (odometry, Field2d) is identical production code.
+
+### Code Path Comparison
+
+The following table shows the actual methods called during a single loop cycle.  The "Real Robot" and "Simulation" columns indicate what each method call does in each mode.  Methods where the code itself is identical are marked with **=**.
+
+| Step | Method | Real Robot | Simulation |
+|------|--------|-----------|------------|
+| 1 | `TeleopSwerve.execute()` | Reads joystick, computes speeds | **=** Same code |
+| 2 | `SwerveSubsystem.drive()` | Converts to `ChassisSpeeds` | **=** Same code |
+| 3 | `driveFromChassisSpeeds()` | Kinematics → module states | **=** Same code |
+| 4 | `SwerveModule.setDesiredState()` | Optimizes, stores state, commands motors | **=** Same code (motors no-op) |
+| 4a | `setAngle()` | `angleController.setReference()` → motor turns | **=** Same code (no-op in sim) |
+| 4b | `setSpeed()` | `driveController.setReference()` → motor spins | **=** Same code (no-op in sim) |
+| 5 | **`SimulationManager.simulationPeriodic()`** | *Does not run* | Computes motion, writes to sim sensors |
+| 6 | `SwerveSubsystem.periodic()` | Reads physical sensors | **=** Same code (reads simulated sensors) |
+| 6a | `pigeon.getYaw()` | Returns physical gyro heading | **=** Same code (vendor lib returns sim value) |
+| 6b | `driveEncoder.getPosition()` | Returns physical encoder distance | **=** Same code (vendor lib returns sim value) |
+| 6c | `integratedAngleEncoder.getPosition()` | Returns physical encoder angle | **=** Same code (vendor lib returns sim value) |
+| 7 | `odometry.update(yaw, positions)` | Fuses physical sensor readings | **=** Same code (fuses simulated readings) |
+| 8 | `field.setRobotPose(getPose())` | Displays physical pose on Field2d | **=** Same code (displays simulated pose) |
+| 9 | `robotPose.set(getPose())` | Publishes pose to NetworkTables for AdvantageScope | **=** Same code (publishes simulated pose) |
+
+Steps 1–4 and 6–9 execute the same Java methods with the same code in both modes.  Step 5 is the only addition — it runs exclusively in simulation and only writes to sensor simulation APIs.
+
+### How Vendor Libraries Enable This
+
+The key to this design is that vendor libraries (CTRE Phoenix 6 for Pigeon2 and CANcoder, REV for SparkMax/SparkFlex encoders) internally handle the real-vs-simulation routing:
+
+```
+Production code calls:         pigeon.getYaw()
+                                    │
+                       ┌────────────┴────────────┐
+                       ▼                         ▼
+              Real robot mode              Simulation mode
+           Read hardware via CAN       Return value from SimState
+           (physical sensor)           (set by SimulationManager)
+```
+
+The production code — `pigeon.getYaw()`, `driveEncoder.getPosition()`, `integratedAngleEncoder.getPosition()` — never checks `RobotBase.isSimulation()`.  The vendor library does that internally.  This means:
+
+- `SwerveSubsystem.periodic()` contains **zero** simulation-specific conditionals
+- `SwerveModule.setDesiredState()` contains **zero** simulation-specific conditionals
+- `SwerveModule.getState()` and `getPosition()` contain **zero** simulation-specific conditionals
+
+The `SimulationManager` writes to the "back door" of these vendor objects (the SimState APIs), and the production code reads from the "front door" (the normal getter methods).  The vendor library connects the two internally.
+
+### What This Means for Bug Detection
+
+Because the production `periodic()` code path runs identically in simulation, certain categories of bugs would manifest in simulation the same way they do on the real robot:
+
+| Bug Category | Detected in Sim? | Why |
+|-------------|------------------|-----|
+| Wrong encoder conversion factor | ✅ Yes | `periodic()` reads the same encoder object with the same conversion factor |
+| Gyro sign inversion (e.g., `invertPigeon` configured wrong) | ✅ Yes | `getYaw()` applies the same inversion logic to simulated yaw |
+| Odometry reset not updating gyro baseline | ✅ Yes | `resetOdometry()` calls the same `resetPosition()` with the same gyro value |
+| Wrong kinematics (module positions) | ✅ Yes | Same `SwerveDriveKinematics` instance used in both modes |
+| Module optimization bug (e.g., angle accumulation) | ✅ Yes | Same `optimize()` method runs in both modes |
+| Motor PID tuning issues | ❌ No | Motors no-op in sim; desired speed is assumed to be achieved instantly |
+| Wheel slip / friction effects | ❌ No | No force-based physics model |
+| Mechanical issues (loose belt, broken encoder) | ❌ No | Simulation assumes perfect hardware |
+
+The first five rows are the primary benefit of the `SimulationManager` approach: the full sensor-to-odometry pipeline is exercised in simulation using the same code path, so bugs in that pipeline are caught.
+
+### Production Code Modifications Required
+
+The `SimulationManager` approach requires a small set of additions to production code.  These are accessor methods only — they do not change any existing behavior.
+
+**`SwerveModule` additions:**
+
+| Addition | Purpose | Lines |
+|----------|---------|-------|
+| `desiredState` field | Stores the optimized state from `setDesiredState()` for simulation to read | 1 |
+| `getDesiredState()` | Returns the stored desired state | 3 |
+| `getCanCoderDevice()` | Exposes CANcoder hardware object for SimState access | 3 |
+| `getDriveEncoder()` | Exposes drive encoder for `setPosition()` in sim | 3 |
+| `getAngleEncoder()` | Exposes angle encoder for `setPosition()` in sim | 3 |
+
+**`SwerveSubsystem` additions:**
+
+| Addition | Purpose | Lines |
+|----------|---------|-------|
+| `getDesiredStates()` | Collects desired states from all four modules | 6 |
+| `getPigeon()` | Exposes Pigeon2 for SimState access | 3 |
+| `getModules()` | Exposes module array (defensive copy) | 3 |
+| `getKinematics()` | Exposes kinematics for chassis speed calculation | 3 |
+| `getOdometry()` | Exposes pose estimator for reset support | 3 |
+
+**Unchanged production methods** (these run identically in both modes):
+
+- `SwerveSubsystem.periodic()` — no `isSimulation()` check
+- `SwerveSubsystem.drive()`
+- `SwerveSubsystem.driveFromChassisSpeeds()`
+- `SwerveSubsystem.getYaw()`
+- `SwerveSubsystem.getPositions()`
+- `SwerveSubsystem.resetOdometry()`
+- `SwerveModule.setDesiredState()`
+- `SwerveModule.getState()`
+- `SwerveModule.getPosition()`
+- All command classes (`TeleopSwerve`, `AutoAlign`, autonomous commands)
+
+### Removability
+
+The simulation support can be completely removed without affecting production code behavior:
+
+1. Delete `src/main/java/frc/robot/sim/SimulationManager.java`
+2. Remove two lines from `Robot.java` (`simManager` field declaration and `simulationInit()`/`simulationPeriodic()` bodies)
+3. Optionally remove the accessor methods from `SwerveModule` and `SwerveSubsystem` (they are unused by production code, but leaving them causes no harm)
+
+No production code behavior changes because the accessor methods are never called by production code — they are only called by `SimulationManager`.
