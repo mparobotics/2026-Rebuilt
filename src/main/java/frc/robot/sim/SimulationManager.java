@@ -4,25 +4,18 @@
 
 package frc.robot.sim;
 
-import com.ctre.phoenix6.hardware.Pigeon2;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.sim.Pigeon2SimState;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 import com.revrobotics.RelativeEncoder;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.SwerveModule;
 import frc.robot.Subsystems.SwerveSubsystem;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 
 /**
  * A self-contained simulation manager for driver practice.
@@ -32,10 +25,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 public class SimulationManager {
 
     private final SwerveSubsystem swerveSubsystem;
-    
-    // Simulation state objects
-    private Pigeon2SimState pigeonSimState;
-    private CANcoderSimState[] cancoderSimStates;
     
     // Internal simulated pose
     private Pose2d simPose = new Pose2d();
@@ -52,17 +41,6 @@ public class SimulationManager {
      */
     public SimulationManager(SwerveSubsystem swerveSubsystem) {
         this.swerveSubsystem = swerveSubsystem;
-        
-        // Initialize simulation state objects
-        pigeonSimState = swerveSubsystem.getPigeon().getSimState();
-        
-        SwerveModule[] modules = swerveSubsystem.getModules();
-        cancoderSimStates = new CANcoderSimState[modules.length];
-        for (int i = 0; i < modules.length; i++) {
-            CANcoder cancoder = modules[i].getCanCoderDevice();
-            cancoderSimStates[i] = cancoder.getSimState();
-        }
-        
         this.lastTime = Timer.getFPGATimestamp();
     }
 
@@ -116,7 +94,7 @@ public class SimulationManager {
         ));
         
         // Step 3: Update simulated Pigeon2 gyro
-        pigeonSimState.setRawYaw(simPose.getRotation().getDegrees());
+        swerveSubsystem.getPigeon().getSimState().setRawYaw(simPose.getRotation().getDegrees());
         
         // Step 4: Update simulated module encoders
         // Use desired states directly (not chassis speeds) to handle individual module commands
@@ -164,12 +142,10 @@ public class SimulationManager {
             // Update angle encoder to match desired angle
             angleEncoder.setPosition(desiredAngleDegrees);
             
-            // Update CANcoder simulation (absolute encoder)
-            if (cancoderSimStates[i] != null) {
-                // CANcoder position is in rotations (0.0 to 1.0)
-                double positionRotations = desiredState.angle.getRotations();
-                cancoderSimStates[i].setRawPosition(positionRotations);
-            }
+            // Update CANcoder simulation (absolute encoder on the steering axis)
+            // Wheel steering angle expressed in rotations (e.g. 0.25 = 90°, 0.5 = 180°)
+            CANcoderSimState cancoderSimState = module.getCanCoderDevice().getSimState();
+            cancoderSimState.setRawPosition(desiredState.angle.getRotations());
         }
     }
 }
