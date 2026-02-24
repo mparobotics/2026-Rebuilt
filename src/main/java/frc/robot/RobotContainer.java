@@ -145,7 +145,7 @@ public class RobotContainer {
     // getHID() accesses the underlying XboxController to read button states directly.
     // CommandXboxController doesn't provide a method for stick button presses, so we use
     // the HID (Human Interface Device) object's getRawButton() method instead.
-    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1;
+    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.85: 1;
   }
   
   public Command getAutonomousCommand() {
