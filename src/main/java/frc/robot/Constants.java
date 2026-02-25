@@ -96,7 +96,16 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double angleConversionFactor = 360.0 / angleGearRatio;
 
     /* Swerve Profiling Values */
-    public static final double maxSpeed = 3; // meters per second
+    public static final double maxSpeed = 3; // meters per second — software speed limit for teleop
+
+    // Physical max speed at the wheel, derived from the motor's free speed through the gearbox.
+    // This is what the motor can physically achieve, NOT a software limit.
+    // Used by PathPlanner's ModuleConfig to model motor physics (torque, current, acceleration).
+    // freeSpeedRadPerSec (after gear reduction) × wheel radius
+    public static final double maxDriveVelocityMPS =
+        DCMotor.getNeoVortex(1).withReduction(driveGearRatio).freeSpeedRadPerSec
+        * (wheelDiameter / 2.0);
+
     public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
 
     /* Neutral Modes */
@@ -142,7 +151,7 @@ public static final class AutoConstants {
   private static boolean dashboardInitialized = false;
 
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
-  SwerveConstants.maxSpeed,
+  SwerveConstants.maxDriveVelocityMPS,  // physical max speed, NOT the software speed limit (maxSpeed)
   1.2,
   DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
   SwerveConstants.driveContinuousCurrentLimit,
@@ -201,20 +210,7 @@ public static final class FieldConstants {
 
       public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
 
-      /**
-       * If true, the robot will behave as if it is always on the Blue alliance (no field mirroring),
-       * even when connected to FMS / Driver Station reports Red.
-       *
-       * WARNING: Enabling this for real matches while actually on Red will make autos/field-oriented
-       * behavior mirror incorrectly.
-       */
-      public static final boolean FORCE_BLUE_ALLIANCE = true;
-
       public static boolean isRedAlliance(){
-          if (FORCE_BLUE_ALLIANCE) {
-              return false;
-          }
-          // Default to Blue when alliance is unknown (common in sim/practice).
           return DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
       }
       
@@ -241,7 +237,7 @@ public static final class FieldConstants {
   public static final class ShooterConstants {
       public static final int SHOOTER_ID = 70; //Placeholder ID
       public static final int FEEDER_ID = 61; //Feeder ID
-      public static final int HOOD_ID = 62; //Hood ID (NEED CHANGE)
+      public static final int HOOD_ID = 62; //Hood ID
 
       public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
       public static final double FEEDER_SPEED = 0.5; 

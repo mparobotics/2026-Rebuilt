@@ -38,6 +38,7 @@ bin/
 # Simulator runtime files
 networktables.json
 simgui*.json
+ctre_sim/
 
 # JVM crash logs
 hs_err_pid*.log
@@ -50,6 +51,9 @@ Thumbs.db
 *.tmp
 *.bak
 *~
+
+# CTRE simulation data files
+ctre_sim/
 
 # VS Code Settings
 .vscode/

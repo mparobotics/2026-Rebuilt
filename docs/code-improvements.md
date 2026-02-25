@@ -1778,6 +1778,195 @@ Remove the `cppDependencies` section (including `binaryPlatforms`) from `WPILibN
 
 ---
 
+## 18. Add a `RobotState` Class as the Single Source of Truth for Robot Pose (Architecture)
+
+### What
+Extract pose estimation, sensor fusion, and robot state tracking from `SwerveSubsystem` into a dedicated `RobotState` class. This class would be the single source of truth for "where is the robot?" and "what is the robot doing?" — consolidating the odometry, gyro management, and vision fusion logic that is currently scattered across `SwerveSubsystem`, `SimulationManager`, and various commands.
+
+**Note**: This is a **plain Java class** (either a singleton or an injected dependency), **not** a WPILib `Subsystem`. See the rationale below.
+
+### Why
+
+This recommendation emerged directly from debugging the autonomous pose reset issues documented in `docs/auto-sim-log-analysis.md`. The investigation revealed that `SwerveSubsystem` currently mixes three distinct responsibilities:
+
+1. **Motor control** — commanding swerve modules to drive
+2. **Pose estimation** — fusing gyro, encoders, and vision into a robot pose
+3. **Pose management** — resetting and synchronizing pose across subsystems (pigeon, odometry, simulation)
+
+This mixing caused multiple bugs (documented in detail in [`docs/auto-sim-analysis/auto-sim-log-analysis.md`](auto-sim-analysis/auto-sim-log-analysis.md), Section 8 — "Remaining Issues"):
+- **Issue 8.1**: `startAutoAt()` passed the wrong `gyroAngle` to `odometry.resetPosition()` because pose reset logic was interleaved with drive setup code
+- **Issue 8.2**: `SimulationManager` couldn't detect pose resets because the reset happened inside `SwerveSubsystem` without notification
+- **Issue 8.3**: `pigeon.setYaw()` caused heading doubling in simulation because the pigeon and odometry were managed by different code paths with different assumptions
+- **`drive()` bug**: Field-centric conversion used `getYaw()` (raw pigeon) instead of `getPose().getRotation()` (fused estimate), creating inconsistency
+
+A `RobotState` class eliminates these issues by providing a single, controlled entry point for all pose operations.
+
+### Reference Implementations from Elite FRC Teams
+
+Two of the most architecturally sophisticated FRC teams have published code using this exact pattern:
+
+#### FRC 6328 — Mechanical Advantage
+
+**Repository**: [Mechanical-Advantage/RobotCode2025Public](https://github.com/Mechanical-Advantage/RobotCode2025Public) (also [2026](https://github.com/Mechanical-Advantage/RobotCode2026Public), [2024](https://github.com/Mechanical-Advantage/RobotCode2024Public))
+
+**File**: `src/main/java/org/littletonrobotics/frc2025/RobotState.java` (~471 lines)
+
+**Key design decisions**:
+- **Singleton pattern**: `RobotState.getInstance()` — accessible from anywhere without dependency injection
+- **Owns the pose estimator**: Implements its own Kalman filter (does NOT use WPILib's `SwerveDrivePoseEstimator`), maintaining both `odometryPose` and `estimatedPose`
+- **Receives observations, not raw sensor values**: The Drive subsystem calls `addOdometryObservation(wheelPositions, gyroAngle, timestamp)` — note that the Drive subsystem reads the sensors, but `RobotState` does all the math
+- **Manages gyro offset**: Tracks a `gyroOffset` field so that `resetPose()` correctly handles the gyro-to-field rotation mapping
+- **Vision fusion**: `addVisionObservation()` and `addTxTyObservation()` process vision data with configurable standard deviations
+- **Game piece tracking**: Also tracks coral and algae positions (game-specific state)
+- **Has its own `periodic()`**: Called from the main robot loop for logging and LED state updates
+- **NOT a Subsystem**: Plain Java class — no `requires()`, no command scheduling conflicts
+
+**Data flow**:
+```
+Drive subsystem → addOdometryObservation() → RobotState (computes pose)
+Vision subsystem → addVisionObservation() → RobotState (fuses vision)
+Any command/subsystem ← getEstimatedPose() ← RobotState (reads pose)
+```
+
+#### FRC 254 — The Cheesy Poofs
+
+**Repository**: [Team254/FRC-2025-Public](https://github.com/Team254/FRC-2025-Public) (also [2024](https://github.com/Team254/FRC-2024-Public), [2023](https://github.com/Team254/FRC-2023-Public), and back to [2019](https://github.com/Team254/FRC-2019-Public))
+
+**File**: `src/main/java/com/team254/frc2025/RobotState.java` (~509 lines)
+
+**Key design decisions**:
+- **Dependency injection**: `RobotState` is created in `RobotContainer` and passed to subsystems that need it — more testable than a singleton
+- **Thread-safe**: Uses `AtomicReference<>` for all mutable state because their odometry runs on a high-frequency thread separate from the main robot loop
+- **Time-interpolatable pose buffer**: `ConcurrentTimeInterpolatableBuffer<Pose2d>` stores historical poses for latency compensation when applying vision corrections
+- **Comprehensive velocity tracking**: Tracks measured, desired, and fused chassis speeds in both robot-relative and field-relative frames
+- **Mechanism state**: Also tracks elevator height, wrist angle, intake rotations, etc. — a true "robot state" beyond just pose
+- **Trajectory tracking**: Stores current trajectory target and actual pose for diagnostics
+- **Pose prediction**: `getPredictedFieldToRobot(lookaheadTimeS)` extrapolates future pose based on current velocity
+- **NOT a Subsystem**: Plain Java class — no scheduling conflicts, thread-safe, accessible from anywhere
+
+**Data flow**:
+```
+DriveIOHardware → addOdometryMeasurement(timestamp, pose) → RobotState
+DriveIOHardware → addDriveMotionMeasurements(...) → RobotState (speeds, IMU data)
+Vision subsystem → updateMegatagEstimate() → RobotState → SwerveDrivePoseEstimator
+Any command/subsystem ← getLatestFieldToRobot() ← RobotState
+```
+
+### Why NOT a Subsystem?
+
+Both 6328 and 254 deliberately chose NOT to make `RobotState` a WPILib `Subsystem`. The reasons are:
+
+1. **No scheduling conflicts**: A `Subsystem` can only be "owned" by one `Command` at a time via `requires()`. If `RobotState` were a subsystem, only one command could read the robot's pose at a time — which is nonsensical since multiple systems (drive, vision, autonomous, LED controller) all need pose simultaneously
+2. **No default command needed**: `RobotState` doesn't need a default command — it processes data when data arrives, not on a fixed schedule driven by command allocation
+3. **Thread safety**: `RobotState` may need to be accessed from multiple threads (odometry thread, vision processing thread, main robot loop). `Subsystem` isn't designed for this
+4. **Simplicity**: A plain class with well-defined methods is simpler and more predictable than the command scheduling framework
+
+### Proposed Design for Our Codebase
+
+```java
+/**
+ * Single source of truth for robot pose and state.
+ * 
+ * This is a plain Java class (NOT a Subsystem) that centralizes all
+ * pose estimation, sensor fusion, and state tracking. Subsystems feed
+ * sensor data IN, and commands/subsystems read state OUT.
+ */
+public class RobotState {
+    private static RobotState instance;
+    
+    private final SwerveDrivePoseEstimator odometry;
+    private Rotation2d gyroOffset;
+    
+    public static RobotState getInstance() {
+        if (instance == null) instance = new RobotState();
+        return instance;
+    }
+    
+    // ---- Data IN (called by subsystems) ----
+    
+    /** Called by SwerveSubsystem.periodic() with raw sensor readings */
+    public void addOdometryObservation(Rotation2d gyroAngle, 
+                                        SwerveModulePosition[] positions) { ... }
+    
+    /** Called by vision processing code */
+    public void addVisionObservation(Pose2d visionPose, double timestamp,
+                                      Matrix<N3, N1> stdDevs) { ... }
+    
+    /** Reset pose (e.g., at auto start). Correctly handles gyro offset. */
+    public void resetPose(Rotation2d actualGyroReading, 
+                          SwerveModulePosition[] positions,
+                          Pose2d newPose) { ... }
+    
+    // ---- Data OUT (read by commands/subsystems) ----
+    
+    /** The fused robot pose — THE single source of truth */
+    public Pose2d getEstimatedPose() { ... }
+    
+    /** Heading from the fused pose — use this for field-centric driving */
+    public Rotation2d getRotation() { 
+        return getEstimatedPose().getRotation(); 
+    }
+    
+    /** Current chassis speeds */
+    public ChassisSpeeds getRobotVelocity() { ... }
+}
+```
+
+**What moves OUT of `SwerveSubsystem`**:
+- `SwerveDrivePoseEstimator odometry` → `RobotState`
+- `getPose()` → delegates to `RobotState.getInstance().getEstimatedPose()`
+- `getYaw()` — only used internally by `RobotState` for odometry input
+- `resetOdometry()` → delegates to `RobotState.getInstance().resetPose()`
+- `startAutoAt()` pose reset logic → delegates to `RobotState.getInstance().resetPose()`
+- `updateOdometryWithVision()` → delegates to `RobotState.getInstance().addVisionObservation()`
+- Vision Limelight processing → could stay in `SwerveSubsystem` but calls `RobotState` for fusion
+
+**What stays IN `SwerveSubsystem`**:
+- Swerve module management and motor commands
+- `drive()`, `driveFromChassisSpeeds()` — motor control
+- Pigeon2 hardware object — but `SwerveSubsystem.periodic()` passes `pigeon.getYaw()` to `RobotState`
+- SmartDashboard module-specific telemetry
+
+### Incremental Migration Path
+
+This change doesn't need to happen all at once. A practical migration path:
+
+1. **Phase 1** (minimal, fixes current bugs): Create `RobotState` with just `resetPose()` that correctly handles gyro offset. Have `startAutoAt()` and `resetOdometry()` delegate to it. This alone fixes issues 8.1 and 8.3.
+
+2. **Phase 2** (move odometry): Move `SwerveDrivePoseEstimator` into `RobotState`. `SwerveSubsystem.periodic()` calls `robotState.addOdometryObservation()` instead of `odometry.update()`.
+
+3. **Phase 3** (move vision): Move `updateOdometryWithVision()` logic into `RobotState.addVisionObservation()`.
+
+4. **Phase 4** (clean up): Remove `getPose()` from `SwerveSubsystem` (or make it delegate). All callers use `RobotState.getInstance().getEstimatedPose()`.
+
+### Where
+- **New file**: `src/main/java/frc/robot/RobotState.java`
+- **Modified file**: `src/main/java/frc/robot/Subsystems/SwerveSubsystem.java` — extract pose estimation logic
+- **Modified file**: `src/main/java/frc/robot/sim/SimulationManager.java` — read pose from `RobotState` instead of `SwerveSubsystem`
+- **Modified files**: Any command/subsystem that currently calls `swerveSubsystem.getPose()` — redirect to `RobotState`
+
+### Impact
+- **High value**: Eliminates an entire class of pose-related bugs by centralizing state management
+- **Medium risk**: Significant refactoring of `SwerveSubsystem`, but can be done incrementally (see migration path above)
+- **Improves testability**: `RobotState` can be unit tested independently of hardware
+- **Follows proven patterns**: Both 6328 and 254 — arguably the two most successful software teams in FRC history — have used this pattern for multiple seasons
+- **Mid-to-late season timing**: This is best done during an off-week or post-season, not right before a competition
+
+### Decision Points
+- **Singleton vs. dependency injection?** Singleton (like 6328) is simpler; dependency injection (like 254) is more testable. Recommend singleton for our team's experience level.
+- **Phase 1 only, or full migration?** Phase 1 alone fixes the current bugs with minimal risk. Full migration is the architecturally correct solution but requires more effort.
+- **When to implement?** Phase 1 can be done now. Phases 2-4 are best for off-season or a non-competition week.
+
+### Status
+- [ ] Pending team review
+- [ ] Approved (Phase 1 only)
+- [ ] Approved (Full migration)
+- [ ] Rejected
+- [ ] In progress
+- [ ] Implemented
+
+---
+
 ## Future Recommendations
 
 _Additional code improvement recommendations will be added here as they are identified._

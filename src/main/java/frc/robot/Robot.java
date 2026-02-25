@@ -4,23 +4,48 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
-
+import frc.robot.sim.SimulationManager;
+import frc.lib.test.DiagnosticTestManager;
+/**
+ * Main robot class that extends TimedRobot. This is the entry point for the robot program
+ * and manages the robot lifecycle across different modes (disabled, autonomous, teleop, test).
+ * 
+ * <p>The Robot class:
+ * <ul>
+ *   <li>Creates and initializes the RobotContainer which sets up subsystems and command bindings</li>
+ *   <li>Runs the CommandScheduler every 20ms to execute active commands and check button bindings</li>
+ *   <li>Handles mode transitions (autonomous, teleop, test) and manages command lifecycle</li>
+ * </ul>
+ */
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
-  private final RobotSimulation m_robotSimulation;
+  private DiagnosticTestManager m_testManager;
 
+  // Simulation support
+  private SimulationManager simManager;
+
+  /**
+   * Constructs the Robot. Initializes the RobotContainer which creates subsystems
+   * (subsystems configure themselves) and sets up command bindings.
+   */
   public Robot() {
     m_robotContainer = new RobotContainer();
-    m_robotSimulation = new RobotSimulation(m_robotContainer);
   }
 
+  @Override
+  public void robotInit() {
+  }
 
+  /**
+   * Called every 20ms during all robot modes. Runs the CommandScheduler which
+   * executes active commands, checks button/trigger bindings, and updates subsystems.
+   */
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
@@ -69,21 +94,44 @@ public class Robot extends TimedRobot {
   public void testInit() {
     // Cancel all commands when entering test mode.
     CommandScheduler.getInstance().cancelAll();
+    // Initialize diagnostic test manager
+    m_testManager = new DiagnosticTestManager(m_robotContainer);
   }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    // Update diagnostic test manager (handles test selection, execution, and status monitoring)
+    if (m_testManager != null) {
+      m_testManager.periodic();
+    }
+  }
 
   @Override
-  public void testExit() {}
+  public void testExit() {
+    // Cleanup diagnostic test manager
+    if (m_testManager != null) {
+      m_testManager.cleanup();
+      m_testManager = null;
+    }
+  }
 
   @Override
   public void simulationInit() {
-    m_robotSimulation.simulationInit();
+    // Suppress joystick-not-found warnings in sim (no physical controller).
+    // Controlled by -Dsim.silenceJoystick=true|false in user-specific ~/.gradle/init.gradle file.
+    if (Boolean.parseBoolean(System.getProperty("sim.silenceJoystick", "true"))) {
+      DriverStation.silenceJoystickConnectionWarning(true);
+    }
+
+    // Initialize simulation manager for driver practice simulation
+    simManager = new SimulationManager(m_robotContainer.getSwerveSubsystem());
   }
 
   @Override
   public void simulationPeriodic() {
-    m_robotSimulation.simulationPeriodic();
+    // Run simulation manager (handles both normal simulation and API testing)
+    if (simManager != null) {
+      simManager.simulationPeriodic();
+    }
   }
 }
