@@ -407,17 +407,19 @@ public void simulationReset() {
 
 **Is it worth integrating into `SimulationManager`?**
 
-Potentially useful as a future enhancement.  `SimulationManager` currently initializes `simPose` to `new Pose2d()` (origin) in its field declaration, and encoder positions start at whatever the REV sim state defaults to.  This works for the initial startup.
+No.  The startup initialization that `simulationReset()` provides is already handled by `SimulationManager`'s construction.  When `SimulationManager` is created in `Robot.simulationInit()`, its `simPose` field initializes to `new Pose2d()` (origin), `lastTime` is set to the current FPGA timestamp, and encoder positions start at whatever the REV sim state defaults to (typically zero).  This achieves the same clean starting state without an explicit reset method.
 
-However, `SimulationManager` does not expose a way to reset the simulation mid-run (e.g., after testing one autonomous path and wanting to start another from a clean state without restarting the sim).  A `simulationReset()` method on `SimulationManager` could:
-- Reset `simPose` to origin (or a specified pose).
-- Zero out drive encoder positions via `driveEncoder.setPosition(0)`.
-- Reset the Pigeon2 yaw via `pigeonSimState.setRawYaw(0)`.
-- Optionally reset the odometry estimator via `swerveSubsystem.getOdometry().resetPosition(...)`.
+Note that `RobotSimulation`'s reset is also startup-only — `simulationReset()` is called from `simulationInit()`, which WPILib calls once when the simulation process starts.  There is no user-facing button, command, or key binding to trigger it mid-run in that framework either.  The only way to re-trigger it is to restart the simulation process.  Neither approach provides a user-accessible mid-run reset.
 
-This would be compatible with the existing architecture — it would write to the same vendor SimState APIs, and the subsystem's `periodic()` would pick up the reset values naturally.
+**What about a mid-run reset as a new enhancement?**
 
-**Assessment:** Worth considering as a future addition.  The `SimulationManager` design can accommodate a reset method without architectural changes.  The implementation would be ~15 lines.
+A separate question is whether `SimulationManager` should expose a mid-run reset capability that neither approach currently provides.  Evaluating the scenarios where this might be useful:
+
+- **Testing sequential autonomous paths:** Each auto begins with `startAutoAt()` or PathPlanner's `resetPose()` callback, which resets odometry to the path's starting pose — not necessarily origin.  The problem in this scenario is not "dirty state" but rather that `SimulationManager.simPose` is not synced to the new pose.  On the next cycle, `SimulationManager` writes the stale heading to the pigeon SimState, corrupting the freshly-reset odometry baseline (see `sensors-and-pose-estimation.md`).  The correct fix for this is a **pose sync mechanism** (`SimulationManager.syncPose(Pose2d)`) called from the odometry reset path — not a user-triggered "reset to origin."
+- **Driver practice — returning to origin:** Restarting the simulation takes a few seconds and guarantees a fully clean state.  A "reset to origin" button offers marginal convenience over a restart.
+- **Recovering from simulation artifacts:** If odometry becomes corrupted (e.g., from the simPose desync described above), a "reset to origin" is a workaround for a bug, not a feature.  Fixing the underlying desync is the proper solution.
+
+**Assessment:** Not integrating.  The startup initialization is already handled by construction.  A mid-run "reset to origin" has limited practical value — the scenarios that motivate it are better addressed by pose synchronization (keeping `SimulationManager.simPose` in sync when odometry is reset by autonomous commands), which is a different problem that would be addressed separately if needed.
 
 #### 4. Explicit Disabled-State Handling
 
@@ -537,7 +539,7 @@ In `SimulationManager`, direct module commands from diagnostic tests bypass `dri
 | **Tighter dt clamping** | Yes | ~1 line change | Medium — prevents large pose jumps during debugging |
 | **Battery voltage simulation** | Not currently | ~5 lines | Low — no subsystem code reads battery voltage |
 | **DriverStation state setup** | No | ~5 lines | None — Sim GUI provides the same functionality |
-| **Simulation reset method** | Future consideration | ~15 lines | Low — useful for multi-run testing without restart |
+| **Simulation reset method** | No | N/A | None — startup handled by construction; mid-run scenarios need pose sync, not reset |
 | **Pose integration method** | Already better in `SimulationManager` | N/A | N/A |
 | **Gyro update API** | Already better in `SimulationManager` | N/A | N/A |
 | **Wheel desaturation** | Not needed | N/A | N/A |
