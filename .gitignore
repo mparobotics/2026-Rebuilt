@@ -52,8 +52,5 @@ Thumbs.db
 *.bak
 *~
 
-# CTRE simulation data files
-ctre_sim/
-
 # VS Code Settings
 .vscode/
