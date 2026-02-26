@@ -31,6 +31,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
 import frc.robot.SwerveModule;
 
@@ -77,6 +78,7 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+    SmartDashboard.putBoolean("Vision Enabled", VisionConstants.VISION_ENABLED_DEFAULT);
 
     configurePathPlanner();
   }
@@ -140,6 +142,10 @@ public class SwerveSubsystem extends SubsystemBase {
   
 
 
+  private boolean isVisionEnabled() {
+    return SmartDashboard.getBoolean("Vision Enabled", VisionConstants.VISION_ENABLED_DEFAULT);
+  }
+
   private void updateOdometryWithVision (String limelightName){
     boolean doRejectUpdate = false;
       LimelightHelpers.SetRobotOrientation(limelightName, odometry.getEstimatedPosition().getRotation().getDegrees(),0,0,0,0,0);
@@ -147,7 +153,7 @@ public class SwerveSubsystem extends SubsystemBase {
       if (mt2 == null){
         return;
       }
-      if(Math.abs(pigeon.getAngularVelocityZWorld().getValueAsDouble())> 720)
+      if(Math.abs(pigeon.getAngularVelocityZWorld().getValueAsDouble()) > VisionConstants.MAX_VISION_ANGULAR_RATE_DEG_PER_SEC)
       {
         doRejectUpdate = true;
       }
@@ -157,11 +163,19 @@ public class SwerveSubsystem extends SubsystemBase {
       }
       if(!doRejectUpdate)
       {
-        odometry.setVisionMeasurementStdDevs(VecBuilder.fill (.7,.7,99999));// need to measure
+        odometry.setVisionMeasurementStdDevs(
+            VecBuilder.fill(
+                VisionConstants.VISION_STD_DEV_X_METERS,
+                VisionConstants.VISION_STD_DEV_Y_METERS,
+                VisionConstants.VISION_STD_DEV_THETA_RADIANS)); // need to measure
         odometry.addVisionMeasurement(
           mt2.pose,
           mt2.timestampSeconds);
       }
+
+      SmartDashboard.putNumber("Vision/" + limelightName + "/TagCount", mt2.tagCount);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/AvgTagDist", mt2.avgTagDist);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/LatencyMs", mt2.latency);
     }
 
 
@@ -279,8 +293,11 @@ public class SwerveSubsystem extends SubsystemBase {
   public void periodic() {
     if (!RobotBase.isSimulation()) {
       odometry.update(getYaw(), getPositions());
-      updateOdometryWithVision("limelight-a");
-      updateOdometryWithVision("limelight-b");
+      if (isVisionEnabled()) {
+        for (String limelightName : VisionConstants.LIMELIGHT_NAMES) {
+          updateOdometryWithVision(limelightName);
+        }
+      }
     }
     field.setRobotPose(getPose());
 

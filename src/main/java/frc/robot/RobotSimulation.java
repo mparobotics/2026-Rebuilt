@@ -13,13 +13,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-/**
- * Desktop simulation hooks.
- *
- * <p>This class is called from {@link Robot#simulationInit()} and {@link Robot#simulationPeriodic()}
- * so the "WPILib: Simulate Robot Code" action in VS Code can run your robot with a simple physics
- * model.
- */
+
 public class RobotSimulation {
   private final SwerveSubsystem drive;
   private double lastTimestampSeconds = Timer.getFPGATimestamp();

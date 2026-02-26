@@ -4,11 +4,14 @@
 
 package frc.robot;
 
-
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -20,6 +23,7 @@ import frc.robot.Auto.EightLemonAuto;
 import frc.robot.Auto.TrenchToDepotAuto;
 import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
@@ -30,6 +34,7 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
 public class RobotContainer {
@@ -60,7 +65,29 @@ public class RobotContainer {
   
   public RobotContainer() {
     AutoConstants.initDashboard();
+    startLimelightStreams();
     configureBindings();
+  }
+
+  private void startLimelightStreams() {
+    SmartDashboard.putBoolean("Limelight Stream Enabled", VisionConstants.LIMELIGHT_STREAM_ENABLED_DEFAULT);
+
+    if (RobotBase.isSimulation()) {
+      return;
+    }
+
+    if (!SmartDashboard.getBoolean("Limelight Stream Enabled", VisionConstants.LIMELIGHT_STREAM_ENABLED_DEFAULT)) {
+      return;
+    }
+
+    for (String limelightName : VisionConstants.LIMELIGHT_NAMES) {
+      String url = String.format(VisionConstants.LIMELIGHT_STREAM_URL_FORMAT, limelightName);
+      SmartDashboard.putString("Vision/" + limelightName + "/StreamURL", url);
+
+      HttpCamera camera = new HttpCamera(limelightName, url);
+      camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+      CameraServer.startAutomaticCapture(camera);
+    }
   }
 
   private void configureBindings() {

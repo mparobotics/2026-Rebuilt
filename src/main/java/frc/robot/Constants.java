@@ -237,6 +237,22 @@ public static final class FieldConstants {
       }
       
   }
+
+  /** Vision constants (Limelight, etc). */
+  public static final class VisionConstants {
+    public static final String[] LIMELIGHT_NAMES = {"limelight-a", "limelight-b"};
+    
+    public static final String LIMELIGHT_STREAM_URL_FORMAT = "http://%s.local:5800/stream.mjpg";
+    public static final boolean LIMELIGHT_STREAM_ENABLED_DEFAULT = true;
+
+    public static final boolean VISION_ENABLED_DEFAULT = true;
+    public static final double MAX_VISION_ANGULAR_RATE_DEG_PER_SEC = 720.0;
+
+    /** Standard deviations for vision measurements: (x meters, y meters, theta radians). */
+    public static final double VISION_STD_DEV_X_METERS = 0.7;
+    public static final double VISION_STD_DEV_Y_METERS = 0.7;
+    public static final double VISION_STD_DEV_THETA_RADIANS = 99999.0;
+  }
   /* Shooter Constants */
   public static final class ShooterConstants {
       public static final int SHOOTER_ID = 70; //Placeholder ID
