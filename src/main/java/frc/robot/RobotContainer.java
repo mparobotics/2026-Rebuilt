@@ -90,9 +90,15 @@ public class RobotContainer {
               if (Math.abs(feederAxis) > 0.1) {
                 feederSpeed = -Math.signum(feederAxis) * ShooterConstants.FEEDER_SPEED;
               }
-              m_shooter.runFeederSpeed(feederSpeed);
+              m_shooter.setFeederSpeed(feederSpeed);
             },
             m_shooter));
+          
+    helmsController.button(Button.kX.value).onTrue(Commands.startEnd(
+      () -> m_shooter.runIndexer(true),
+      () -> m_shooter.runIndexer(false),
+      m_shooter));
+
 
     helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
     helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));

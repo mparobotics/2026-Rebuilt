@@ -22,7 +22,8 @@ public class ShooterSubsystem extends SubsystemBase {
   SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
   SparkMax feederMotor = new SparkMax(ShooterConstants.FEEDER_ID, MotorType.kBrushless);
   SparkMax hoodMotor = new SparkMax(ShooterConstants.HOOD_ID, MotorType.kBrushless);
-  
+  SparkMax indexerMotor = new SparkMax(ShooterConstants.INDEXER_ID, MotorType.kBrushless);
+
   private final PIDController hoodController = new PIDController(
       ShooterConstants.HOOD_KP,
       0.0,
@@ -50,6 +51,12 @@ public class ShooterSubsystem extends SubsystemBase {
     SparkMaxConfig hoodConfig = new SparkMaxConfig();
       hoodConfig.inverted(false);
       hoodConfig.idleMode(IdleMode.kBrake);
+
+    SparkMaxConfig indexConfig = new SparkMaxConfig();
+      indexConfig.inverted(false);
+      indexConfig.idleMode(IdleMode.kBrake);
+
+    
 
     shooterMotor.configure(shootConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -82,10 +89,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
 
     public void runFeeder(boolean feederOn){
-      runFeederSpeed(feederOn ? ShooterConstants.FEEDER_SPEED : 0);
+      setFeederSpeed(feederOn ? ShooterConstants.FEEDER_SPEED : 0);
     }
 
-    public void runFeederSpeed(double speed) {
+    public void setFeederSpeed(double speed) {
       feederMotor.set(speed);
     }
 
@@ -106,6 +113,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public double getHoodPosition() {
       return hoodMotor.getEncoder().getPosition();
+    }
+
+    public void runIndexer(boolean indexerOn) {
+      setIndexerSpeed(indexerOn ? ShooterConstants.INDEXER_SPEED : 0);
+    }
+
+    public void setIndexerSpeed(double speed) { 
+      indexerMotor.set(speed);
     }
 
   @Override
