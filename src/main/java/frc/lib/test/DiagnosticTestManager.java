@@ -6,6 +6,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.lib.SendableChooserUtil;
 import frc.robot.RobotContainer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manages the lifecycle and SmartDashboard integration for diagnostic tests.
@@ -14,9 +16,13 @@ import frc.robot.RobotContainer;
  * <ul>
  *   <li>Test selection via dropdown (SendableChooser)</li>
  *   <li>Parameter initialization when tests are selected</li>
- *   <li>Test execution via CommandScheduler</li>
+ *   <li>Test execution via a proxy {@link TestRunnerCommand} published as a dashboard button</li>
  *   <li>Status monitoring and display</li>
  * </ul>
+ *
+ * <p>Test instances are created once in the constructor and reused across runs.
+ * All test commands support reuse because they fully reset state in
+ * {@code initialize()} and read fresh parameters from SmartDashboard each run.
  *
  * <p>Usage:
  * <ol>
@@ -28,28 +34,24 @@ import frc.robot.RobotContainer;
  * <p><b>SmartDashboard Layout:</b>
  * <pre>
  * DiagnosticTests/
- *   ├── TestSelector/ (SendableChooser - dropdown)
- *   ├── CurrentTest Start-Cancel/ (Boolean - button, behavior changes based on test state)
- *   ├── CurrentTest/ (String - name of running test or "None")
- *   ├── CurrentTest Description/ (String - description of the selected test)
- *   ├── CurrentTest Status/ (String - Idle, Running, Complete, Cancelled, Error)
- *   └── Message/ (String - status messages and error information)
+ *   ├── TestSelector/             (SendableChooser - dropdown)
+ *   ├── StartTest/                (Command button - clickable in Elastic and SimGUI)
+ *   ├── CurrentTest/              (String - name of running test or "None")
+ *   ├── CurrentTest Description/  (String - description of the selected test)
+ *   ├── CurrentTest Status/       (String - Idle, Running, Complete, Cancelled, Error)
+ *   └── Message/                  (String - status messages and error information)
  * </pre>
  *
- * <p><b>Button Behavior:</b>
- * <ul>
- *   <li><b>When no test is running:</b> Pressing the button starts the selected test (if one is selected).</li>
- *   <li><b>When a test is running:</b> Pressing the button immediately cancels the active test.</li>
- * </ul>
- *
- * <p>Defensive checks ensure the button only performs actions when appropriate (e.g., won't start
- * a test if none is selected, won't cancel if no test is running).
+ * <p><b>Button Behavior:</b> The "StartTest" entry is a {@link TestRunnerCommand} published
+ * via {@code SmartDashboard.putData()}. Elastic and SimGUI render it as a native Command
+ * toggle button. When clicked, it schedules the currently selected test. When clicked again
+ * (or the test completes), the button resets.
  */
 public class DiagnosticTestManager {
 
     private static final String DASHBOARD_PREFIX = "DiagnosticTests/";
     private static final String KEY_TEST_SELECTOR = DASHBOARD_PREFIX + "TestSelector";
-    private static final String KEY_START_CANCEL_TEST = DASHBOARD_PREFIX + "CurrentTest Start-Cancel";
+    private static final String KEY_START_TEST = DASHBOARD_PREFIX + "StartTest";
     private static final String KEY_CURRENT_TEST = DASHBOARD_PREFIX + "CurrentTest";
     private static final String KEY_TEST_STATUS = DASHBOARD_PREFIX + "CurrentTest Status";
     private static final String KEY_MESSAGE = DASHBOARD_PREFIX + "Message";
@@ -57,6 +59,8 @@ public class DiagnosticTestManager {
 
     private final RobotContainer robotContainer;
     private final SendableChooser<DiagnosticTestRegistry> testChooser;
+    private final Map<DiagnosticTestRegistry, Command> testInstances = new HashMap<>();
+    private final TestRunnerCommand runTestCommand;
 
     private Command activeTest = null;
     private DiagnosticTestRegistry lastSelectedTest = null;
@@ -88,6 +92,9 @@ public class DiagnosticTestManager {
     /**
      * Creates a new DiagnosticTestManager.
      *
+     * <p>Creates all test instances once and stores them for reuse. Also creates
+     * the proxy {@link TestRunnerCommand} that will be published as a dashboard button.
+     *
      * @param robotContainer The robot container providing access to subsystems
      */
     public DiagnosticTestManager(RobotContainer robotContainer) {
@@ -96,6 +103,22 @@ public class DiagnosticTestManager {
             DiagnosticTestRegistry.class,
             DiagnosticTestRegistry.values()[0],
             DiagnosticTestRegistry::getDisplayName);
+
+        // Create all test instances once (persistent — reused across runs)
+        // * iterate over all test entries in the DiagnosticTestRegistry enum
+        for (DiagnosticTestRegistry entry : DiagnosticTestRegistry.values()) {
+            try {
+                Command test = entry.createTest(robotContainer);
+                testInstances.put(entry, test);
+            } catch (Exception e) {
+                System.err.println("Failed to create test: " + entry.getDisplayName()
+                    + ": " + e.getMessage());
+                // Test won't be available, but other tests still work
+            }
+        }
+
+        // Create proxy command (published as a button in initializeDashboard())
+        this.runTestCommand = new TestRunnerCommand(this::getSelectedTestInstance);
 
         initializeDashboard();
     }
@@ -108,11 +131,13 @@ public class DiagnosticTestManager {
         // testChooser is already populated by SendableChooserUtil.fromEnum() in constructor
         SmartDashboard.putData(KEY_TEST_SELECTOR, testChooser);
 
-        // Initialize button and status display
-        SmartDashboard.putBoolean(KEY_START_CANCEL_TEST, false);
+        // Publish proxy command as a clickable button (works in Elastic and SimGUI)
+        SmartDashboard.putData(KEY_START_TEST, runTestCommand);
+
+        // Initialize status display
         SmartDashboard.putString(KEY_CURRENT_TEST, "None");
         SmartDashboard.putString(KEY_TEST_STATUS, TestStatus.IDLE.toString());
-        SmartDashboard.putString(KEY_MESSAGE, "Select a test and press Start-Cancel to begin");
+        SmartDashboard.putString(KEY_MESSAGE, "Select a test and click Start Test to begin");
         SmartDashboard.putString(KEY_DESCRIPTION, "");
     }
 
@@ -123,22 +148,16 @@ public class DiagnosticTestManager {
      * <ul>
      *   <li>Monitors test selection dropdown for changes</li>
      *   <li>Initializes parameters when a test is selected</li>
-     *   <li>Monitors Start/Cancel button and performs appropriate action</li>
      *   <li>Monitors active test status and updates display</li>
      *   <li>Detects unexpected test failures and handles errors</li>
      * </ul>
+     *
+     * <p>Note: Start/cancel actions are handled by the {@link TestRunnerCommand} proxy
+     * via the CommandScheduler, not by polling a boolean.
      */
     public void periodic() {
         // Check chooser and ensure Current Test field is synchronized with selection
         updateTestSelection();
-
-        // Check for Start/Cancel button press
-        boolean buttonPressed = SmartDashboard.getBoolean(KEY_START_CANCEL_TEST, false);
-        if (buttonPressed) {
-            // Reset button immediately to prevent multiple triggers
-            SmartDashboard.putBoolean(KEY_START_CANCEL_TEST, false);
-            handleStartCancelButton();
-        }
 
         // Monitor active test status and detect failures
         updateTestStatus();
@@ -191,33 +210,27 @@ public class DiagnosticTestManager {
                 return;
             }
 
-            // selectedTest IS the registry entry — no findByDisplayName() lookup needed
+            // Get test display name
             String displayName = selectedTest.getDisplayName();
+            // Get the selected test command
+            Command testCommand = testInstances.get(selectedTest);
 
-            // Create a temporary throwaway instance solely to initialize SmartDashboard parameters.
-            // This instance is discarded immediately after calling initializeParameters().
-            // When the user presses Start, a fresh instance will be created that reads current
-            // parameter values from SmartDashboard, ensuring any parameter changes made after
-            // selection are respected.
-            try {
-                Command testCommand = selectedTest.createTest(robotContainer);
-                if (testCommand instanceof DiagnosticTest) {
-                    DiagnosticTest diagnosticTest = (DiagnosticTest) testCommand;
-                    diagnosticTest.initializeParameters();
-                    SmartDashboard.putString(KEY_DESCRIPTION, diagnosticTest.getTestDescription());
-                    // Instance is discarded here - not stored or reused
-                    System.out.println("Initialized parameters for: " + displayName);
-                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + displayName + ". Press Start-Cancel to begin.");
-                } else {
-                    // Test doesn't implement DiagnosticTest yet (e.g., during Phase 2 migration)
-                    SmartDashboard.putString(KEY_DESCRIPTION, "");
-                    System.out.println("Note: " + displayName + " does not implement DiagnosticTest interface yet");
-                    SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + displayName + ". Press Start-Cancel to begin.");
-                }
-            } catch (Exception e) {
-                System.err.println("Error creating test instance for parameter initialization: " + e.getMessage());
-                e.printStackTrace();
-                SmartDashboard.putString(KEY_MESSAGE, "Error initializing test: " + e.getMessage());
+            if (testCommand == null) {
+                // Test instance failed to create during construction
+                SmartDashboard.putString(KEY_DESCRIPTION, "");
+                SmartDashboard.putString(KEY_MESSAGE, "Test creation failed: " + displayName);
+                System.err.println("Test creation failed: " + displayName);
+            } else if (testCommand instanceof DiagnosticTest) {
+                DiagnosticTest diagnosticTest = (DiagnosticTest) testCommand;
+                diagnosticTest.initializeParameters();
+                SmartDashboard.putString(KEY_DESCRIPTION, diagnosticTest.getTestDescription());
+                System.out.println("Initialized parameters for: " + displayName);
+                SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + displayName + ". Click Start Test to begin.");
+            } else {
+                // Test doesn't implement DiagnosticTest yet (e.g., during Phase 2 migration)
+                SmartDashboard.putString(KEY_DESCRIPTION, "");
+                System.out.println("Note: " + displayName + " does not implement DiagnosticTest interface yet");
+                SmartDashboard.putString(KEY_MESSAGE, "Test selected: " + displayName + ". Click Start Test to begin.");
             }
 
             lastSelectedTest = selectedTest;
@@ -227,135 +240,72 @@ public class DiagnosticTestManager {
             SmartDashboard.putString(KEY_DESCRIPTION, "");
             // Update message when selection is cleared (only if no test is running)
             if (!isTestRunning()) {
-                SmartDashboard.putString(KEY_MESSAGE, "Select a test and press Start-Cancel to begin");
+                SmartDashboard.putString(KEY_MESSAGE, "Select a test and click Start Test to begin");
             }
         }
     }
 
     /**
-     * Handles the Start/Cancel button press.
-     * Determines whether to start or cancel based on current test state.
+     * Supplier method for {@link TestRunnerCommand}. Returns the currently selected
+     * persistent test instance, or null if no valid test is available.
+     *
+     * <p>Called by the proxy's {@code initialize()} when the user clicks the button.
+     * This method is a pure lookup — it does not modify manager state. The manager
+     * detects the newly scheduled test in {@link #updateTestStatus()} on the next
+     * {@link #periodic()} call (same cycle — no gap).
+     *
+     * @return The persistent test command to schedule, or null if unavailable
      */
-    private void handleStartCancelButton() {
-        if (isTestRunning()) {
-            // Test is running - cancel it
-            cancelActiveTest();
-        } else {
-            // No test running - start the selected test
-            startSelectedTest();
-        }
-    }
-
-    /**
-     * Cancels the currently running test.
-     * Immediately stops the test and updates status to Cancelled.
-     */
-    private void cancelActiveTest() {
-        if (!isTestRunning()) {
-            // No test running - ignore button press
-            String message = "No test is currently running";
-            SmartDashboard.putString(KEY_MESSAGE, message);
-            System.out.println("Warning: " + message);
-            return;
+    private Command getSelectedTestInstance() {
+        DiagnosticTestRegistry selected = testChooser.getSelected();
+        if (selected == null) {
+            SmartDashboard.putString(KEY_MESSAGE,
+                "No test selected. Select a test from the dropdown.");
+            return null;
         }
 
-        try {
-            // Cancel the test
-            activeTest.cancel();
-
-            // Update status
-            currentStatus = TestStatus.CANCELLED;
-            SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
-            String testName = getActiveTestName();
-            String message = "Test cancelled: " + testName;
-            SmartDashboard.putString(KEY_MESSAGE, message);
-
-            System.out.println("Cancelled test: " + testName);
-        } catch (Exception e) {
-            // Error during cancellation - still mark as cancelled but note the error
-            System.err.println("Error cancelling test: " + e.getMessage());
-            e.printStackTrace();
-            currentStatus = TestStatus.ERROR;
-            SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
-            SmartDashboard.putString(KEY_MESSAGE, "Error cancelling test: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Starts the currently selected test.
-     * Creates a new test instance, schedules it via CommandScheduler, and tracks it.
-     */
-    private void startSelectedTest() {
-        // Don't start if a test is already running
-        if (isTestRunning()) {
-            String message = "A test is already running. Press Start-Cancel to cancel it first.";
-            SmartDashboard.putString(KEY_MESSAGE, message);
-            System.out.println("Warning: " + message);
-            return;
+        Command test = testInstances.get(selected);
+        if (test == null) {
+            SmartDashboard.putString(KEY_MESSAGE,
+                "Test creation failed: " + selected.getDisplayName());
+            return null;
         }
 
-        // Get selected test from chooser — returns the enum directly, no string lookup needed
-        DiagnosticTestRegistry selectedTest = testChooser.getSelected();
-        if (selectedTest == null) {
-            String message = "No test selected. Please select a test from the dropdown.";
-            SmartDashboard.putString(KEY_MESSAGE, message);
-            System.err.println("Error: " + message);
-            return;
-        }
-
-        String displayName = selectedTest.getDisplayName();
-
-        // Cancel any existing test (shouldn't be necessary, but be safe)
-        if (activeTest != null) {
-            activeTest.cancel();
-        }
-
-        // Create and schedule the test
-        try {
-            activeTest = selectedTest.createTest(robotContainer);
-            CommandScheduler.getInstance().schedule(activeTest);
-
-            // Update status display
-            currentStatus = TestStatus.RUNNING;
-            SmartDashboard.putString(KEY_CURRENT_TEST, displayName);
-            SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
-            SmartDashboard.putString(KEY_MESSAGE, "Test running: " + displayName);
-
-            System.out.println("Started test: " + displayName);
-        } catch (Exception e) {
-            // Handle exceptions during test creation or scheduling
-            System.err.println("Error starting test: " + e.getMessage());
-            e.printStackTrace();
-
-            // Cancel the test if it was created/scheduled (defensive cleanup)
-            if (activeTest != null) {
-                try {
-                    activeTest.cancel();
-                } catch (Exception cancelException) {
-                    System.err.println("Error cancelling test after creation failure: " + cancelException.getMessage());
-                }
-            }
-
-            currentStatus = TestStatus.ERROR;
-            activeTest = null;
-            suppressedSelectionWarning = null;
-            SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
-            SmartDashboard.putString(KEY_CURRENT_TEST, "None");
-            SmartDashboard.putString(KEY_DESCRIPTION, "");
-            SmartDashboard.putString(KEY_MESSAGE, "Error starting test: " + e.getMessage());
-        }
+        return test;
     }
 
     /**
      * Monitors the active test and updates status display.
-     * Checks if the test has completed, was cancelled, or encountered an error.
-     * Also detects unexpected test failures (exceptions during execution).
+     *
+     * <p>Detects three kinds of transitions:
+     * <ul>
+     *   <li><b>New test started:</b> No active test, but the selected test instance is now
+     *       scheduled (started by the proxy). Sets {@code activeTest} and transitions to RUNNING.</li>
+     *   <li><b>Test completed/cancelled:</b> Active test is no longer scheduled. Transitions
+     *       to COMPLETE or CANCELLED based on {@code isFinished()}.</li>
+     *   <li><b>Error:</b> Exception while monitoring the active test. Transitions to ERROR.</li>
+     * </ul>
      */
     private void updateTestStatus() {
         // Note: Current Test field is kept in sync by updateTestSelection() called from periodic()
 
+        // If no test is currently being tracked as running, check if the proxy started one.
+        // This handles: first start (activeTest==null), re-run after completion (activeTest
+        // kept for status display but not scheduled), and switching to a different test.
+        if (!isTestRunning()) {
+            DiagnosticTestRegistry selected = testChooser.getSelected();
+            if (selected != null) {
+                Command test = testInstances.get(selected);
+                if (test != null && CommandScheduler.getInstance().isScheduled(test)) {
+                    // Proxy scheduled this test — begin tracking it
+                    activeTest = test;
+                    suppressedSelectionWarning = null;
+                }
+            }
+        }
+
+        // No active test to monitor — ensure IDLE status and return early
         if (activeTest == null) {
-            // No active test
             if (currentStatus != TestStatus.IDLE) {
                 currentStatus = TestStatus.IDLE;
                 SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
@@ -403,23 +353,22 @@ public class DiagnosticTestManager {
                 currentStatus = TestStatus.COMPLETE;
                 SmartDashboard.putString(KEY_MESSAGE, "Test completed: " + testName);
             } else {
-                // Test is not scheduled and not finished — it was cancelled unexpectedly
-                // (e.g., by CommandScheduler due to subsystem conflict)
-                // Note: If cancelled via our button, currentStatus would already be CANCELLED
-                // and the outer if (currentStatus == RUNNING) would have been false, so we
-                // wouldn't reach this point.
+                // Test is not scheduled and not finished — it was cancelled
+                // (e.g., by the proxy's end(interrupted) or by CommandScheduler due to subsystem conflict)
                 currentStatus = TestStatus.CANCELLED;
-                SmartDashboard.putString(KEY_MESSAGE, "Test cancelled unexpectedly: " + testName);
+                SmartDashboard.putString(KEY_MESSAGE, "Test cancelled: " + testName);
             }
             SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
             // Note: Current Test field is kept in sync by updateTestSelection() called from periodic()
 
             // Keep activeTest reference so completion status is displayed until a new test starts
         } else if (isScheduled && currentStatus != TestStatus.RUNNING) {
-            // Test is running
+            // Test is running (either just started via proxy, or resumed unexpectedly)
             currentStatus = TestStatus.RUNNING;
+            String testName = getActiveTestName();
             SmartDashboard.putString(KEY_TEST_STATUS, currentStatus.toString());
-            SmartDashboard.putString(KEY_MESSAGE, "Test running: " + getActiveTestName());
+            SmartDashboard.putString(KEY_MESSAGE, "Test running: " + testName);
+            System.out.println("Started test: " + testName);
         }
     }
 
@@ -428,10 +377,17 @@ public class DiagnosticTestManager {
      * Should be called in {@code Robot.testEnd()}.
      */
     public void cleanup() {
-        // Cancel any active test
+        // Cancel the proxy command (which will also cancel the inner test if running)
+        if (CommandScheduler.getInstance().isScheduled(runTestCommand)) {
+            runTestCommand.cancel();
+        }
+
+        // Cancel any active test (defensive — proxy's end() should have done this)
         if (activeTest != null) {
             try {
-                activeTest.cancel();
+                if (CommandScheduler.getInstance().isScheduled(activeTest)) {
+                    activeTest.cancel();
+                }
             } catch (Exception e) {
                 System.err.println("Error cancelling test during cleanup: " + e.getMessage());
                 e.printStackTrace();
@@ -443,13 +399,12 @@ public class DiagnosticTestManager {
         // Clear SmartDashboard entries when exiting test mode by setting to default/empty values
         // NetworkTables entries persist until overwritten, so we set them to empty values
         // They'll be recreated with proper values on next testInit()
-        SmartDashboard.putBoolean(KEY_START_CANCEL_TEST, false);
         SmartDashboard.putString(KEY_CURRENT_TEST, "");
         SmartDashboard.putString(KEY_DESCRIPTION, "");
         SmartDashboard.putString(KEY_TEST_STATUS, "");
         SmartDashboard.putString(KEY_MESSAGE, "");
-        // Note: SendableChooser (TestSelector) cannot be easily removed, but it will be overwritten
-        // on next testInit() when we call putData() again
+        // Note: SendableChooser (TestSelector) and Command (StartTest) cannot be easily removed,
+        // but they will be overwritten on next testInit() when we call putData() again
 
         currentStatus = TestStatus.IDLE;
         lastSelectedTest = null;
