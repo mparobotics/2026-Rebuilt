@@ -26,7 +26,7 @@ import frc.robot.Constants.SwerveConstants;
 public final class Constants {
 
   public static final class SwerveConstants {
-    private static final boolean isCompDrivebase = true;
+    private static final boolean isCompDrivebase = false;
     
     /* Global Swerve Constants */
     public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
@@ -161,13 +161,6 @@ public final class Constants {
         BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
         BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
-        /* Translation2d - Kinematics */
-        /* SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
-        * which contains velocities and angles for each swerve module of a swerve drive robot.
-        * make sure things in this section line up if the robot is driving weird check this first
-        * more info see https://www.notion.so/Swerve-Module-Positioning-Translation2d-2ec665d348f580e48612c9a5bd315fb7 
-        * and https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
-        */
         swerveKinematics = new SwerveDriveKinematics(FRONT_LEFT, FRONT_RIGHT, BACK_RIGHT, BACK_LEFT);
 
         moduleData = new ModuleData[] {
@@ -186,7 +179,7 @@ public final class Constants {
         halfWheelBase = Units.inchesToMeters(28/2.0);
         wheelDiameter = Units.inchesToMeters(4.0);
 
-        driveGearRatio = (8.14 / 1.0); 
+        driveGearRatio = (6.75 / 1.0); 
         // L2 Mk4 Modules are 6.75:1 L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
         angleGearRatio = (12.8 / 1.0); 
         // MK4i Modules are 21.4:1 SDS Mk4 is 12.8:1, Mk4i is 21.4:1
@@ -216,18 +209,18 @@ public final class Constants {
         angleKD = 0.0; //Derivitive
 
         /* Location of modules (make sure this and moduleData are in same order) */
-        FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
-        FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
         BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+        FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+        FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
         BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
 
         swerveKinematics = new SwerveDriveKinematics(BACK_RIGHT, FRONT_RIGHT, FRONT_LEFT, BACK_LEFT);
         
         moduleData = new ModuleData[] {
-          new ModuleData(11, 52, 19, 156.09, BACK_RIGHT, driveInvert, angleInvert), //Mod 0 Front left
-          new ModuleData(17, 53, 22, 50.80, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-          new ModuleData(15, 16, 21, 132.53, FRONT_LEFT, driveInvert, angleInvert), //Mod 2 Back right
-          new ModuleData(13, 12, 20, 115.40, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+          new ModuleData(11, 52, 19, 339.96, BACK_RIGHT, driveInvert, angleInvert), //Mod 0 Front left
+          new ModuleData(17, 53, 22, 54.66, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+          new ModuleData(15, 16, 21,129.28, FRONT_LEFT, driveInvert, angleInvert), //Mod 2 Back right
+          new ModuleData(13, 12, 20, 119.987, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
         };
       }
 
