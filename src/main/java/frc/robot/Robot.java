@@ -118,8 +118,11 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationInit() {
     // Suppress joystick-not-found warnings in sim (no physical controller).
-    // Controlled by -Dsim.silenceJoystick=true|false in user-specific ~/.gradle/init.gradle file.
-    if (Boolean.parseBoolean(System.getProperty("sim.silenceJoystick", "true"))) {
+    // Opt-in by adding the following to your ~/.gradle/init.gradle file:
+    //   allprojects {
+    //     tasks.withType(JavaExec) { jvmArgs '-Dsim.silenceJoystick=true' }
+    //   }
+    if (Boolean.parseBoolean(System.getProperty("sim.silenceJoystick", "false"))) {
       DriverStation.silenceJoystickConnectionWarning(true);
     }
 
