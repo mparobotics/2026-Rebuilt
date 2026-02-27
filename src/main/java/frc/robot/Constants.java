@@ -96,7 +96,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
     public static final double angleConversionFactor = 360.0 / angleGearRatio;
 
     /* Swerve Profiling Values */
-    public static final double maxSpeed = 3; // meters per second
+    public static final double maxSpeed = 5; // meters per second
     public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
 
     /* Neutral Modes */
@@ -196,7 +196,7 @@ public static final class AutoConstants {
 
 
 public static final class FieldConstants {
-      public static final double FIELD_LENGTH = 17.54824934;
+      public static final double FIELD_LENGTH = 16.54;
       public static final double FIELD_WIDTH = 8.052;
 
       public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
