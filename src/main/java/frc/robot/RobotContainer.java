@@ -121,7 +121,7 @@ public class RobotContainer {
             },
             m_shooter));
           
-    helmsController.button(Button.kX.value).onTrue(Commands.startEnd(
+    helmsController.button(Button.kY.value).onTrue(Commands.startEnd(
       () -> m_shooter.runIndexer(true),
       () -> m_shooter.runIndexer(false),
       m_shooter));
@@ -156,17 +156,17 @@ public class RobotContainer {
       ));
 
     //INTAKE
-    // raises the intake using the A button on the helms controller
     m_intake.setDefaultCommand(
         new RunCommand(
             () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
             m_intake));
     
     
-    //lowers the intake using the A button on the helms controller
+    /*raise the intake using the A button on the helms controller
     helmsController.button(Button.kA.value).onTrue(
        new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
     );
+    */
 
     // lowers the intake using the X button on the helms controller
     helmsController.button(Button.kX.value).onTrue(
