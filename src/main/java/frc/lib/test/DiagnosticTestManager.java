@@ -396,6 +396,16 @@ public class DiagnosticTestManager {
             suppressedSelectionWarning = null;
         }
 
+        // Release all test command instances so they (and their subsystem references) can be GC'd.
+        testInstances.clear();
+
+        // Break the reference chain: NetworkTables → TestRunnerCommand → supplier → this manager.
+        // Nulling the supplier allows this DiagnosticTestManager (and everything it owns) to be
+        // garbage collected once Robot.testExit() sets m_testManager = null.
+        // The TestRunnerCommand shell remains in NetworkTables (no WPILib API to remove Sendables),
+        // but with a null supplier any stale button click is a safe no-op.
+        runTestCommand.cleanup();
+
         // Clear SmartDashboard entries when exiting test mode by setting to default/empty values
         // NetworkTables entries persist until overwritten, so we set them to empty values
         // They'll be recreated with proper values on next testInit()
@@ -403,8 +413,6 @@ public class DiagnosticTestManager {
         SmartDashboard.putString(KEY_DESCRIPTION, "");
         SmartDashboard.putString(KEY_TEST_STATUS, "");
         SmartDashboard.putString(KEY_MESSAGE, "");
-        // Note: SendableChooser (TestSelector) and Command (StartTest) cannot be easily removed,
-        // but they will be overwritten on next testInit() when we call putData() again
 
         currentStatus = TestStatus.IDLE;
         lastSelectedTest = null;

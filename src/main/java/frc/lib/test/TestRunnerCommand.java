@@ -1,5 +1,6 @@
 package frc.lib.test;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import java.util.function.Supplier;
@@ -42,7 +43,7 @@ public class TestRunnerCommand extends Command {
     private static final String LABEL_START = "Start Test";
     private static final String LABEL_CANCEL = "Cancel Test";
 
-    private final Supplier<Command> selectedTestSupplier;
+    private Supplier<Command> selectedTestSupplier;
     private Command runningTest;
 
     /**
@@ -59,6 +60,18 @@ public class TestRunnerCommand extends Command {
 
     @Override
     public void initialize() {
+        // Guard: only allow tests to run in Test mode.
+        // The TestRunnerCommand persists in NetworkTables after exiting test mode,
+        // so it can still be clicked from teleop/autonomous/disabled. Reject those.
+        if (!DriverStation.isTest() || selectedTestSupplier == null) {
+            if (!DriverStation.isTest()) {
+                System.out.println("Warning: Diagnostic tests can only run in Test mode. "
+                    + "Ignoring Start Test request.");
+            }
+            runningTest = null;
+            return; // isFinished() returns true immediately → proxy ends → button resets
+        }
+
         runningTest = selectedTestSupplier.get();
         if (runningTest != null) {
             CommandScheduler.getInstance().schedule(runningTest);
@@ -86,5 +99,20 @@ public class TestRunnerCommand extends Command {
         }
         runningTest = null;
         setName(LABEL_START); // Button label reverts to "Start Test"
+    }
+
+    /**
+     * Releases the supplier reference so the owning {@link DiagnosticTestManager}
+     * (and everything it points to) can be garbage collected.
+     *
+     * <p>This command remains registered in NetworkTables as a Sendable (no WPILib API
+     * to remove it), but with a null supplier any subsequent button click is a safe
+     * no-op — {@code initialize()} will set {@code runningTest = null} and the proxy
+     * ends immediately.
+     *
+     * <p>Called by {@link DiagnosticTestManager#cleanup()} when exiting test mode.
+     */
+    public void cleanup() {
+        selectedTestSupplier = null;
     }
 }
