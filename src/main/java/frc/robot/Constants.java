@@ -280,7 +280,7 @@ public static final class FieldConstants {
     public static double INTAKE_ARM_MAXIMUM = 90;
     public static int GEAR_RATIO = 25;
 
-    public static double INTAKE_ARM_kP = 0.000001;
+    public static double INTAKE_ARM_kP = 0.001;
     public static double INTAKE_ARM_kI = 0;
     public static double INTAKE_ARM_kD = 0;
   }

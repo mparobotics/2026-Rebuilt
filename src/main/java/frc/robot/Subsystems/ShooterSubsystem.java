@@ -53,7 +53,7 @@ public class ShooterSubsystem extends SubsystemBase {
       hoodConfig.idleMode(IdleMode.kBrake);
 
     SparkMaxConfig indexConfig = new SparkMaxConfig();
-      indexConfig.inverted(false);
+      indexConfig.inverted(true);
       indexConfig.idleMode(IdleMode.kBrake);
 
     
