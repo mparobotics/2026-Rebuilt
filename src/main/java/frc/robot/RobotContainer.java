@@ -121,8 +121,8 @@ public class RobotContainer {
 
     // Hood controls (helms controller).
     // Y = hood up (2 inches / max travel), B = hood down.
-    helmsController.y().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
-    helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
+    driveController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
+    driveController.a().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
 
     
     // Left Trigger = Auto-align to left scoring position
@@ -164,8 +164,6 @@ public class RobotContainer {
     // Bound on both controllers so it works regardless of which one you're pressing.
     helmsController.x().onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
     helmsController.a().onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
-    driveController.x().onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
-    driveController.a().onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
   }
 
   private double getSpeedMultiplier(){

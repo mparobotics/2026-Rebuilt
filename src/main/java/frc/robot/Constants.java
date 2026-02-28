@@ -259,9 +259,9 @@ public static final class ShooterConstants {
   public static final int INDEXER_ID = 23;
 
   // Percent output caps ([-1..1]). Higher = faster spin-up but more current draw.
-  public static final double SHOOTER_SPEED = 1.0;
-  public static final double KICKER_SPEED = 1.0;
-  public static final double INDEXER_SPEED = 0.5; //placeholder
+  public static final double SHOOTER_SPEED = 0.6;
+  public static final double KICKER_SPEED = 0.6;
+  public static final double INDEXER_SPEED = 0.4; //placeholder
 
   // Electrical limits/compensation.
   public static final double SHOOTER_VOLTAGE_COMP = 12.0;
@@ -271,12 +271,12 @@ public static final class ShooterConstants {
   // Hood position units are motor rotations (NEO internal encoder).
   // Max travel is 3 rotations = 1080 degrees.
   public static final double HOOD_MIN_ROTATIONS = 0.0;
-  public static final double HOOD_MAX_ROTATIONS = 3.0;
+  public static final double HOOD_MAX_ROTATIONS = 24.0;
 
   // Preset positions.
   public static final double HOOD_ANGLE_LOW = HOOD_MIN_ROTATIONS;
   public static final double HOOD_ANGLE_HIGH = HOOD_MAX_ROTATIONS; // "up" (about 2 inches)
-  public static final double HOOD_KP = 1.2;
+  public static final double HOOD_KP = 0.1;
   public static final double HOOD_MAX_OUTPUT = 0.4;
   public static final double HOOD_TOLERANCE = 0.02;
 }
@@ -285,7 +285,7 @@ public static final class IntakeConstants {
   // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
   // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
   public static int INTAKE_ID = 19;
-  public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
+  public static double INTAKE_SPEED = 75; //placeholder for percent power for intake
 
   public static int INTAKE_ARM_ID = 18;
   public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
@@ -299,10 +299,13 @@ public static final class IntakeConstants {
   public static double INTAKE_ARM_kD = 0;
 
   // Intake arm motion limits (tune to be slower/gentler).
-  public static double INTAKE_ARM_MAX_VEL_DEG_PER_SEC = 60.0; //Degrees
-  public static double INTAKE_ARM_MAX_ACCEL_DEG_PER_SEC2 = 120.0; //Degrees/sec
-  public static double INTAKE_ARM_MAX_OUTPUT_UP = 0.25; //Degrees/sec^2
-  public static double INTAKE_ARM_MAX_OUTPUT_DOWN = 0.18; //Percent output (0.1)
+  public static double INTAKE_ARM_MAX_VEL_DEG_PER_SEC = 30.0; //Degrees/sec
+  public static double INTAKE_ARM_MAX_ACCEL_DEG_PER_SEC2 = 5.0; //Degrees/sec^2
+
+  public static double INTAKE_ARM_MAX_OUTPUT_UP = 0.25;
+  public static double INTAKE_ARM_MAX_OUTPUT_DOWN = 0.25; //Percent output (0.1)
+  public static double INTAKE_ARM_FLOOR_SLOW_ZONE_DEG = 10.0;
+  public static double INTAKE_ARM_MAX_OUTPUT_DOWN_NEAR_FLOOR = 0.12;
 }
 
 public static final class CANdleConstants {

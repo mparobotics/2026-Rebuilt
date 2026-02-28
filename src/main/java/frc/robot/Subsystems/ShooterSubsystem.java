@@ -57,7 +57,7 @@ public class ShooterSubsystem extends SubsystemBase {
       feedConfig.voltageCompensation(ShooterConstants.SHOOTER_VOLTAGE_COMP);
 
     SparkMaxConfig hoodConfig = new SparkMaxConfig();
-      hoodConfig.inverted(false);
+      hoodConfig.inverted(true);
       hoodConfig.idleMode(IdleMode.kBrake);
 
     SparkMaxConfig indexConfig = new SparkMaxConfig();

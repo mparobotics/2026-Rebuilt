@@ -36,7 +36,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public double targetPosition;
 
   private boolean intakeOn = false;
-  private boolean intakeUp = false;
+  private boolean intakeUp = true;
 
   private final TrapezoidProfile.Constraints armConstraints =
     new TrapezoidProfile.Constraints(
@@ -136,9 +136,13 @@ public class IntakeSubsystem extends SubsystemBase {
         + intakeArmPID.calculate(currentDegrees, armSetpoint.position);
 
     // Limit output so the arm moves slower/gentler (especially on the way down).
-    double maxOutput = armSetpoint.velocity >= 0.0
+    boolean movingUp = armSetpoint.position > currentDegrees;
+    double maxOutput = movingUp
         ? IntakeConstants.INTAKE_ARM_MAX_OUTPUT_UP
         : IntakeConstants.INTAKE_ARM_MAX_OUTPUT_DOWN;
+    if (!movingUp && currentDegrees <= IntakeConstants.INTAKE_ARM_FLOOR_SLOW_ZONE_DEG){
+      maxOutput = Math.min(maxOutput, IntakeConstants.INTAKE_ARM_MAX_OUTPUT_DOWN_NEAR_FLOOR);
+    }
     output = MathUtil.clamp(output, -maxOutput, maxOutput);
     intakeArmMotor.set(output);
 
