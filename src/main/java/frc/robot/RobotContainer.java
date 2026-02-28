@@ -17,17 +17,16 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Auto.EightLemonAuto;
+import frc.robot.Auto.TrenchToDepotAuto;
+import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AutoAlign;
 import frc.robot.Command.TeleopSwerve;
+import frc.robot.Subsystems.CandleSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 
 
 public class RobotContainer {
@@ -55,11 +54,23 @@ public class RobotContainer {
 
   //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
+
+  //CandleSubsystem for LED control
+  private final CandleSubsystem m_candle = new CandleSubsystem();
   
+  /**
+   * Constructs the RobotContainer. Creates subsystems (which configure themselves)
+   * and sets up command bindings to map controller inputs to commands.
+   */
   public RobotContainer() {
+    AutoConstants.initDashboard();
     configureBindings();
   }
 
+  /**
+   * Configures command bindings for controller inputs.
+   * Maps buttons and triggers to commands and sets the default drive command.
+   */
   private void configureBindings() {
 
     // Y Button = Zero gyro (reset heading to 0° or 180° based on alliance)
@@ -138,22 +149,60 @@ public class RobotContainer {
     );
   }
 
+  /**
+   * Determines if the driver has requested speed reduction for precise positioning
+   * or delicate tasks.
+   * @return Speed multiplier
+   */
   private double getSpeedMultiplier(){
     // getHID() accesses the underlying XboxController to read button states directly.
     // CommandXboxController doesn't provide a method for stick button presses, so we use
     // the HID (Human Interface Device) object's getRawButton() method instead.
-    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.7: 1;
+    return driveController.getHID().getRawButton(Button.kLeftStick.value)? 0.85: 1;
   }
-  
+
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
   public Command getAutonomousCommand() {
     AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
 
     return switch (selected) {
+      case None -> Commands.none();
       case DriveTestAuto -> new DriveTestAuto(m_drive);
       case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
+      case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
+      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
       default -> Commands.none();
     };
   }
 
+  // ============================================================================
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
+  // ============================================================================
 
+  /**
+   * Gets the swerve subsystem instance.
+   * Used for simulation and test code that needs access to the
+   * swerve subsystem.
+   *
+   * @return The SwerveSubsystem instance
+   */
+  public SwerveSubsystem getSwerveSubsystem() {
+    return m_drive;
+  }
+
+  /**
+   * Gets the candle subsystem instance.
+   * Used for test code that needs access to the LED subsystem.
+   *
+   * @return The CandleSubsystem instance
+   */
+  public CandleSubsystem getCandleSubsystem() {
+    return m_candle;
+  }
 }

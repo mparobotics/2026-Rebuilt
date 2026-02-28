@@ -19,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -49,6 +50,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final StructArrayPublisher<SwerveModuleState> desiredSwerveDataPublisher = NetworkTableInstance.getDefault()
   .getStructArrayTopic("Desired Swerve States", SwerveModuleState.struct).publish();
+  private final StructPublisher<Pose2d> robotPose = NetworkTableInstance.getDefault()
+      .getStructTopic("Robot Pose", Pose2d.struct).publish();
 
   /** Creates a new SwerveSubsystem. */
   public SwerveSubsystem() { 
@@ -150,7 +153,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
     driveFromChassisSpeeds(desiredSpeeds, true);
   }
- 
+
   public void driveFromChassisSpeeds(ChassisSpeeds driveSpeeds, boolean isOpenLoop){
     SwerveModuleState[] desiredStates = SwerveConstants.swerveKinematics.toSwerveModuleStates(driveSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.maxSpeed);
@@ -218,7 +221,7 @@ public class SwerveSubsystem extends SubsystemBase {
   public void resyncModuleEncoders(){
     if(!DriverStation.isDisabled()){
       DriverStation.reportWarning
-        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",  
+        ("Attempted to resync swerve module encoders while robot is enabled. Disable before resyncing",
         false); //NEED CONFIRM
       return;
     }
@@ -227,7 +230,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-    public void saveModuleOffsets(){
+  public void saveModuleOffsets(){
     saveModuleOffsets(new Rotation2d());
   }
   public void saveModuleOffsets(Rotation2d desiredAngle){
@@ -242,14 +245,14 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-
-
   @Override
   public void periodic() {
-        odometry.update(getYaw(), getPositions());
-        updateOdometryWithVision("limelight-a");
-        updateOdometryWithVision("limelight-b");
+    odometry.update(getYaw(), getPositions());
+    updateOdometryWithVision("limelight-a");
+    updateOdometryWithVision("limelight-b");
     field.setRobotPose(getPose());
+    // required by AdvantageScope - to visualize the robot pose without "spinning"
+    robotPose.set(getPose());
 
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
 
@@ -266,8 +269,72 @@ public class SwerveSubsystem extends SubsystemBase {
       SmartDashboard.putNumber(
           "Mod " + mod.moduleNumber + " New Cancoder Offset", 
         canCoderDegrees < 0 ? 360 + canCoderDegrees : canCoderDegrees);
+    }
+    swerveDataPublisher.set(getStates());
   }
-  swerveDataPublisher.set(getStates());
-}
 
+  // ============================================================================
+  // Simulation and Test Support Methods
+  // The following methods are provided for simulation and diagnostic test
+  // support. They are not used by production robot code.
+  // ============================================================================
+
+  /**
+   * Gets the desired module states. Used by simulation to track robot motion.
+   * Reads desired states from each module (modules store their own desired state).
+   * @return Array of desired swerve module states
+   */
+  public SwerveModuleState[] getDesiredStates() {
+    SwerveModuleState[] states = new SwerveModuleState[4];
+    for (SwerveModule mod : mSwerveMods) {
+      states[mod.moduleNumber] = mod.getDesiredState();
+    }
+    return states;
+  }
+
+  public Field2d getField() {
+    return field;
+  }
+
+  public Pigeon2 getPigeon() {
+    return pigeon;
+  }
+
+  public SwerveDrivePoseEstimator getOdometry() {
+    return odometry;
+  }
+
+  public SwerveDriveKinematics getKinematics() {
+    return Constants.SwerveConstants.swerveKinematics;
+  }
+
+  /**
+   * Gets a specific swerve module by its module number.
+   * Required for diagnostic tests to access individual modules for testing and diagnostics.
+   *
+   * @param moduleNumber The module number (0-3)
+   * @return The SwerveModule instance, or null if moduleNumber is invalid
+   */
+  public SwerveModule getModule(int moduleNumber) {
+    if (moduleNumber >= 0 && moduleNumber < mSwerveMods.length) {
+      return mSwerveMods[moduleNumber];
+    }
+    return null;
+  }
+
+  /**
+   * Gets all swerve modules as an array.
+   *
+   * <p>Returns a defensive copy to prevent modification of the subsystem's internal
+   * module array structure. The {@link SwerveModule} instances inside the returned
+   * array are the same objects (their state remains mutable, which is intended).
+   *
+   * <p>Java arrays are always mutable, so this method returns a copy to prevent
+   * callers from replacing array elements (e.g., {@code getModules()[0] = null}).
+   *
+   * @return A copy of the array containing all swerve modules
+   */
+  public SwerveModule[] getModules() {
+    return mSwerveMods.clone();
+  }
 }
