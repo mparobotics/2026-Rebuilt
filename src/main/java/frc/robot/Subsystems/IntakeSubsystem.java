@@ -7,6 +7,7 @@ package frc.robot.Subsystems;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
 
@@ -79,11 +80,13 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void raiseIntake() {
     setTargetPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
+    intakeArmPID.reset();
     intakeUp = true;
   }
 
   public void lowerIntake() {
     setTargetPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
+    intakeArmPID.reset();
     intakeUp = false;
   }
   
@@ -111,5 +114,9 @@ public class IntakeSubsystem extends SubsystemBase {
     // SparkMax expects [-1, 1]; clamp to avoid slamming the arm on startup/tuning mistakes.
     output = Math.max(-1.0, Math.min(1.0, output));
     intakeArmMotor.set(output);
+
+    SmartDashboard.putNumber("IntakeArm/TargetDeg", targetPosition);
+    SmartDashboard.putNumber("IntakeArm/PositionDeg", currentDegrees);
+    SmartDashboard.putNumber("IntakeArm/Output", output);
   }
 }

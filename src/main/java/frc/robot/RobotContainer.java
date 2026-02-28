@@ -103,7 +103,7 @@ public class RobotContainer {
     m_shooter.setDefaultCommand(
         Commands.run(
             () -> {
-              // Right stick Y controls shooter + indexer together.
+              // Right stick Y controls shooter + kicker together.
               // Invert so stick-up (negative on Xbox) produces positive motor output.
               double shooterAxis = -MathUtil.applyDeadband(
                   helmsController.getRawAxis(Axis.kRightY.value),
@@ -112,7 +112,7 @@ public class RobotContainer {
               m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
               m_shooter.setKickerSpeed(shooterAxis * ShooterConstants.KICKER_SPEED);
 
-              // Right bumper runs the kicker while held.
+              // Right bumper runs the indexer while held.
               m_shooter.setIndexerSpeed(helmsController.getHID().getRightBumper()
                   ? ShooterConstants.INDEXER_SPEED
                   : 0.0);
@@ -154,12 +154,13 @@ public class RobotContainer {
 
     
     
-    // Intake arm on helms controller buttons.
+    // Intake arm buttons.
     // X = raise arm, A = lower arm.
-    helmsController.button(Button.kX.value)
-        .onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
-    helmsController.button(Button.kA.value)
-        .onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
+    // Bound on both controllers so it works regardless of which one you're pressing.
+    helmsController.x().onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
+    helmsController.a().onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
+    driveController.x().onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
+    driveController.a().onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
   }
 
   private double getSpeedMultiplier(){
