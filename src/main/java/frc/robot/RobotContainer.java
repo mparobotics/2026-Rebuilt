@@ -110,11 +110,11 @@ public class RobotContainer {
                   0.1);
 
               m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
-              m_shooter.setIndexerSpeed(shooterAxis * ShooterConstants.INDEXER_SPEED);
+              m_shooter.setKickerSpeed(shooterAxis * ShooterConstants.KICKER_SPEED);
 
               // Right bumper runs the kicker while held.
-              m_shooter.setKickerSpeed(helmsController.getHID().getRightBumper()
-                  ? ShooterConstants.KICKER_SPEED
+              m_shooter.setIndexerSpeed(helmsController.getHID().getRightBumper()
+                  ? ShooterConstants.INDEXER_SPEED
                   : 0.0);
             },
             m_shooter));
