@@ -74,11 +74,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void toggleIntake() {
     if (!intakeOn) {
-      intakeOn = true;
+      intakeOn = false;
       intakeMotor.set(IntakeConstants.INTAKE_SPEED);
     }
     else {
-      intakeOn = false;
+      intakeOn = true;
       intakeMotor.set(0);
     }
   }
@@ -98,13 +98,13 @@ public class IntakeSubsystem extends SubsystemBase {
   public void raiseIntake() {
     setTargetPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
     intakeArmPID.reset();
-    intakeUp = true;
+    intakeUp = false;
   }
 
   public void lowerIntake() {
     setTargetPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
     intakeArmPID.reset();
-    intakeUp = false;
+    intakeUp = true;
   }
   
   public void moveIntake() {
@@ -124,6 +124,10 @@ public class IntakeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+
+    System.out.println(intakeArmEncoder.getPosition());
+    System.out.println(armSetpoint.position);
+
     double nowSec = Timer.getFPGATimestamp();
     double dtSec = nowSec - lastTimestampSec;
     lastTimestampSec = nowSec;
@@ -136,7 +140,7 @@ public class IntakeSubsystem extends SubsystemBase {
         + intakeArmPID.calculate(currentDegrees, armSetpoint.position);
 
     // Limit output so the arm moves slower/gentler (especially on the way down).
-    boolean movingUp = armSetpoint.position > currentDegrees;
+    boolean movingUp = armSetpoint.position <  currentDegrees;
     double maxOutput = movingUp
         ? IntakeConstants.INTAKE_ARM_MAX_OUTPUT_UP
         : IntakeConstants.INTAKE_ARM_MAX_OUTPUT_DOWN;

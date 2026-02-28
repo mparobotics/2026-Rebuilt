@@ -162,8 +162,8 @@ public class RobotContainer {
     // Intake arm buttons.
     // X = raise arm, A = lower arm.
     // Bound on both controllers so it works regardless of which one you're pressing.
-    helmsController.x().onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
-    helmsController.a().onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
+    helmsController.a().onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
+    helmsController.x().onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
   }
 
   private double getSpeedMultiplier(){
