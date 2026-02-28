@@ -4,9 +4,12 @@
 
 package frc.robot.Subsystems;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
@@ -35,6 +38,15 @@ public class IntakeSubsystem extends SubsystemBase {
   private boolean intakeOn = false;
   private boolean intakeUp = false;
 
+  private final TrapezoidProfile.Constraints armConstraints =
+    new TrapezoidProfile.Constraints(
+      IntakeConstants.INTAKE_ARM_MAX_VEL_DEG_PER_SEC,
+      IntakeConstants.INTAKE_ARM_MAX_ACCEL_DEG_PER_SEC2);
+
+  private TrapezoidProfile.State armSetpoint = new TrapezoidProfile.State(0.0, 0.0);
+  private TrapezoidProfile.State armGoal = new TrapezoidProfile.State(0.0, 0.0);
+  private double lastTimestampSec = 0.0;
+
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
     SparkMaxConfig intakeConfig = new SparkMaxConfig();
@@ -54,6 +66,10 @@ public class IntakeSubsystem extends SubsystemBase {
     intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
     intakeArmPID.reset();
     targetPosition = IntakeConstants.INTAKE_ARM_LOWERED_POSITION;
+
+    armSetpoint = new TrapezoidProfile.State(targetPosition, 0.0);
+    armGoal = new TrapezoidProfile.State(targetPosition, 0.0);
+    lastTimestampSec = Timer.getFPGATimestamp();
   }
 
   public void toggleIntake() {
@@ -76,6 +92,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void setTargetPosition(double position) {
     targetPosition = Math.max(IntakeConstants.INTAKE_ARM_MINIMUM, Math.min(IntakeConstants.INTAKE_ARM_MAXIMUM, position));
+    armGoal = new TrapezoidProfile.State(targetPosition, 0.0);
   }
 
   public void raiseIntake() {
@@ -107,15 +124,27 @@ public class IntakeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    double currentDegrees = getArmPosition();
-    double output = intakeArmFeedForward.calculate(Units.degreesToRadians(currentDegrees), 0)
-        + intakeArmPID.calculate(currentDegrees, targetPosition);
+    double nowSec = Timer.getFPGATimestamp();
+    double dtSec = nowSec - lastTimestampSec;
+    lastTimestampSec = nowSec;
+    dtSec = MathUtil.clamp(dtSec, 0.0, 0.05);
 
-    // SparkMax expects [-1, 1]; clamp to avoid slamming the arm on startup/tuning mistakes.
-    output = Math.max(-1.0, Math.min(1.0, output));
+    double currentDegrees = getArmPosition();
+    armSetpoint = new TrapezoidProfile(armConstraints).calculate(dtSec, armGoal, armSetpoint);
+
+    double output = intakeArmFeedForward.calculate(Units.degreesToRadians(currentDegrees), 0)
+        + intakeArmPID.calculate(currentDegrees, armSetpoint.position);
+
+    // Limit output so the arm moves slower/gentler (especially on the way down).
+    double maxOutput = armSetpoint.velocity >= 0.0
+        ? IntakeConstants.INTAKE_ARM_MAX_OUTPUT_UP
+        : IntakeConstants.INTAKE_ARM_MAX_OUTPUT_DOWN;
+    output = MathUtil.clamp(output, -maxOutput, maxOutput);
     intakeArmMotor.set(output);
 
     SmartDashboard.putNumber("IntakeArm/TargetDeg", targetPosition);
+    SmartDashboard.putNumber("IntakeArm/SetpointDeg", armSetpoint.position);
+    SmartDashboard.putNumber("IntakeArm/SetpointVelDegPerSec", armSetpoint.velocity);
     SmartDashboard.putNumber("IntakeArm/PositionDeg", currentDegrees);
     SmartDashboard.putNumber("IntakeArm/Output", output);
   }

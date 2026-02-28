@@ -45,12 +45,16 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public ShooterSubsystem() {
     SparkMaxConfig shootConfig = new SparkMaxConfig();
+      shootConfig.smartCurrentLimit(ShooterConstants.SHOOTER_CURRENT_LIMIT_AMPS);
       shootConfig.inverted(true);
       shootConfig.idleMode(IdleMode.kCoast);
+      shootConfig.voltageCompensation(ShooterConstants.SHOOTER_VOLTAGE_COMP);
 
     SparkMaxConfig feedConfig = new SparkMaxConfig();
+      feedConfig.smartCurrentLimit(ShooterConstants.KICKER_CURRENT_LIMIT_AMPS);
       feedConfig.inverted(false);
       feedConfig.idleMode(IdleMode.kBrake);
+      feedConfig.voltageCompensation(ShooterConstants.SHOOTER_VOLTAGE_COMP);
 
     SparkMaxConfig hoodConfig = new SparkMaxConfig();
       hoodConfig.inverted(false);
@@ -119,6 +123,9 @@ public class ShooterSubsystem extends SubsystemBase {
         default:
           hoodTargetPosition = ShooterConstants.HOOD_ANGLE_HIGH;
       }
+      hoodTargetPosition = Math.max(
+          ShooterConstants.HOOD_MIN_ROTATIONS,
+          Math.min(ShooterConstants.HOOD_MAX_ROTATIONS, hoodTargetPosition));
       hoodController.reset();
       hoodActive = true;
     }

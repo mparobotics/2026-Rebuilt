@@ -101,38 +101,28 @@ public class RobotContainer {
 
     // SHOOTER CONTROLLER
     m_shooter.setDefaultCommand(
-        Commands.run(
-            () -> {
-              // Right stick Y controls shooter + kicker together.
-              // Invert so stick-up (negative on Xbox) produces positive motor output.
-              double shooterAxis = -MathUtil.applyDeadband(
-                  helmsController.getRawAxis(Axis.kRightY.value),
-                  0.1);
+      Commands.run(
+        () -> {
+          // Right stick Y controls shooter + kicker together.
+          // Invert so stick-up (negative on Xbox) produces positive motor output.
+          double shooterAxis = -MathUtil.applyDeadband(
+              helmsController.getRawAxis(Axis.kRightY.value),
+              0.1);
 
-              m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
-              m_shooter.setKickerSpeed(shooterAxis * ShooterConstants.KICKER_SPEED);
+          m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
+          m_shooter.setKickerSpeed(shooterAxis * ShooterConstants.KICKER_SPEED);
 
-              // Right bumper runs the indexer while held.
-              m_shooter.setIndexerSpeed(helmsController.getHID().getRightBumper()
-                  ? ShooterConstants.INDEXER_SPEED
-                  : 0.0);
-            },
-            m_shooter));
+          // Right bumper runs the indexer while held.
+          m_shooter.setIndexerSpeed(helmsController.getHID().getRightBumper()
+              ? ShooterConstants.INDEXER_SPEED
+              : 0.0);
+        },
+    m_shooter));
 
-    // Helms Y = run shooter+kicker+indexer while held (easy "does it work?" test).
-    helmsController.y().whileTrue(
-        Commands.runEnd(
-            () -> {
-              m_shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
-              m_shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-              m_shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
-            },
-            () -> {
-              m_shooter.setShooterSpeed(0.0);
-              m_shooter.setKickerSpeed(0.0);
-              m_shooter.setIndexerSpeed(0.0);
-            },
-            m_shooter));
+    // Hood controls (helms controller).
+    // Y = hood up (2 inches / max travel), B = hood down.
+    helmsController.y().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
+    helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
 
     
     // Left Trigger = Auto-align to left scoring position
@@ -164,7 +154,7 @@ public class RobotContainer {
     //INTAKE
     m_intake.setDefaultCommand(
         new RunCommand(
-            () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
+            () -> m_intake.setIntakePower(MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
             m_intake));
 
     

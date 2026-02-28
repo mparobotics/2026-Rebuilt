@@ -29,113 +29,113 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 
 
 // Swerve Constants
-  public static final class SwerveConstants{
-    public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
-    public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
-    public static final boolean invertPigeon = false; // Whether to invert gyro readings
+public static final class SwerveConstants{
+  public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
+  public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
+  public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
-    /* Drivetrain Constants */
-    public static final double halfTrackWidth = Units.inchesToMeters(27/2.0);//to find
-    public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
-    public static final double wheelDiameter = Units.inchesToMeters(4.0);
-    public static final double wheelCircumference = wheelDiameter * Math.PI;
-    //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
-    //public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
-    public static final double driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
+  /* Drivetrain Constants */
+  public static final double halfTrackWidth = Units.inchesToMeters(27/2.0);//to find
+  public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
+  public static final double wheelDiameter = Units.inchesToMeters(4.0);
+  public static final double wheelCircumference = wheelDiameter * Math.PI;
+  //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
+  //public static final double driveBaseRadius = Math.hypot(halfTrackWidth/2, halfWheelBase/2);
+  public static final double driveBaseRadius = Math.hypot(halfWheelBase, halfTrackWidth);
 
 
-    public static final double openLoopRamp = 0.25;
-    public static final double closedLoopRamp = 0.0;
+  public static final double openLoopRamp = 0.25;
+  public static final double closedLoopRamp = 0.0;
 
-    public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1 L2 Mk4 Modules
-    //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
-    public static final double angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
-    //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
+  public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1 L2 Mk4 Modules
+  //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
+  public static final double angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
+  //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
-    public static final SwerveDriveKinematics swerveKinematics =
-    new SwerveDriveKinematics(
-        //WPILib coordinate system: +X = forward, +Y = left
-        new Translation2d(halfTrackWidth, halfWheelBase), //Front left
-        new Translation2d(halfTrackWidth, -halfWheelBase), //Front right
-        new Translation2d(-halfTrackWidth, -halfWheelBase), //Back right
-        new Translation2d(-halfTrackWidth, halfWheelBase)); //Back Left
-    //translation 2d locates the swerve module in cords
-    //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
-    //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
-    //which contains velocities and angles for each swerve module of a swerve drive robot.
-        
-    /* Swerve Voltage Compensation */
-    public static final double voltageComp = 12.0;
+  public static final SwerveDriveKinematics swerveKinematics =
+  new SwerveDriveKinematics(
+      //WPILib coordinate system: +X = forward, +Y = left
+      new Translation2d(halfTrackWidth, halfWheelBase), //Front left
+      new Translation2d(halfTrackWidth, -halfWheelBase), //Front right
+      new Translation2d(-halfTrackWidth, -halfWheelBase), //Back right
+      new Translation2d(-halfTrackWidth, halfWheelBase)); //Back Left
+  //translation 2d locates the swerve module in cords
+  //https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/swerve-drive-kinematics.html
+  //SwerveDrive Kinematics converts between a ChassisSpeeds object and several SwerveModuleState objects, 
+  //which contains velocities and angles for each swerve module of a swerve drive robot.
+      
+  /* Swerve Voltage Compensation */
+  public static final double voltageComp = 12.0;
        
-    //Swerve Current Limiting for neos
-    public static final int angleContinuousCurrentLimit = 20; //limits current draw of turning motor
-    public static final int driveContinuousCurrentLimit = 40; //limits current draw of drive motor
+  //Swerve Current Limiting for neos
+  public static final int angleContinuousCurrentLimit = 20; //limits current draw of turning motor
+  public static final int driveContinuousCurrentLimit = 40; //limits current draw of drive motor
+
+
+
+  /* Drive Motor PID Values */
+  public static final double driveKP = 0.1; //to tune
+  public static final double driveKI = 0.0; //to tune
+  public static final double driveKD = 0.0; //to tune 
+
+  /* Drive Motor Characterization Values */
+  //values to calculate the drive feedforward (KFF)
+  public static final double driveKS = 0.667; //to calculate
+  public static final double driveKV = 2.4; //to calculate
+  public static final double driveKA = 0.5; //to calculate
+
+  /* Angle Motor PID Values */
+  public static final double angleKP = 0.01; //to tune
+  public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
+  public static final double angleKD = 0.0; //to tune
+
+  /* Drive Motor Conversion Factors */
+  public static final double driveConversionPositionFactor =
+  (wheelDiameter * Math.PI) / driveGearRatio;
+  public static final double driveConversionVelocityFactor = driveConversionPositionFactor / 60.0;
+  public static final double angleConversionFactor = 360.0 / angleGearRatio;
+
+  /* Swerve Profiling Values */
+  public static final double maxSpeed = 5; // meters per second
+  public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
+
+  /* Neutral Modes */
+  public static final IdleMode angleNeutralMode = IdleMode.kBrake;
+  public static final IdleMode driveNeutralMode = IdleMode.kBrake;
+
+  /* Motor Inverts */
+  public static final boolean canCoderInvert = false;
+  public static final boolean driveInvert = false;
+  public static final boolean angleInvert = true;
+
+  //Location of modules
+  public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
+  public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
+  public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
+  public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
+
+  /* Module Specific Constants */
+  public record ModuleData(
+    int driveMotorID,
+    int angleMotorID,
+    int encoderID,
+    double angleOffset,
+    Translation2d location,
+    boolean driveInvert,
+    boolean angleInvert
+  ){}
+
+  public static ModuleData[] moduleData = {
+    new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+    // Module 1 is currently the only module oscillating; flip its angle motor invert so its
+    // steering closed-loop sign matches the encoder direction.
+    // Module 1: also invert drive so +X command drives forward like the others.
+    new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+    new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+    new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+  };
   
-
-
-    /* Drive Motor PID Values */
-    public static final double driveKP = 0.1; //to tune
-    public static final double driveKI = 0.0; //to tune
-    public static final double driveKD = 0.0; //to tune 
-  
-    /* Drive Motor Characterization Values */
-    //values to calculate the drive feedforward (KFF)
-    public static final double driveKS = 0.667; //to calculate
-    public static final double driveKV = 2.4; //to calculate
-    public static final double driveKA = 0.5; //to calculate
-
-    /* Angle Motor PID Values */
-    public static final double angleKP = 0.01; //to tune
-    public static final double angleKI = 0.0; //to tune, keep it at zero unless you see a persistent offset
-    public static final double angleKD = 0.0; //to tune
-
-    /* Drive Motor Conversion Factors */
-    public static final double driveConversionPositionFactor =
-    (wheelDiameter * Math.PI) / driveGearRatio;
-    public static final double driveConversionVelocityFactor = driveConversionPositionFactor / 60.0;
-    public static final double angleConversionFactor = 360.0 / angleGearRatio;
-
-    /* Swerve Profiling Values */
-    public static final double maxSpeed = 5; // meters per second
-    public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
-
-    /* Neutral Modes */
-    public static final IdleMode angleNeutralMode = IdleMode.kBrake;
-    public static final IdleMode driveNeutralMode = IdleMode.kBrake;
-
-    /* Motor Inverts */
-    public static final boolean canCoderInvert = false;
-    public static final boolean driveInvert = false;
-    public static final boolean angleInvert = true;
-
-    //Location of modules
-    public static final Translation2d FRONT_LEFT = new Translation2d(halfWheelBase, halfTrackWidth);
-    public static final Translation2d FRONT_RIGHT = new Translation2d(halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_RIGHT = new Translation2d(-halfWheelBase, -halfTrackWidth);
-    public static final Translation2d BACK_LEFT = new Translation2d(-halfWheelBase, halfTrackWidth);
-
-    /* Module Specific Constants */
-    public record ModuleData(
-      int driveMotorID,
-      int angleMotorID,
-      int encoderID,
-      double angleOffset,
-      Translation2d location,
-      boolean driveInvert,
-      boolean angleInvert
-    ){}
-
-    public static ModuleData[] moduleData = {
-      new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-      // Module 1 is currently the only module oscillating; flip its angle motor invert so its
-      // steering closed-loop sign matches the encoder direction.
-      // Module 1: also invert drive so +X command drives forward like the others.
-      new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-      new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-      new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
-    };
-    
-  }
+}
 
 
 public static final class AutoConstants {
@@ -196,96 +196,117 @@ public static final class AutoConstants {
 
 
 public static final class FieldConstants {
-      public static final double FIELD_LENGTH = 16.54;
-      public static final double FIELD_WIDTH = 8.07;
+  public static final double FIELD_LENGTH = 16.54;
+  public static final double FIELD_WIDTH = 8.07;
 
-      public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
+  public static final Translation2d HUB_CENTER = new Translation2d(4.61,4.03);
 
-      /**
-       * If true, the robot will behave as if it is always on the Blue alliance (no field mirroring),
-       * even when connected to FMS / Driver Station reports Red.1
-       */
-      public static final boolean FORCE_BLUE_ALLIANCE = true;
+  /**
+   * If true, the robot will behave as if it is always on the Blue alliance (no field mirroring),
+   * even when connected to FMS / Driver Station reports Red.1
+   */
+  public static final boolean FORCE_BLUE_ALLIANCE = true;
 
-      public static boolean isRedAlliance(){
-          if (FORCE_BLUE_ALLIANCE) {
-              return false;
-          }
-          // Default to Blue when alliance is unknown (common in sim/practice).
-          return DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
-      }
-      
-      public static Rotation2d flipForAlliance(Rotation2d rotation){
-          if(isRedAlliance()){
-              return Rotation2d.fromDegrees(rotation.getDegrees() + 180);
-          }else{
-              return rotation;
-          }
-      }
-      public static Translation2d flipForAlliance(Translation2d pos){
-          if(isRedAlliance()){
-              return new Translation2d(FIELD_LENGTH - pos.getX(), FIELD_WIDTH - pos.getY());
-          }else{
-              return pos;
-          }
-      }
-      public static Pose2d flipForAlliance(Pose2d pose){
-          return new Pose2d(flipForAlliance(pose.getTranslation()), flipForAlliance(pose.getRotation()));
-      }
-      
+  public static boolean isRedAlliance(){
+    if (FORCE_BLUE_ALLIANCE) {
+        return false;
+    }
+    // Default to Blue when alliance is unknown (common in sim/practice).
+    return DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get() == Alliance.Red;
   }
-
-  /** Vision constants (Limelight, etc). */
-  public static final class VisionConstants {
-    public static final String[] LIMELIGHT_NAMES = {"limelight-a", "limelight-b"};
     
-    public static final String LIMELIGHT_STREAM_URL_FORMAT = "http://%s.local:5800/stream.mjpg";
-    public static final boolean LIMELIGHT_STREAM_ENABLED_DEFAULT = true;
-
-    public static final boolean VISION_ENABLED_DEFAULT = true;
-    public static final double MAX_VISION_ANGULAR_RATE_DEG_PER_SEC = 720.0;
-
-    /** Standard deviations for vision measurements: (x meters, y meters, theta radians). */
-    public static final double VISION_STD_DEV_X_METERS = 0.7;
-    public static final double VISION_STD_DEV_Y_METERS = 0.7;
-    public static final double VISION_STD_DEV_THETA_RADIANS = 99999.0;
+  public static Rotation2d flipForAlliance(Rotation2d rotation){
+    if(isRedAlliance()){
+        return Rotation2d.fromDegrees(rotation.getDegrees() + 180);
+    }else{
+        return rotation;
+    }
   }
-  /* Shooter Constants */
-  public static final class ShooterConstants {
-      public static final int SHOOTER_ID = 22;
-      public static final int KICKER_ID = 21;
-      public static final int HOOD_ID = 20;
-      public static final int INDEXER_ID = 23;
-
-      public static final double SHOOTER_SPEED = 0.60; //Placeholder speed
-      public static final double KICKER_SPEED = 0.60; 
-      public static final double INDEXER_SPEED = 0.5; //placeholder
-
-      public static final double HOOD_ANGLE_LOW = 0.0;
-      public static final double HOOD_ANGLE_HIGH = 0.5;
-      public static final double HOOD_KP = 1.2;
-      public static final double HOOD_MAX_OUTPUT = 0.4;
-      public static final double HOOD_TOLERANCE = 0.02;
+  public static Translation2d flipForAlliance(Translation2d pos){
+    if(isRedAlliance()){
+        return new Translation2d(FIELD_LENGTH - pos.getX(), FIELD_WIDTH - pos.getY());
+    }else{
+        return pos;
+    }
   }
-  public static final class IntakeConstants {
-    // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
-    // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
-    public static int INTAKE_ID = 19;
-    public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
-
-    public static int INTAKE_ARM_ID = 18;
-    public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
-    public static double INTAKE_ARM_LOWERED_POSITION = 0;
-    public static double INTAKE_ARM_MINIMUM = 0; // placeholders
-    public static double INTAKE_ARM_MAXIMUM = 90;
-    public static int GEAR_RATIO = 25;
-
-    public static double INTAKE_ARM_kP = 0.01;
-    public static double INTAKE_ARM_kI = 0;
-    public static double INTAKE_ARM_kD = 0;
+  public static Pose2d flipForAlliance(Pose2d pose){
+    return new Pose2d(flipForAlliance(pose.getTranslation()), flipForAlliance(pose.getRotation()));
   }
+    
+}
 
-  public static final class CANdleConstants {
-    public static final int CANDLE_ID = 18; //Placeholder ID
+/** Vision constants (Limelight, etc). */
+public static final class VisionConstants {
+  public static final String[] LIMELIGHT_NAMES = {"limelight-a", "limelight-b"};
+  
+  public static final String LIMELIGHT_STREAM_URL_FORMAT = "http://%s.local:5800/stream.mjpg";
+  public static final boolean LIMELIGHT_STREAM_ENABLED_DEFAULT = true;
+
+  public static final boolean VISION_ENABLED_DEFAULT = true;
+  public static final double MAX_VISION_ANGULAR_RATE_DEG_PER_SEC = 720.0;
+
+  /** Standard deviations for vision measurements: (x meters, y meters, theta radians). */
+  public static final double VISION_STD_DEV_X_METERS = 0.7;
+  public static final double VISION_STD_DEV_Y_METERS = 0.7;
+  public static final double VISION_STD_DEV_THETA_RADIANS = 99999.0;
+}
+
+/* Shooter Constants */
+public static final class ShooterConstants {
+  public static final int SHOOTER_ID = 22;
+  public static final int KICKER_ID = 21;
+  public static final int HOOD_ID = 20;
+  public static final int INDEXER_ID = 23;
+
+  // Percent output caps ([-1..1]). Higher = faster spin-up but more current draw.
+  public static final double SHOOTER_SPEED = 1.0;
+  public static final double KICKER_SPEED = 1.0;
+  public static final double INDEXER_SPEED = 0.5; //placeholder
+
+  // Electrical limits/compensation.
+  public static final double SHOOTER_VOLTAGE_COMP = 12.0;
+  public static final int SHOOTER_CURRENT_LIMIT_AMPS = 60;
+  public static final int KICKER_CURRENT_LIMIT_AMPS = 60;
+
+  // Hood position units are motor rotations (NEO internal encoder).
+  // Max travel is 3 rotations = 1080 degrees.
+  public static final double HOOD_MIN_ROTATIONS = 0.0;
+  public static final double HOOD_MAX_ROTATIONS = 3.0;
+
+  // Preset positions.
+  public static final double HOOD_ANGLE_LOW = HOOD_MIN_ROTATIONS;
+  public static final double HOOD_ANGLE_HIGH = HOOD_MAX_ROTATIONS; // "up" (about 2 inches)
+  public static final double HOOD_KP = 1.2;
+  public static final double HOOD_MAX_OUTPUT = 0.4;
+  public static final double HOOD_TOLERANCE = 0.02;
+}
+
+public static final class IntakeConstants {
+  // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
+  // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
+  public static int INTAKE_ID = 19;
+  public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
+
+  public static int INTAKE_ARM_ID = 18;
+  public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
+  public static double INTAKE_ARM_LOWERED_POSITION = 0;
+  public static double INTAKE_ARM_MINIMUM = 0; // placeholders
+  public static double INTAKE_ARM_MAXIMUM = 90;
+  public static int GEAR_RATIO = 25;
+
+  public static double INTAKE_ARM_kP = 0.01;
+  public static double INTAKE_ARM_kI = 0;
+  public static double INTAKE_ARM_kD = 0;
+
+  // Intake arm motion limits (tune to be slower/gentler).
+  public static double INTAKE_ARM_MAX_VEL_DEG_PER_SEC = 60.0; //Degrees
+  public static double INTAKE_ARM_MAX_ACCEL_DEG_PER_SEC2 = 120.0; //Degrees/sec
+  public static double INTAKE_ARM_MAX_OUTPUT_UP = 0.25; //Degrees/sec^2
+  public static double INTAKE_ARM_MAX_OUTPUT_DOWN = 0.18; //Percent output (0.1)
+}
+
+public static final class CANdleConstants {
+  public static final int CANDLE_ID = 18; //Placeholder ID
+
   }
 }
