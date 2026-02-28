@@ -253,11 +253,11 @@ public static final class FieldConstants {
   /* Shooter Constants */
   public static final class ShooterConstants {
       public static final int SHOOTER_ID = 22; 
-      public static final int KICKER_ID = 21;
+      public static final int KICKER_ID = 23;
       public static final int HOOD_ID = 20;
-      public static final int INDEXER_ID = 23;
+      public static final int INDEXER_ID = 21;
 
-      public static final double SHOOTER_SPEED = 0.5; //Placeholder speed
+      public static final double SHOOTER_SPEED = 0.75; //Placeholder speed
       public static final double KICKER_SPEED = 0.5; 
       public static final double INDEXER_SPEED = 0.5; //placeholder
 
@@ -270,17 +270,17 @@ public static final class FieldConstants {
   public static final class IntakeConstants {
     // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
     // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
-    public static int INTAKE_ID = 19; // TODO: set to your intake motor CAN ID
+    public static int INTAKE_ID = 19;
     public static double INTAKE_SPEED = 50; //placeholder for percent power for intake
 
-    public static int INTAKE_ARM_ID = 18; // TODO: set to your intake arm motor CAN ID
+    public static int INTAKE_ARM_ID = 18;
     public static double INTAKE_ARM_RAISED_POSITION = 90; //to do later
     public static double INTAKE_ARM_LOWERED_POSITION = 0;
     public static double INTAKE_ARM_MINIMUM = 0; // placeholders
     public static double INTAKE_ARM_MAXIMUM = 90;
-    public static int GEAR_RATIO = 3;
+    public static int GEAR_RATIO = 25;
 
-    public static double INTAKE_ARM_kP = 0.01;
+    public static double INTAKE_ARM_kP = 0.000001;
     public static double INTAKE_ARM_kI = 0;
     public static double INTAKE_ARM_kD = 0;
   }

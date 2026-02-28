@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Auto.EightLemonAuto;
@@ -152,11 +151,14 @@ public class RobotContainer {
         new RunCommand(
             () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
             m_intake));
+
     
-    // Intake arm on helms D-pad.
-    new POVButton(helmsController.getHID(), 0)
+    
+    // Intake arm on helms controller buttons.
+    // X = raise arm, A = lower arm.
+    helmsController.button(Button.kX.value)
         .onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
-    new POVButton(helmsController.getHID(), 180)
+    helmsController.button(Button.kA.value)
         .onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
   }
 

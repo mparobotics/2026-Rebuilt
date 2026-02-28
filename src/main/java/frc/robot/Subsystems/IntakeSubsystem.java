@@ -32,7 +32,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public double targetPosition;
 
   private boolean intakeOn = false;
-  private boolean intakeUp = true;
+  private boolean intakeUp = false;
 
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
@@ -45,11 +45,14 @@ public class IntakeSubsystem extends SubsystemBase {
     SparkMaxConfig intakeArmConfig = new SparkMaxConfig();
       intakeArmConfig.inverted(false);
       intakeArmConfig.idleMode(IdleMode.kBrake);
-      intakeArmConfig.encoder.positionConversionFactor(360/IntakeConstants.GEAR_RATIO);
+      // Convert motor rotations -> arm degrees (assumes INTAKEConstants.GEAR_RATIO is motor:arm reduction).
+      intakeArmConfig.encoder.positionConversionFactor(360.0 / IntakeConstants.GEAR_RATIO);
 
     intakeArmMotor.configure(intakeArmConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
-    targetPosition = IntakeConstants.INTAKE_ARM_RAISED_POSITION; // start with arm raised
+    // On enable, assume the arm is sitting on the floor at 0° and hold there.
+    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
+    intakeArmPID.reset();
+    targetPosition = IntakeConstants.INTAKE_ARM_LOWERED_POSITION;
   }
 
   public void toggleIntake() {
@@ -94,15 +97,19 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public double getArmPosition() {
-    return intakeArmEncoder.getPosition() * 360;
+    // With positionConversionFactor set, encoder position is already in degrees.
+    return intakeArmEncoder.getPosition();
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    double PIDOutput = intakeArmFeedForward.calculate(
-      Units.degreesToRadians(intakeArmEncoder.getPosition()),0)
-      + intakeArmPID.calculate(getArmPosition(), targetPosition);
-    intakeArmMotor.set(PIDOutput);
+    double currentDegrees = getArmPosition();
+    double output = intakeArmFeedForward.calculate(Units.degreesToRadians(currentDegrees), 0)
+        + intakeArmPID.calculate(currentDegrees, targetPosition);
+
+    // SparkMax expects [-1, 1]; clamp to avoid slamming the arm on startup/tuning mistakes.
+    output = Math.max(-1.0, Math.min(1.0, output));
+    intakeArmMotor.set(output);
   }
 }
