@@ -19,10 +19,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public boolean isShooterActive = false; //Shooter True
 
-  SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
-  SparkMax kickerMotor = new SparkMax(ShooterConstants.KICKER_ID, MotorType.kBrushless);
-  SparkMax hoodMotor = new SparkMax(ShooterConstants.HOOD_ID, MotorType.kBrushless);
-  SparkMax indexerMotor = new SparkMax(ShooterConstants.INDEXER_ID, MotorType.kBrushless);
+  private final SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
+  private final SparkMax kickerMotor = new SparkMax(ShooterConstants.KICKER_ID, MotorType.kBrushless);
+  private final SparkMax hoodMotor = new SparkMax(ShooterConstants.HOOD_ID, MotorType.kBrushless);
+  private final SparkMax indexerMotor = new SparkMax(ShooterConstants.INDEXER_ID, MotorType.kBrushless);
+
+  private double shooterCmd = 0.0;
+  private double kickerCmd = 0.0;
+  private double indexerCmd = 0.0;
 
   private final PIDController hoodController = new PIDController(
       ShooterConstants.HOOD_KP,
@@ -90,6 +94,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setShooterSpeed(double speed) {
       isShooterActive = Math.abs(speed) > 0.0;
+      shooterCmd = speed;
       shooterMotor.set(speed);
     }
 
@@ -99,6 +104,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void setKickerSpeed(double speed) {
+      kickerCmd = speed;
       kickerMotor.set(speed);
     }
 
@@ -126,6 +132,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void setIndexerSpeed(double speed) { 
+      indexerCmd = speed;
       indexerMotor.set(speed);
     }
 
@@ -135,6 +142,12 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putBoolean("Is Shooter Active", isShooterActive);
     SmartDashboard.putNumber("Hood Target Position", hoodTargetPosition);
     SmartDashboard.putNumber("Hood Position", getHoodPosition());
+    SmartDashboard.putNumber("Shooter/Cmd", shooterCmd);
+    SmartDashboard.putNumber("Shooter/VelocityRPM", shooterMotor.getEncoder().getVelocity());
+    SmartDashboard.putNumber("Kicker/Cmd", kickerCmd);
+    SmartDashboard.putNumber("Kicker/VelocityRPM", kickerMotor.getEncoder().getVelocity());
+    SmartDashboard.putNumber("Indexer/Cmd", indexerCmd);
+    SmartDashboard.putNumber("Indexer/VelocityRPM", indexerMotor.getEncoder().getVelocity());
 
     
     if (hoodActive) {

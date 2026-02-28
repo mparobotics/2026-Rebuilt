@@ -252,10 +252,10 @@ public static final class FieldConstants {
   }
   /* Shooter Constants */
   public static final class ShooterConstants {
-      public static final int SHOOTER_ID = 23; 
-      public static final int KICKER_ID = 22;
+      public static final int SHOOTER_ID = 22;
+      public static final int KICKER_ID = 21;
       public static final int HOOD_ID = 20;
-      public static final int INDEXER_ID = 21;
+      public static final int INDEXER_ID = 23;
 
       public static final double SHOOTER_SPEED = 0.75; //Placeholder speed
       public static final double KICKER_SPEED = 0.5; 

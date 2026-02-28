@@ -119,6 +119,21 @@ public class RobotContainer {
             },
             m_shooter));
 
+    // Helms Y = run shooter+kicker+indexer while held (easy "does it work?" test).
+    helmsController.y().whileTrue(
+        Commands.runEnd(
+            () -> {
+              m_shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
+              m_shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+              m_shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+            },
+            () -> {
+              m_shooter.setShooterSpeed(0.0);
+              m_shooter.setKickerSpeed(0.0);
+              m_shooter.setIndexerSpeed(0.0);
+            },
+            m_shooter));
+
     
     // Left Trigger = Auto-align to left scoring position
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
