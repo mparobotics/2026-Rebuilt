@@ -20,7 +20,7 @@ public class ShooterSubsystem extends SubsystemBase {
   public boolean isShooterActive = false; //Shooter True
 
   SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
-  SparkMax feederMotor = new SparkMax(ShooterConstants.FEEDER_ID, MotorType.kBrushless);
+  SparkMax kickerMotor = new SparkMax(ShooterConstants.KICKER_ID, MotorType.kBrushless);
   SparkMax hoodMotor = new SparkMax(ShooterConstants.HOOD_ID, MotorType.kBrushless);
   SparkMax indexerMotor = new SparkMax(ShooterConstants.INDEXER_ID, MotorType.kBrushless);
 
@@ -59,8 +59,9 @@ public class ShooterSubsystem extends SubsystemBase {
     
 
     shooterMotor.configure(shootConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    feederMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    kickerMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     hoodMotor.configure(hoodConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    indexerMotor.configure(indexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     hoodController.setTolerance(ShooterConstants.HOOD_TOLERANCE);
   }
@@ -87,13 +88,18 @@ public class ShooterSubsystem extends SubsystemBase {
       }
     }
 
-
-    public void runFeeder(boolean feederOn){
-      setFeederSpeed(feederOn ? ShooterConstants.FEEDER_SPEED : 0);
+    public void setShooterSpeed(double speed) {
+      isShooterActive = Math.abs(speed) > 0.0;
+      shooterMotor.set(speed);
     }
 
-    public void setFeederSpeed(double speed) {
-      feederMotor.set(speed);
+
+    public void runKicker(boolean kickerOn){
+      setKickerSpeed(kickerOn ? ShooterConstants.KICKER_SPEED : 0);
+    }
+
+    public void setKickerSpeed(double speed) {
+      kickerMotor.set(speed);
     }
 
     public void setHoodAngle(HoodAngle angle) {

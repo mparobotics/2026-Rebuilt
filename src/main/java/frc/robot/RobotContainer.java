@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Auto.EightLemonAuto;
@@ -31,10 +32,6 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
@@ -104,32 +101,24 @@ public class RobotContainer {
 
 
     // SHOOTER CONTROLLER
-    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
-        .whileTrue(Commands.startEnd(
-            () -> m_shooter.runShooter(true),
-            () -> m_shooter.runShooter(false),
-            m_shooter));
-
     m_shooter.setDefaultCommand(
         Commands.run(
             () -> {
-              double feederAxis = helmsController.getRawAxis(Axis.kRightY.value);
-              double feederSpeed = 0.0;
-              if (Math.abs(feederAxis) > 0.1) {
-                feederSpeed = -Math.signum(feederAxis) * ShooterConstants.FEEDER_SPEED;
-              }
-              m_shooter.setFeederSpeed(feederSpeed);
+              // Right stick Y controls shooter + indexer together.
+              // Invert so stick-up (negative on Xbox) produces positive motor output.
+              double shooterAxis = -MathUtil.applyDeadband(
+                  helmsController.getRawAxis(Axis.kRightY.value),
+                  0.1);
+
+              m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
+              m_shooter.setIndexerSpeed(shooterAxis * ShooterConstants.INDEXER_SPEED);
+
+              // Right bumper runs the kicker while held.
+              m_shooter.setKickerSpeed(helmsController.getHID().getRightBumper()
+                  ? ShooterConstants.KICKER_SPEED
+                  : 0.0);
             },
             m_shooter));
-          
-    helmsController.button(Button.kY.value).onTrue(Commands.startEnd(
-      () -> m_shooter.runIndexer(true),
-      () -> m_shooter.runIndexer(false),
-      m_shooter));
-
-
-    helmsController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
-    helmsController.button(Button.kY.value).onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
 
     
     // Left Trigger = Auto-align to left scoring position
@@ -164,17 +153,11 @@ public class RobotContainer {
             () -> m_intake.setIntakePower(-MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
             m_intake));
     
-    
-    /*raise the intake using the A button on the helms controller
-    helmsController.button(Button.kA.value).onTrue(
-       new InstantCommand(() -> m_intake.raiseIntake(), m_intake)
-    );
-    */
-
-    // lowers the intake using the X button on the helms controller
-    helmsController.button(Button.kX.value).onTrue(
-        new InstantCommand(() -> m_intake.lowerIntake(), m_intake)
-    );
+    // Intake arm on helms D-pad.
+    new POVButton(helmsController.getHID(), 0)
+        .onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
+    new POVButton(helmsController.getHID(), 180)
+        .onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
   }
 
   private double getSpeedMultiplier(){
