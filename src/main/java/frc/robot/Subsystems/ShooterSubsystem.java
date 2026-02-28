@@ -45,11 +45,11 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public ShooterSubsystem() {
     SparkMaxConfig shootConfig = new SparkMaxConfig();
-      shootConfig.inverted(false);
+      shootConfig.inverted(true);
       shootConfig.idleMode(IdleMode.kCoast);
 
     SparkMaxConfig feedConfig = new SparkMaxConfig();
-      feedConfig.inverted(true);
+      feedConfig.inverted(false);
       feedConfig.idleMode(IdleMode.kBrake);
 
     SparkMaxConfig hoodConfig = new SparkMaxConfig();
@@ -57,7 +57,7 @@ public class ShooterSubsystem extends SubsystemBase {
       hoodConfig.idleMode(IdleMode.kBrake);
 
     SparkMaxConfig indexConfig = new SparkMaxConfig();
-      indexConfig.inverted(false);
+      indexConfig.inverted(true);
       indexConfig.idleMode(IdleMode.kBrake);
 
     

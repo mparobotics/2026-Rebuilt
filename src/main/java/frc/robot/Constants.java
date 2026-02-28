@@ -257,8 +257,8 @@ public static final class FieldConstants {
       public static final int HOOD_ID = 20;
       public static final int INDEXER_ID = 23;
 
-      public static final double SHOOTER_SPEED = 0.75; //Placeholder speed
-      public static final double KICKER_SPEED = 0.5; 
+      public static final double SHOOTER_SPEED = 0.60; //Placeholder speed
+      public static final double KICKER_SPEED = 0.60; 
       public static final double INDEXER_SPEED = 0.5; //placeholder
 
       public static final double HOOD_ANGLE_LOW = 0.0;
@@ -280,7 +280,7 @@ public static final class FieldConstants {
     public static double INTAKE_ARM_MAXIMUM = 90;
     public static int GEAR_RATIO = 25;
 
-    public static double INTAKE_ARM_kP = 0.001;
+    public static double INTAKE_ARM_kP = 0.01;
     public static double INTAKE_ARM_kI = 0;
     public static double INTAKE_ARM_kD = 0;
   }

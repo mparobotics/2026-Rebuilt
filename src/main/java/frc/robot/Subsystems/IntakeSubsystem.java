@@ -44,7 +44,7 @@ public class IntakeSubsystem extends SubsystemBase {
     intakeMotor.configure(intakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     SparkMaxConfig intakeArmConfig = new SparkMaxConfig();
-      intakeArmConfig.inverted(false);
+      intakeArmConfig.inverted(true);
       intakeArmConfig.idleMode(IdleMode.kBrake);
       // Convert motor rotations -> arm degrees (assumes INTAKEConstants.GEAR_RATIO is motor:arm reduction).
       intakeArmConfig.encoder.positionConversionFactor(360.0 / IntakeConstants.GEAR_RATIO);
