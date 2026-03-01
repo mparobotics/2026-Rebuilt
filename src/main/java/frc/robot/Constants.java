@@ -159,7 +159,8 @@ public static final class AutoConstants {
     DriveTestAuto,
     EightLemonAuto,
     TrenchToDepotAuto,
-    CenterToDepotAuto
+    CenterToDepotAuto,
+    OffsetDepotAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -178,6 +179,7 @@ public static final class AutoConstants {
     autoModeChooser.addOption("EightLemonAuto (PathPlanner)", AutoMode.EightLemonAuto);
     autoModeChooser.addOption("TrenchToDepotAuto", AutoMode.TrenchToDepotAuto);
     autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
+    autoModeChooser.addOption("Offset Depot Auto", AutoMode.OffsetDepotAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);

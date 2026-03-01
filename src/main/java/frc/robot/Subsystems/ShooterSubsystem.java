@@ -143,6 +143,11 @@ public class ShooterSubsystem extends SubsystemBase {
       indexerMotor.set(speed);
     }
 
+    public void AutoToggleShootKick (boolean AutoShootOn) {
+      setKickerSpeed(AutoShootOn ? 0 : ShooterConstants.KICKER_SPEED);
+      setShooterSpeed(AutoShootOn ? 0 : ShooterConstants.SHOOTER_SPEED);
+    }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run

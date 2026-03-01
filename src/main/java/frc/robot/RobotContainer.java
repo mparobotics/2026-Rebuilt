@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Auto.EightLemonAuto;
+import frc.robot.Auto.OffsetDepotAuto;
 import frc.robot.Auto.TrenchToDepotAuto;
 import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Constants.AutoConstants;
@@ -182,6 +183,7 @@ public class RobotContainer {
       case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
       case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
       case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
+      case OffsetDepotAuto -> new OffsetDepotAuto(m_drive, m_intake, m_shooter);
       default -> Commands.none();
     };
   }
