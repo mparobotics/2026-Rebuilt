@@ -239,7 +239,7 @@ public static final class FieldConstants {
 
 /** Vision constants (Limelight, etc). */
 public static final class VisionConstants {
-  public static final String[] LIMELIGHT_NAMES = {"limelight-a", "limelight-b"};
+  public static final String[] LIMELIGHT_NAMES = {"limelightA", "limelightB"};
   
   public static final String LIMELIGHT_STREAM_URL_FORMAT = "http://%s.local:5800/stream.mjpg";
   public static final boolean LIMELIGHT_STREAM_ENABLED_DEFAULT = true;
