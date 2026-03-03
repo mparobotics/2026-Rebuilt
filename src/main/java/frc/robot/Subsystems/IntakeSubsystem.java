@@ -136,7 +136,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     if (intakeArmActive){
       double output = intakeArmController.calculate(currentDeg, intakeArmTargetDeg);
-      output = Math.max(-IntakeConstants.INTAKE_ARM_MAX_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output));
+      output = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output));
 
     if (intakeArmController.atSetpoint()){
       intakeArmMotor.set(0.0);

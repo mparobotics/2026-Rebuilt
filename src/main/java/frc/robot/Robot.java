@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -27,7 +29,12 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    HttpCamera limelightA = new HttpCamera("LimelightA", "http://10.39.26.201");
+    HttpCamera limelightB = new HttpCamera("LimelightB", "http://10.39.26.202");
+    CameraServer.startAutomaticCapture(limelightA);
+    CameraServer.startAutomaticCapture(limelightB);
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -57,6 +64,11 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    HttpCamera limelightA = new HttpCamera("LimelightA", "http://10.39.26.201");
+    HttpCamera limelightB = new HttpCamera("LimelightB", "http://10.39.26.202");
+    CameraServer.startAutomaticCapture(limelightA);
+    CameraServer.startAutomaticCapture(limelightB);
   }
 
   @Override

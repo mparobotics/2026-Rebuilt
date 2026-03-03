@@ -241,7 +241,7 @@ public static final class FieldConstants {
 public static final class VisionConstants {
   public static final String[] LIMELIGHT_NAMES = {"limelightA", "limelightB"};
   
-  public static final String LIMELIGHT_STREAM_URL_FORMAT = "http://%s.local:5800/stream.mjpg";
+  public static final String LIMELIGHT_STREAM_URL_FORMAT = "http://10.39.26.20";
   public static final boolean LIMELIGHT_STREAM_ENABLED_DEFAULT = true;
 
   public static final boolean VISION_ENABLED_DEFAULT = true;
@@ -293,7 +293,7 @@ public static final class IntakeConstants {
   public static int GEAR_RATIO = 25;
 
   //Intake arm position units are degrees
-  public static final double INTAKE_ARM_MIN_DEG = 0.0;
+  public static final double INTAKE_ARM_MIN_DEG = 20.0;
   public static final double INTAKE_ARM_MAX_DEG = 90.0;
 
   //Preset positions
@@ -301,14 +301,15 @@ public static final class IntakeConstants {
   public static final double INTAKE_ARM_RAISED_POSITION = INTAKE_ARM_MAX_DEG;
 
   //PID constants for intake arm (degrees).
-  public static final double INTAKE_ARM_kP = 0.01;
-  public static final double INTAKE_ARM_kI = 0.0;
-  public static final double INTAKE_ARM_kD = 0.0;
+  public static final double INTAKE_ARM_kP = 6.0;
+  public static final double INTAKE_ARM_kI = 1.5;
+  public static final double INTAKE_ARM_kD = 0.15;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
 
   //Percent output cap (0..1) for gentler motion
   //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
-  public static final double INTAKE_ARM_MAX_OUTPUT = 0.25;
+  public static final double INTAKE_ARM_MAX_OUTPUT = 0.20;
+  public static final double INTAKE_ARM_MIN_OUTPUT = -0.10;
 }
 
 public static final class CANdleConstants {
