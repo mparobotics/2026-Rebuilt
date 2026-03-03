@@ -27,25 +27,23 @@ public class IntakeSubsystem extends SubsystemBase {
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
   private final SparkMax intakeArmMotor = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
 
-  private RelativeEncoder intakeArmEncoder = intakeArmMotor.getEncoder();
+  private final RelativeEncoder intakeArmEncoder = intakeArmMotor.getEncoder();
 
-  private PIDController intakeArmPID = new PIDController(IntakeConstants.INTAKE_ARM_kP, IntakeConstants.INTAKE_ARM_kI, IntakeConstants.INTAKE_ARM_kD);
-
-  private ArmFeedforward intakeArmFeedForward = new ArmFeedforward(0,0,0);
-
-  public double targetPosition;
+  private final PIDController intakeArmController = new PIDController(
+    IntakeConstants.INTAKE_ARM_kP,
+    IntakeConstants.INTAKE_ARM_kI,
+    IntakeConstants.INTAKE_ARM_kD);
+  
+  private double intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
+  private boolean intakeArmActive = false;
 
   private boolean intakeOn = false;
   private boolean intakeUp = true;
 
-  private final TrapezoidProfile.Constraints armConstraints =
-    new TrapezoidProfile.Constraints(
-      IntakeConstants.INTAKE_ARM_MAX_VEL_DEG_PER_SEC,
-      IntakeConstants.INTAKE_ARM_MAX_ACCEL_DEG_PER_SEC2);
-
-  private TrapezoidProfile.State armSetpoint = new TrapezoidProfile.State(0.0, 0.0);
-  private TrapezoidProfile.State armGoal = new TrapezoidProfile.State(0.0, 0.0);
-  private double lastTimestampSec = 0.0;
+  public enum IntakeArmAngle {
+    DOWN,
+    UP
+  }
 
   /** Creates a new IntakeSubsystem. */
   public IntakeSubsystem() {
@@ -58,18 +56,15 @@ public class IntakeSubsystem extends SubsystemBase {
     SparkMaxConfig intakeArmConfig = new SparkMaxConfig();
       intakeArmConfig.inverted(true);
       intakeArmConfig.idleMode(IdleMode.kBrake);
-      // Convert motor rotations -> arm degrees (assumes INTAKEConstants.GEAR_RATIO is motor:arm reduction).
+      
       intakeArmConfig.encoder.positionConversionFactor(360.0 / IntakeConstants.GEAR_RATIO);
 
     intakeArmMotor.configure(intakeArmConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    // On enable, assume the arm is sitting on the floor at 0° and hold there.
-    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
-    intakeArmPID.reset();
-    targetPosition = IntakeConstants.INTAKE_ARM_LOWERED_POSITION;
-
-    armSetpoint = new TrapezoidProfile.State(targetPosition, 0.0);
-    armGoal = new TrapezoidProfile.State(targetPosition, 0.0);
-    lastTimestampSec = Timer.getFPGATimestamp();
+    //On enable, assume the arm starts raised at 90 degrees
+    intakeArmEncoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
+    intakeArmController.setTolerance(IntakeConstants.INTAKE_ARM_TOLERANCE_DEG);
+    intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
+    intakeArmActive = false;
   }
 
   public void toggleIntake() {
@@ -90,21 +85,32 @@ public class IntakeSubsystem extends SubsystemBase {
   }
   
 
-  public void setTargetPosition(double position) {
-    targetPosition = Math.max(IntakeConstants.INTAKE_ARM_MINIMUM, Math.min(IntakeConstants.INTAKE_ARM_MAXIMUM, position));
-    armGoal = new TrapezoidProfile.State(targetPosition, 0.0);
+  public void setIntakeArmAngle(IntakeArmAngle angle){
+    switch (angle){
+      case DOWN:
+      intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_LOWERED_POSITION;
+      intakeUp = false;
+      break;
+      case UP:
+      default:
+      intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
+      intakeUp = true;
+      break;
+    }
+
+    intakeArmTargetDeg = Math.max(
+      IntakeConstants.INTAKE_ARM_MIN_DEG, 
+      Math.min(IntakeConstants.INTAKE_ARM_MAX_DEG, intakeArmTargetDeg));
+    intakeArmController.reset();
+    intakeArmActive = true;
   }
 
   public void raiseIntake() {
-    setTargetPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
-    intakeArmPID.reset();
-    intakeUp = false;
+    setIntakeArmAngle (IntakeArmAngle.UP);
   }
 
   public void lowerIntake() {
-    setTargetPosition(IntakeConstants.INTAKE_ARM_LOWERED_POSITION);
-    intakeArmPID.reset();
-    intakeUp = true;
+    setIntakeArmAngle(IntakeArmAngle.DOWN);
   }
   
   public void moveIntake() {
@@ -116,44 +122,30 @@ public class IntakeSubsystem extends SubsystemBase {
     }
   }
 
-  public double getArmPosition() {
-    // With positionConversionFactor set, encoder position is already in degrees.
+  public double getArmPositionDeg() {
     return intakeArmEncoder.getPosition();
   }
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
+    double currentDeg = getArmPositionDeg();
 
-    System.out.println(intakeArmEncoder.getPosition());
-    System.out.println(armSetpoint.position);
+    SmartDashboard.putNumber("IntakeArm/TargetDeg", intakeArmTargetDeg);
+    SmartDashboard.putNumber("IntakeArm/PostionDeg", currentDeg);
+    SmartDashboard.putBoolean("IntakeArm/Active", intakeArmActive);
 
-    double nowSec = Timer.getFPGATimestamp();
-    double dtSec = nowSec - lastTimestampSec;
-    lastTimestampSec = nowSec;
-    dtSec = MathUtil.clamp(dtSec, 0.0, 0.05);
+    if (intakeArmActive){
+      double output = intakeArmController.calculate(currentDeg, intakeArmTargetDeg);
+      output = Math.max(-IntakeConstants.INTAKE_ARM_MAX_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output));
 
-    double currentDegrees = getArmPosition();
-    armSetpoint = new TrapezoidProfile(armConstraints).calculate(dtSec, armGoal, armSetpoint);
-
-    double output = intakeArmFeedForward.calculate(Units.degreesToRadians(currentDegrees), 0)
-        + intakeArmPID.calculate(currentDegrees, armSetpoint.position);
-
-    // Limit output so the arm moves slower/gentler (especially on the way down).
-    boolean movingUp = armSetpoint.position <  currentDegrees;
-    double maxOutput = movingUp
-        ? IntakeConstants.INTAKE_ARM_MAX_OUTPUT_UP
-        : IntakeConstants.INTAKE_ARM_MAX_OUTPUT_DOWN;
-    if (!movingUp && currentDegrees <= IntakeConstants.INTAKE_ARM_FLOOR_SLOW_ZONE_DEG){
-      maxOutput = Math.min(maxOutput, IntakeConstants.INTAKE_ARM_MAX_OUTPUT_DOWN_NEAR_FLOOR);
+    if (intakeArmController.atSetpoint()){
+      intakeArmMotor.set(0.0);
+      intakeArmActive = false;
+    } else {
+      intakeArmMotor.set(output);
     }
-    output = MathUtil.clamp(output, -maxOutput, maxOutput);
-    intakeArmMotor.set(output);
-
-    SmartDashboard.putNumber("IntakeArm/TargetDeg", targetPosition);
-    SmartDashboard.putNumber("IntakeArm/SetpointDeg", armSetpoint.position);
-    SmartDashboard.putNumber("IntakeArm/SetpointVelDegPerSec", armSetpoint.velocity);
-    SmartDashboard.putNumber("IntakeArm/PositionDeg", currentDegrees);
-    SmartDashboard.putNumber("IntakeArm/Output", output);
+  } else{
+      intakeArmMotor.set(0.0);
+    }
   }
 }

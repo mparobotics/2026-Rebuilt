@@ -287,26 +287,28 @@ public static final class IntakeConstants {
   // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
   // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
   public static int INTAKE_ID = 19;
-  public static double INTAKE_SPEED = 75; //placeholder for percent power for intake
+  public static double INTAKE_SPEED = 75; //percent output scaling for intake motor
 
   public static int INTAKE_ARM_ID = 18;
-  public static double INTAKE_ARM_RAISED_POSITION = 0; //to do later
-  public static double INTAKE_ARM_LOWERED_POSITION = 90;
-  public static double INTAKE_ARM_MINIMUM = 5; // placeholders
-  public static double INTAKE_ARM_MAXIMUM = 85;
   public static int GEAR_RATIO = 25;
 
-  public static double INTAKE_ARM_kP = 0.03;
-  public static double INTAKE_ARM_kI = 0.0;
-  public static double INTAKE_ARM_kD = 0.0;
-  // Intake arm motion limits (tune to be slower/gentler).
-  public static double INTAKE_ARM_MAX_VEL_DEG_PER_SEC = 30.0; //Degrees/sec
-  public static double INTAKE_ARM_MAX_ACCEL_DEG_PER_SEC2 = 5.0; //Degrees/sec^2
+  //Intake arm position units are degrees
+  public static final double INTAKE_ARM_MIN_DEG = 0.0;
+  public static final double INTAKE_ARM_MAX_DEG = 90.0;
 
-  public static double INTAKE_ARM_MAX_OUTPUT_UP = 0.1;
-  public static double INTAKE_ARM_MAX_OUTPUT_DOWN = 0.35; //Percent output (0.1)
-  public static double INTAKE_ARM_FLOOR_SLOW_ZONE_DEG = 10.0;
-  public static double INTAKE_ARM_MAX_OUTPUT_DOWN_NEAR_FLOOR = 0.12;
+  //Preset positions
+  public static final double INTAKE_ARM_LOWERED_POSITION = INTAKE_ARM_MIN_DEG;
+  public static final double INTAKE_ARM_RAISED_POSITION = INTAKE_ARM_MAX_DEG;
+
+  //PID constants for intake arm (degrees).
+  public static final double INTAKE_ARM_kP = 0.01;
+  public static final double INTAKE_ARM_kI = 0.0;
+  public static final double INTAKE_ARM_kD = 0.0;
+  public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
+
+  //Percent output cap (0..1) for gentler motion
+  //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
+  public static final double INTAKE_ARM_MAX_OUTPUT = 0.25;
 }
 
 public static final class CANdleConstants {
