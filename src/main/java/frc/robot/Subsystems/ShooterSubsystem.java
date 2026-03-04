@@ -143,9 +143,14 @@ public class ShooterSubsystem extends SubsystemBase {
       indexerMotor.set(speed);
     }
 
-    public void AutoToggleShootKick (boolean AutoShootOn) {
+    public void AutoToggleShoot (boolean AutoShootOn) {
       setKickerSpeed(AutoShootOn ? 0 : ShooterConstants.KICKER_SPEED);
       setShooterSpeed(AutoShootOn ? 0 : ShooterConstants.SHOOTER_SPEED);
+    }
+
+    public void AutoToggleKickIndex (boolean AutoIndexKickOn) {
+      setKickerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.KICKER_SPEED);
+      setIndexerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.SHOOTER_SPEED);
     }
 
   @Override

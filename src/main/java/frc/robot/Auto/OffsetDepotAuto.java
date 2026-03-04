@@ -25,15 +25,16 @@ public class OffsetDepotAuto extends SequentialCommandGroup {
       new InstantCommand(() -> intake.setIntakePower(0), intake),
       drive.autoDrive("ShootAfterDepot"),
       new InstantCommand(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
-      new InstantCommand(() -> shooter.AutoToggleShootKick(false)),
+      new InstantCommand(() -> shooter.AutoToggleShoot(false)),
       Commands.waitSeconds(3),
+      new InstantCommand(() -> shooter.AutoToggleKickIndex(false)),
       new InstantCommand(() -> intake.lowerIntake(), intake),
       new InstantCommand(() -> intake.raiseIntake(), intake),
       Commands.waitSeconds(1),
       new InstantCommand(() -> intake.lowerIntake(), intake),
       new InstantCommand(() -> intake.raiseIntake(), intake),
       Commands.waitSeconds(4),
-      new InstantCommand(() -> shooter.AutoToggleShootKick(true))
+      new InstantCommand(() -> shooter.AutoToggleShoot(true))
     );
   }
 }

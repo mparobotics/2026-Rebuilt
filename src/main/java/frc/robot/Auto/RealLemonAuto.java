@@ -32,10 +32,9 @@ public class RealLemonAuto extends SequentialCommandGroup {
           return Math.abs(errorRad) < Math.toRadians(3.0);
         }),
       new InstantCommand(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
-      new InstantCommand(() -> shooter.AutoToggleShootKick(false)),
+      new InstantCommand(() -> shooter.AutoToggleShoot(false)),
       Commands.waitSeconds(3),
-      new InstantCommand(() -> intake.lowerIntake(), intake),
-      new InstantCommand(() -> intake.raiseIntake(), intake)
+      new InstantCommand(() -> shooter.AutoToggleKickIndex(false))
     );
   }
 }
