@@ -79,7 +79,7 @@ public class RobotContainer {
     }
 
     for (String limelightName : VisionConstants.LIMELIGHT_NAMES) {
-      String url = String.format(VisionConstants.LIMELIGHT_STREAM_URL_FORMAT, limelightName);
+      String url = VisionConstants.getLimelightStreamUrl(limelightName);
       SmartDashboard.putString("Vision/" + limelightName + "/StreamURL", url);
 
       HttpCamera camera = new HttpCamera(limelightName, url);
