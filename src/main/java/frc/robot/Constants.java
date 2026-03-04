@@ -160,7 +160,8 @@ public static final class AutoConstants {
     EightLemonAuto,
     TrenchToDepotAuto,
     CenterToDepotAuto,
-    OffsetDepotAuto
+    OffsetDepotAuto,
+    RealLemonAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -180,6 +181,7 @@ public static final class AutoConstants {
     autoModeChooser.addOption("TrenchToDepotAuto", AutoMode.TrenchToDepotAuto);
     autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
     autoModeChooser.addOption("Offset Depot Auto", AutoMode.OffsetDepotAuto);
+    autoModeChooser.addOption("RealLemonAuto", AutoMode.RealLemonAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
