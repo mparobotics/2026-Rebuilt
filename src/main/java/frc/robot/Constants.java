@@ -282,6 +282,9 @@ public static final class ShooterConstants {
   public static final double KICKER_SPEED = 0.6;
   public static final double INDEXER_SPEED = 0.4; //placeholder
 
+  // Shooter readiness (SparkMax encoder velocity is RPM). Tune on the real robot.
+  public static final double SHOOTER_READY_RPM = 30.0;
+
   // Electrical limits/compensation.
   public static final double SHOOTER_VOLTAGE_COMP = 12.0;
   public static final int SHOOTER_CURRENT_LIMIT_AMPS = 60;

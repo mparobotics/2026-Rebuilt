@@ -102,6 +102,10 @@ public class ShooterSubsystem extends SubsystemBase {
       shooterMotor.set(speed);
     }
 
+    public double getShooterVelocityRpm() {
+      return shooterMotor.getEncoder().getVelocity();
+    }
+
 
     public void runKicker(boolean kickerOn){
       setKickerSpeed(kickerOn ? ShooterConstants.KICKER_SPEED : 0);
@@ -160,7 +164,7 @@ public class ShooterSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Hood Target Position", hoodTargetPosition);
     SmartDashboard.putNumber("Hood Position", getHoodPosition());
     SmartDashboard.putNumber("Shooter/Cmd", shooterCmd);
-    SmartDashboard.putNumber("Shooter/VelocityRPM", shooterMotor.getEncoder().getVelocity());
+    SmartDashboard.putNumber("Shooter/VelocityRPM", getShooterVelocityRpm());
     SmartDashboard.putNumber("Kicker/Cmd", kickerCmd);
     SmartDashboard.putNumber("Kicker/VelocityRPM", kickerMotor.getEncoder().getVelocity());
     SmartDashboard.putNumber("Indexer/Cmd", indexerCmd);

@@ -6,10 +6,8 @@ package frc.robot.Auto;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
@@ -22,19 +20,28 @@ public class RealLemonAuto extends SequentialCommandGroup {
     addCommands(
       Commands.runOnce(() -> startYawRad[0] = drive.getYaw().getRadians(), drive),
         Commands.run(() -> {
-          double targetYawRad = startYawRad[0] + Math.toRadians(30.0);
+          double targetYawRad = startYawRad[0] + Math.toRadians(25.0);
           double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
           double omegaRadiansPerSecond = MathUtil.clamp(errorRad * 4.0, -SwerveConstants.maxAngularVelocity, SwerveConstants.maxAngularVelocity);
           drive.drive(0,0, omegaRadiansPerSecond, false);
         }, drive).until(() -> {
-          double targetYawRad = startYawRad[0] + Math.toRadians(30.0);
+          double targetYawRad = startYawRad[0] + Math.toRadians(25.0);
           double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
           return Math.abs(errorRad) < Math.toRadians(3.0);
         }),
-      new InstantCommand(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
-      new InstantCommand(() -> shooter.AutoToggleShoot(false)),
-      Commands.waitSeconds(3),
-      new InstantCommand(() -> shooter.AutoToggleKickIndex(false))
+      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+      Commands.runOnce(() -> {
+        shooter.runIndexer(false);
+        shooter.runKicker(false);
+        shooter.runShooter(true);
+      }, shooter),
+      Commands.waitUntil(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
+          .withTimeout(3.0),
+      Commands.runOnce(() -> {
+        shooter.runIndexer(true);
+        shooter.runKicker(true);
+      }, shooter)
     );
   }
 }
