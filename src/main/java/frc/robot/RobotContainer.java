@@ -186,7 +186,7 @@ public class RobotContainer {
       case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
       case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
       case OffsetDepotAuto -> new OffsetDepotAuto(m_drive, m_intake, m_shooter);
-      case RealLemonAuto -> new RealLemonAuto(m_intake, m_shooter);
+      case RealLemonAuto -> new RealLemonAuto(m_drive, m_intake, m_shooter);
       default -> Commands.none();
     };
   }
