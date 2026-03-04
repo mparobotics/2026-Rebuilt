@@ -144,7 +144,6 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void AutoToggleShoot (boolean AutoShootOn) {
-      setKickerSpeed(AutoShootOn ? 0 : ShooterConstants.KICKER_SPEED);
       setShooterSpeed(AutoShootOn ? 0 : ShooterConstants.SHOOTER_SPEED);
     }
 
