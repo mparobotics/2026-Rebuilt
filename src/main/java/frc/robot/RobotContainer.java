@@ -144,7 +144,9 @@ public class RobotContainer {
               
           m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
               
-          // Right bumper runs the indexer and kicker while held.
+          // Right bumper runs the indexer and kicker forward while held.
+          // Left bumper runs the indexer and kicker in reverse while held.
+          boolean leftBumperPressed = helmsController.getHID().getLeftBumper();
           boolean rightBumperPressed = helmsController.getHID().getRightBumper();
           if (rightBumperPressed && !lastHelmsRightBumperPressed) {
             helmsRightBumperPressTimestampSec = Timer.getFPGATimestamp();
@@ -154,8 +156,19 @@ public class RobotContainer {
             rightBumperPressed
               && (Timer.getFPGATimestamp() - helmsRightBumperPressTimestampSec) >= 1.0;
 
-          m_shooter.setKickerSpeed(rightBumperPressed ? ShooterConstants.KICKER_SPEED : 0.0);
-          m_shooter.setIndexerSpeed(indexerEnabled ? ShooterConstants.INDEXER_SPEED : 0.0);
+          double kickerSpeed = 0.0;
+          double indexerSpeed = 0.0;
+
+          if (leftBumperPressed) {
+            kickerSpeed = -ShooterConstants.KICKER_SPEED;
+            indexerSpeed = -ShooterConstants.INDEXER_SPEED;
+          } else if (rightBumperPressed) {
+            kickerSpeed = ShooterConstants.KICKER_SPEED;
+            indexerSpeed = indexerEnabled ? ShooterConstants.INDEXER_SPEED : 0.0;
+          }
+
+          m_shooter.setKickerSpeed(kickerSpeed);
+          m_shooter.setIndexerSpeed(indexerSpeed);
    
           lastHelmsRightBumperPressed = rightBumperPressed;
         },
