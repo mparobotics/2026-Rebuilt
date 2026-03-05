@@ -79,7 +79,8 @@ public class AltAutoAlign extends Command {
         // respect drivetrain max velocity
     }
 
-    double desiredHeadingRadians = radialDirection.getAngle().getRadians();
+    double desiredHeadingRadians = radialDirection.getAngle().getRadians() + Math.PI / 2.0;
+    
     //Face straight at the hub while moving
     double headingFeedforward = 0.0;
     if (radialDistance > 1e-3){

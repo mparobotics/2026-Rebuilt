@@ -37,7 +37,7 @@ public class RealLemonAuto extends SequentialCommandGroup {
       }, shooter),
       Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
-        .withTimeout(10.0),
+        .withTimeout(2.0),
 
       Commands.sequence(
         // Start kicker first, then start indexer 1 second later (kicker keeps running).
