@@ -9,9 +9,11 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -61,10 +63,17 @@ public class RobotContainer {
 
   //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
+
+  private boolean lastHelmsRightBumperPressed = false;
+  private double helmsRightBumperPressTimestampSec = 0.0;
+
+  private final java.util.Map<String, HttpCamera> limelightCameras = new java.util.HashMap<>();
+  private UsbCamera driverCamera;
   
   public RobotContainer() {
     AutoConstants.initDashboard();
     startLimelightStreams();
+    startDriverCameraStream();
     configureBindings();
   }
 
@@ -83,10 +92,32 @@ public class RobotContainer {
       String url = VisionConstants.getLimelightStreamUrl(limelightName);
       SmartDashboard.putString("Vision/" + limelightName + "/StreamURL", url);
 
-      HttpCamera camera = new HttpCamera(limelightName, url);
+      HttpCamera camera = limelightCameras.computeIfAbsent(limelightName, (name) -> new HttpCamera(name, url));
       camera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
       CameraServer.startAutomaticCapture(camera);
     }
+  }
+
+  private void startDriverCameraStream() {
+    SmartDashboard.putBoolean("Driver Camera Enabled", true);
+
+    if (RobotBase.isSimulation()) {
+      return;
+    }
+
+    if (!SmartDashboard.getBoolean("Driver Camera Enabled", true)) {
+      return;
+    }
+
+    if (driverCamera != null) {
+      return;
+    }
+
+    // Microsoft LifeCam HD-3000 (or any USB UVC camera) connected to the roboRIO.
+    driverCamera = CameraServer.startAutomaticCapture("DriverCam", 0);
+    driverCamera.setConnectionStrategy(ConnectionStrategy.kKeepOpen);
+    driverCamera.setResolution(640, 480);
+    driverCamera.setFPS(30);
   }
 
   private void configureBindings() {
@@ -108,16 +139,25 @@ public class RobotContainer {
           // Right stick Y controls shooter.
           // Invert so stick-up (negative on Xbox) produces positive motor output.
           double shooterAxis = -MathUtil.applyDeadband(
-              helmsController.getRawAxis(Axis.kRightY.value),
-              0.1);    
+            helmsController.getRawAxis(Axis.kRightY.value),
+            0.1);    
               
           m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
               
           // Right bumper runs the indexer and kicker while held.
-          Boolean rightBumperPressed = helmsController.getHID().getRightBumper();
+          boolean rightBumperPressed = helmsController.getHID().getRightBumper();
+          if (rightBumperPressed && !lastHelmsRightBumperPressed) {
+            helmsRightBumperPressTimestampSec = Timer.getFPGATimestamp();
+          }
+
+          boolean indexerEnabled =
+            rightBumperPressed
+              && (Timer.getFPGATimestamp() - helmsRightBumperPressTimestampSec) >= 1.0;
 
           m_shooter.setKickerSpeed(rightBumperPressed ? ShooterConstants.KICKER_SPEED : 0.0);
-          m_shooter.setIndexerSpeed(rightBumperPressed ? ShooterConstants.INDEXER_SPEED : 0.0);
+          m_shooter.setIndexerSpeed(indexerEnabled ? ShooterConstants.INDEXER_SPEED : 0.0);
+   
+          lastHelmsRightBumperPressed = rightBumperPressed;
         },
         m_shooter));
 
@@ -156,9 +196,9 @@ public class RobotContainer {
 
     //INTAKE
     m_intake.setDefaultCommand(
-        new RunCommand(
-            () -> m_intake.setIntakePower(MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
-            m_intake));
+      new RunCommand(
+        () -> m_intake.setIntakePower(MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
+        m_intake));
 
     
     
