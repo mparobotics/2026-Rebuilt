@@ -241,12 +241,12 @@ public static final class FieldConstants {
 
 /** Vision constants (Limelight, etc). */
 public static final class VisionConstants {
-  public static final String[] LIMELIGHT_NAMES = {"limelightA", "limelightB"};
+  public static final String[] LIMELIGHT_NAMES = {"limelight-a", "limelight-b"};
 
   // Limelight MJPEG stream endpoints.
   // Using fixed IPs avoids mDNS/DNS resolution issues on the roboRIO.
-  public static final String LIMELIGHT_A_STREAM_URL = "http://10.39.26.201:5801/stream.mjpg";
-  public static final String LIMELIGHT_B_STREAM_URL = "http://10.39.26.202:5801/stream.mjpg";
+  public static final String LIMELIGHT_A_STREAM_URL = "http://10.39.26.4:5801/stream.mjpg";
+  public static final String LIMELIGHT_B_STREAM_URL = "http://10.39.26.5:5801/stream.mjpg";
   public static final boolean LIMELIGHT_STREAM_ENABLED_DEFAULT = true;
 
   public static final boolean VISION_ENABLED_DEFAULT = true;
@@ -259,9 +259,9 @@ public static final class VisionConstants {
 
   public static String getLimelightStreamUrl(String limelightName) {
     switch (limelightName) {
-      case "limelightA":
+      case "limelight-a":
         return LIMELIGHT_A_STREAM_URL;
-      case "limelightB":
+      case "limelight-b":
         return LIMELIGHT_B_STREAM_URL;
       default:
         // Fallback for any future Limelight names.

@@ -149,15 +149,15 @@ public class SwerveSubsystem extends SubsystemBase {
   private void updateOdometryWithVision (String limelightName){
     boolean doRejectUpdate = false;
       LimelightHelpers.SetRobotOrientation(limelightName, odometry.getEstimatedPosition().getRotation().getDegrees(),0,0,0,0,0);
-      LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
-      if (mt2 == null){
+      LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
+      if (mt1 == null){
         return;
       }
       if(Math.abs(pigeon.getAngularVelocityZWorld().getValueAsDouble()) > VisionConstants.MAX_VISION_ANGULAR_RATE_DEG_PER_SEC)
       {
         doRejectUpdate = true;
       }
-      if(mt2.tagCount == 0)
+      if(mt1.tagCount == 0)
       {
         doRejectUpdate = true;
       }
@@ -169,13 +169,13 @@ public class SwerveSubsystem extends SubsystemBase {
                 VisionConstants.VISION_STD_DEV_Y_METERS,
                 VisionConstants.VISION_STD_DEV_THETA_RADIANS)); // need to measure
         odometry.addVisionMeasurement(
-          mt2.pose,
-          mt2.timestampSeconds);
+          mt1.pose,
+          mt1.timestampSeconds);
       }
 
-      SmartDashboard.putNumber("Vision/" + limelightName + "/TagCount", mt2.tagCount);
-      SmartDashboard.putNumber("Vision/" + limelightName + "/AvgTagDist", mt2.avgTagDist);
-      SmartDashboard.putNumber("Vision/" + limelightName + "/LatencyMs", mt2.latency);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/TagCount", mt1.tagCount);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/AvgTagDist", mt1.avgTagDist);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/LatencyMs", mt1.latency);
     }
 
 
