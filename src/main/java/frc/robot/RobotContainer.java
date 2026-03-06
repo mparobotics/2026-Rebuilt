@@ -26,6 +26,8 @@ import frc.robot.Auto.OffsetDepotAuto;
 import frc.robot.Auto.LeftLemonAuto;
 import frc.robot.Auto.TrenchToDepotAuto;
 import frc.robot.Auto.CenterToDepotAuto;
+import frc.robot.Auto.RightLemonAuto;
+import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -197,11 +199,11 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.5,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.7,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.5,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.7,
         // rotationSupplier - Rotation speed
-        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        () -> -driveController.getRawAxis(rotationAxis) * 0.7,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
         () -> robotCentric.getAsBoolean(),
         // isAutoAlignSupplier - Auto-align active flag
@@ -237,10 +239,13 @@ public class RobotContainer {
       case None -> Commands.none();
       case DriveTestAuto -> new DriveTestAuto(m_drive);
       case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
+      case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
+      case OffsetDepotAuto -> new OffsetDepotAuto(m_drive, m_intake, m_shooter);
+      case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
+      case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
       case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
-      case OffsetDepotAuto -> new OffsetDepotAuto(m_drive, m_intake, m_shooter);
-      case RealLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
+      
       default -> Commands.none();
     };
   }
