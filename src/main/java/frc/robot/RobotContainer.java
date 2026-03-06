@@ -203,7 +203,7 @@ public class RobotContainer {
         // strafeSupplier - Side-to-side speed
         () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.7,
         // rotationSupplier - Rotation speed
-        () -> -driveController.getRawAxis(rotationAxis) * 0.7,
+        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
         () -> robotCentric.getAsBoolean(),
         // isAutoAlignSupplier - Auto-align active flag
