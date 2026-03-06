@@ -156,14 +156,10 @@ public static final class AutoConstants {
 
   public enum AutoMode{
     None,
-    DriveTestAuto,
-    EightLemonAuto,
-    TrenchToDepotAuto,
-    CenterToDepotAuto,
-    OffsetDepotAuto,
     LeftLemonAuto,
     RightLemonAuto,
-    ShootEightAuto
+    ShootEightAuto,
+    CenterLemonAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -179,13 +175,10 @@ public static final class AutoConstants {
 
     autoModeChooser.setDefaultOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("None", AutoMode.None);
-    autoModeChooser.addOption("EightLemonAuto (PathPlanner)", AutoMode.EightLemonAuto);
-    autoModeChooser.addOption("TrenchToDepotAuto", AutoMode.TrenchToDepotAuto);
-    autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
-    autoModeChooser.addOption("Offset Depot Auto", AutoMode.OffsetDepotAuto);
     autoModeChooser.addOption("ShootEightAuto", AutoMode.ShootEightAuto);
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
+    autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
@@ -194,7 +187,7 @@ public static final class AutoConstants {
   public static AutoMode getSelectedAutoMode(){
     initDashboard();
     AutoMode selection = autoModeChooser.getSelected();
-    return selection != null ? selection : AutoMode.DriveTestAuto;
+    return selection != null ? selection : AutoMode.LeftLemonAuto;
   }
   public static boolean isRightSideAuto(){
     initDashboard();

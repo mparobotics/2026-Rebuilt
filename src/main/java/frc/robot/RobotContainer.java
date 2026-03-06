@@ -20,14 +20,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Auto.DriveTestAuto;
-import frc.robot.Auto.EightLemonAuto;
-import frc.robot.Auto.OffsetDepotAuto;
 import frc.robot.Auto.LeftLemonAuto;
-import frc.robot.Auto.TrenchToDepotAuto;
-import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.ShootEightAuto;
+import frc.robot.Auto.CenterLemonAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -237,14 +233,11 @@ public class RobotContainer {
 
     return switch (selected) {
       case None -> Commands.none();
-      case DriveTestAuto -> new DriveTestAuto(m_drive);
-      case EightLemonAuto -> new EightLemonAuto(m_drive, m_shooter, m_intake);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
-      case OffsetDepotAuto -> new OffsetDepotAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
-      case TrenchToDepotAuto -> new TrenchToDepotAuto(m_drive);
-      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive);
+      case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
+
       
       default -> Commands.none();
     };
