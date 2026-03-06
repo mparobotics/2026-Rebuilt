@@ -4,36 +4,18 @@
 
 package frc.robot.Auto;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-public class RealLemonAuto extends SequentialCommandGroup {
+public class ShootEightAuto extends SequentialCommandGroup {
 
-  public RealLemonAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+  public ShootEightAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     final double[] startYawRad = new double[1];
     addCommands(
-      new InstantCommand(()->drive.drive(-0.5, 0,0, false), drive),
-      Commands.waitSeconds(2),
-      new InstantCommand(()->drive.drive(0,0,0, false),drive),
-      Commands.runOnce(() -> startYawRad[0] = drive.getYaw().getRadians(), drive),
-        Commands.run(() -> {
-          double targetYawRad = startYawRad[0] + Math.toRadians(30.0);
-          double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
-          double omegaRadiansPerSecond = MathUtil.clamp(errorRad * 4.0, -SwerveConstants.maxAngularVelocity, SwerveConstants.maxAngularVelocity);
-          drive.drive(0,0, omegaRadiansPerSecond, false);
-        }, drive).until(() -> {
-          double targetYawRad = startYawRad[0] + Math.toRadians(30.0);
-          double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
-          return Math.abs(errorRad) < Math.toRadians(3.0);
-        }),
-      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
       Commands.runOnce(() -> {
         shooter.runIndexer(false);
