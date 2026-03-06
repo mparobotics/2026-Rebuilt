@@ -12,7 +12,6 @@ import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -144,9 +143,6 @@ public class RobotContainer {
             0.1);
           
           m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
-          if (shooterAxis > 0.2) {
-            m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED);
-          }
               
           // Right bumper runs the indexer and kicker forward while held.
           // Left bumper runs the indexer and kicker in reverse while held.
