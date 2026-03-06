@@ -7,7 +7,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 /* Drives the robot in an orbit around the hub while continuously facing the hub center */
@@ -15,20 +17,22 @@ import frc.robot.Subsystems.SwerveSubsystem;
 public class AltAutoAlign extends Command {
 
     private SwerveSubsystem swerveSubsystem;
+    private ShooterSubsystem shooterSubsystem;
 
     private final PIDController headingController = new PIDController(kHeadingKp,0,0);
     private final PIDController radiusController = new PIDController(kRadialKp, kRadialKi, kRadialKd);
 
     private static final double kDesiredOrbitRadiusMeters = 2; //placeholder
     private static final double kMaxRadialSpeedMetersPerSecond = 1.0; // Max speed for correcting radius errors
-    private static final double kRadialKp = 1.6; //P-gain for radial distance correction
+    private static final double kRadialKp = 0.1; //P-gain for radial distance correction
     private static final double kRadialKi = 0.0;
     private static final double kRadialKd = 0.0;
-    private static final double kHeadingKp = 4.5; //P-gain for yaw control that faces the hub
+    private static final double kHeadingKp = 0.1; //P-gain for yaw control that faces the hub
 
-    public AltAutoAlign(SwerveSubsystem swerveSubsystem){
+    public AltAutoAlign(SwerveSubsystem swerveSubsystem, ShooterSubsystem shooterSubsystem){
         this.swerveSubsystem = swerveSubsystem;
-        addRequirements(swerveSubsystem);
+        this.shooterSubsystem = shooterSubsystem;
+        addRequirements(swerveSubsystem, shooterSubsystem);
         headingController.enableContinuousInput(-Math.PI, Math.PI);
         radiusController.setSetpoint(kDesiredOrbitRadiusMeters);
     }
@@ -105,6 +109,12 @@ public class AltAutoAlign extends Command {
     swerveSubsystem.driveFromChassisSpeeds(requestedSpeeds, false);
     // Command the swerve in closed loop
 
+    shooterSubsystem.setHoodAngle(ShooterSubsystem.HoodAngle.MED);
+    //put up hood angle
+
+    shooterSubsystem.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
+    //Start shooter motor
+    
    }
 
 

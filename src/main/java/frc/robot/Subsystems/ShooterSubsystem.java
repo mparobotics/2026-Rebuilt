@@ -19,7 +19,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public boolean isShooterActive = false; //Shooter True
 
-  private final SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
+  public final SparkMax shooterMotor = new SparkMax(ShooterConstants.SHOOTER_ID, MotorType.kBrushless);
   private final SparkMax kickerMotor = new SparkMax(ShooterConstants.KICKER_ID, MotorType.kBrushless);
   private final SparkMax hoodMotor = new SparkMax(ShooterConstants.HOOD_ID, MotorType.kBrushless);
   private final SparkMax indexerMotor = new SparkMax(ShooterConstants.INDEXER_ID, MotorType.kBrushless);
@@ -38,6 +38,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public enum HoodAngle {
     LOW,
+    MED,
     HIGH
   }
 
@@ -120,6 +121,9 @@ public class ShooterSubsystem extends SubsystemBase {
       switch (angle) {
         case LOW:
           hoodTargetPosition = ShooterConstants.HOOD_ANGLE_LOW;
+          break;
+        case MED:
+          hoodTargetPosition = ShooterConstants.HOOD_ANGLE_MED;
           break;
         case HIGH:
           hoodTargetPosition = ShooterConstants.HOOD_ANGLE_HIGH;

@@ -12,6 +12,7 @@ import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -140,9 +141,12 @@ public class RobotContainer {
           // Invert so stick-up (negative on Xbox) produces positive motor output.
           double shooterAxis = -MathUtil.applyDeadband(
             helmsController.getRawAxis(Axis.kRightY.value),
-            0.1);    
-              
+            0.1);
+          
           m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
+          if (shooterAxis > 0.2) {
+            m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED);
+          }
               
           // Right bumper runs the indexer and kicker forward while held.
           // Left bumper runs the indexer and kicker in reverse while held.
@@ -178,7 +182,8 @@ public class RobotContainer {
     // Hood controls (helms controller).
     // Y = hood up (2 inches / max travel), B = hood down.
     helmsController.y().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
-    helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
+    helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED), m_shooter));
+    helmsController.a().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
 
     
     // Left Trigger = Auto-align to left scoring position
@@ -186,7 +191,7 @@ public class RobotContainer {
     // Right Trigger = Auto-align to right scoring position
     driveController.axisGreaterThan(Axis.kRightTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, false));
     // Right Bumper = Alt-Auto-Align
-    driveController.button(Button.kRightBumper.value).whileTrue(new AltAutoAlign(m_drive));
+    driveController.button(Button.kRightBumper.value).whileTrue(new AltAutoAlign(m_drive, m_shooter));
 
     // Default command runs continuously when no other command requires the subsystem.
     // It automatically pauses when commands like AutoAlign take control, then resumes
