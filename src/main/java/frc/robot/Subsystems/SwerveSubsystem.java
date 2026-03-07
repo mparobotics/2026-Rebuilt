@@ -150,7 +150,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
     driveFromChassisSpeeds(desiredSpeeds, true);
   }
- 
+  
   public void driveFromChassisSpeeds(ChassisSpeeds driveSpeeds, boolean isOpenLoop){
     SwerveModuleState[] desiredStates = SwerveConstants.swerveKinematics.toSwerveModuleStates(driveSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.maxSpeed);
@@ -161,6 +161,19 @@ public class SwerveSubsystem extends SubsystemBase {
       mod.setDesiredState(desiredStates[mod.moduleNumber], isOpenLoop); //NEED CONFIRM
     }
   }
+
+  private void xLockWheels(){
+    for(int i = 0; i < mSwerveMods.length; i++){
+      SwerveModule module = mSwerveMods[i];
+      Rotation2d angle = SwerveConstants.swerveKinematics.getModules()[i].getAngle();
+      SwerveModuleState xState = new SwerveModuleState(0, angle);
+      module.setDesiredState(xState, false);
+    }
+  }
+  public Command xLockCommand(){
+    return runOnce(() -> xLockWheels()).repeatedly();
+  }
+
 
   public ChassisSpeeds getChassisSpeeds(){
     return SwerveConstants.swerveKinematics.toChassisSpeeds(getStates());

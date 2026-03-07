@@ -24,10 +24,6 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 
 
 public class RobotContainer {
@@ -69,8 +65,9 @@ public class RobotContainer {
     driveController.button(Button.kBack.value).onTrue(new InstantCommand(()->m_drive.resyncModuleEncoders(), m_drive));
     //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
     driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
-   
-
+    
+    
+    driveController.button(Button.kLeftBumper.value).whileTrue(m_drive.xLockCommand());
 
     // SHOOTER CONTROLLER
     helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1)
