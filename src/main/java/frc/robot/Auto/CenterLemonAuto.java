@@ -18,11 +18,11 @@ public class CenterLemonAuto extends SequentialCommandGroup {
 
   public CenterLemonAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addCommands(
-      new InstantCommand(()->drive.drive(0, 0.5,0, false), drive),
+      new InstantCommand(()->drive.drive(0, 0.6,0, false), drive),
       Commands.waitSeconds(2),
       new InstantCommand(()->drive.drive(0,0,0, false),drive),
       
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
       Commands.runOnce(() -> {
         shooter.runIndexer(false);
         shooter.runKicker(false);

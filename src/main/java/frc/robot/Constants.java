@@ -290,7 +290,7 @@ public static final class ShooterConstants {
   // Hood position units are motor rotations (NEO internal encoder).
   // Max travel is 3 rotations = 1080 degrees.
   public static final double HOOD_MIN_ROTATIONS = 0.0;
-  public static final double HOOD_MED_ROTATIONS = 24.0;
+  public static final double HOOD_MED_ROTATIONS = 20.0;
   public static final double HOOD_MAX_ROTATIONS = 36.0;
 
   // Preset positions.
