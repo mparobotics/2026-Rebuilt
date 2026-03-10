@@ -97,6 +97,7 @@ public static final class SwerveConstants{
 
   /* Swerve Profiling Values */
   public static final double maxSpeed = 5; // meters per second
+  public static final double PathPlannerMaxSpeed = DCMotor.getNeoVortex(1).withReduction(driveGearRatio).freeSpeedRadPerSec*(wheelDiameter/2);
   public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
 
   /* Neutral Modes */
@@ -142,7 +143,7 @@ public static final class AutoConstants {
   private static boolean dashboardInitialized = false;
 
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
-  SwerveConstants.maxSpeed,
+  SwerveConstants.PathPlannerMaxSpeed,
   1.2,
   DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
   SwerveConstants.driveContinuousCurrentLimit,
@@ -156,6 +157,7 @@ public static final class AutoConstants {
 
   public enum AutoMode{
     None,
+    DriveTestAuto,
     LeftLemonAuto,
     RightLemonAuto,
     ShootEightAuto,
@@ -175,6 +177,7 @@ public static final class AutoConstants {
 
     autoModeChooser.setDefaultOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("None", AutoMode.None);
+    autoModeChooser.addOption("DriveTestAuto", AutoMode.DriveTestAuto);
     autoModeChooser.addOption("ShootEightAuto", AutoMode.ShootEightAuto);
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
@@ -291,7 +294,7 @@ public static final class ShooterConstants {
   // Max travel is 3 rotations = 1080 degrees.
   public static final double HOOD_MIN_ROTATIONS = 0.0;
   public static final double HOOD_MED_ROTATIONS = 20.0;
-  public static final double HOOD_MAX_ROTATIONS = 36.0;
+  public static final double HOOD_MAX_ROTATIONS = 23.0;
 
   // Preset positions.
   public static final double HOOD_ANGLE_LOW = HOOD_MIN_ROTATIONS;
