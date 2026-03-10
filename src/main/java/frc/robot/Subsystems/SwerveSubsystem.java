@@ -19,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -30,6 +31,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.SwerveConstants.ModuleData;
 import frc.robot.SwerveModule;
 
@@ -42,6 +44,12 @@ public class SwerveSubsystem extends SubsystemBase {
   private SwerveModule[] mSwerveMods;
 
   private Field2d field;
+  private ChassisSpeeds lastCommandedSpeeds = new ChassisSpeeds();
+
+  private double simYawDegrees = 0.0;
+  private final double[] simWheelPositionsMeters = new double[4];
+  private final Rotation2d[] simWheelAngles =
+      new Rotation2d[] {new Rotation2d(), new Rotation2d(), new Rotation2d(), new Rotation2d()};
 
 
   private final StructArrayPublisher<SwerveModuleState> swerveDataPublisher = NetworkTableInstance.getDefault()
@@ -70,8 +78,28 @@ public class SwerveSubsystem extends SubsystemBase {
     //puts out the field
     field = new Field2d();
     SmartDashboard.putData("Field", field);
+    SmartDashboard.putBoolean("Vision Enabled", VisionConstants.VISION_ENABLED_DEFAULT);
 
     configurePathPlanner();
+  }
+
+  public void simulationReset() {
+    if (!RobotBase.isSimulation()) {
+      return;
+    }
+
+    simYawDegrees = getYaw().getDegrees();
+    for (int i = 0; i < 4; i++) {
+      simWheelPositionsMeters[i] = 0.0;
+      simWheelAngles[i] = new Rotation2d();
+    }
+
+    pigeon.setYaw(simYawDegrees);
+    SwerveModulePosition[] positions = new SwerveModulePosition[4];
+    for (int i = 0; i < 4; i++) {
+      positions[i] = new SwerveModulePosition(0.0, simWheelAngles[i]);
+    }
+    odometry.resetPosition(Rotation2d.fromDegrees(simYawDegrees), positions, new Pose2d());
   }
 
 
@@ -114,28 +142,40 @@ public class SwerveSubsystem extends SubsystemBase {
   
 
 
+  private boolean isVisionEnabled() {
+    return SmartDashboard.getBoolean("Vision Enabled", VisionConstants.VISION_ENABLED_DEFAULT);
+  }
+
   private void updateOdometryWithVision (String limelightName){
     boolean doRejectUpdate = false;
       LimelightHelpers.SetRobotOrientation(limelightName, odometry.getEstimatedPosition().getRotation().getDegrees(),0,0,0,0,0);
-      LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
-      if (mt2 == null){
+      LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
+      if (mt1 == null){
         return;
       }
-      if(Math.abs(pigeon.getAngularVelocityZWorld().getValueAsDouble())> 720)
+      if(Math.abs(pigeon.getAngularVelocityZWorld().getValueAsDouble()) > VisionConstants.MAX_VISION_ANGULAR_RATE_DEG_PER_SEC)
       {
         doRejectUpdate = true;
       }
-      if(mt2.tagCount == 0)
+      if(mt1.tagCount == 0)
       {
         doRejectUpdate = true;
       }
       if(!doRejectUpdate)
       {
-        odometry.setVisionMeasurementStdDevs(VecBuilder.fill (.7,.7,99999));// need to measure
+        odometry.setVisionMeasurementStdDevs(
+            VecBuilder.fill(
+                VisionConstants.VISION_STD_DEV_X_METERS,
+                VisionConstants.VISION_STD_DEV_Y_METERS,
+                VisionConstants.VISION_STD_DEV_THETA_RADIANS)); // need to measure
         odometry.addVisionMeasurement(
-          mt2.pose,
-          mt2.timestampSeconds);
+          mt1.pose,
+          mt1.timestampSeconds);
       }
+
+      SmartDashboard.putNumber("Vision/" + limelightName + "/TagCount", mt1.tagCount);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/AvgTagDist", mt1.avgTagDist);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/LatencyMs", mt1.latency);
     }
 
 
@@ -152,6 +192,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
  
   public void driveFromChassisSpeeds(ChassisSpeeds driveSpeeds, boolean isOpenLoop){
+    lastCommandedSpeeds = driveSpeeds;
     SwerveModuleState[] desiredStates = SwerveConstants.swerveKinematics.toSwerveModuleStates(driveSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.maxSpeed);
 
@@ -164,6 +205,10 @@ public class SwerveSubsystem extends SubsystemBase {
 
   public ChassisSpeeds getChassisSpeeds(){
     return SwerveConstants.swerveKinematics.toChassisSpeeds(getStates());
+  }
+
+  public ChassisSpeeds getLastCommandedSpeeds() {
+    return lastCommandedSpeeds;
   }
 
   public Pose2d getPose() {
@@ -246,9 +291,14 @@ public class SwerveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-        odometry.update(getYaw(), getPositions());
-        updateOdometryWithVision("limelight-a");
-        updateOdometryWithVision("limelight-b");
+    if (!RobotBase.isSimulation()) {
+      odometry.update(getYaw(), getPositions());
+      if (isVisionEnabled()) {
+        for (String limelightName : VisionConstants.LIMELIGHT_NAMES) {
+          updateOdometryWithVision(limelightName);
+        }
+      }
+    }
     field.setRobotPose(getPose());
 
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());
@@ -269,5 +319,32 @@ public class SwerveSubsystem extends SubsystemBase {
   }
   swerveDataPublisher.set(getStates());
 }
+
+  /**
+   * Simple swerve simulation: integrates the last commanded chassis speeds into wheel positions and
+   * a yaw angle, then updates odometry from those simulated sensors.
+   */
+  public void simulationUpdate(double dtSeconds) {
+    if (!RobotBase.isSimulation()) {
+      return;
+    }
+
+    ChassisSpeeds speeds = DriverStation.isDisabled() ? new ChassisSpeeds() : lastCommandedSpeeds;
+
+    simYawDegrees += Math.toDegrees(speeds.omegaRadiansPerSecond * dtSeconds);
+    pigeon.setYaw(simYawDegrees);
+
+    SwerveModuleState[] states = SwerveConstants.swerveKinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(states, SwerveConstants.maxSpeed);
+
+    SwerveModulePosition[] positions = new SwerveModulePosition[4];
+    for (int i = 0; i < 4; i++) {
+      simWheelPositionsMeters[i] += states[i].speedMetersPerSecond * dtSeconds;
+      simWheelAngles[i] = states[i].angle;
+      positions[i] = new SwerveModulePosition(simWheelPositionsMeters[i], simWheelAngles[i]);
+    }
+
+    odometry.update(Rotation2d.fromDegrees(simYawDegrees), positions);
+  }
 
 }

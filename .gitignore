@@ -53,3 +53,6 @@ Thumbs.db
 
 # VS Code Settings
 .vscode/
+
+# sim files
+.ctre_sim/

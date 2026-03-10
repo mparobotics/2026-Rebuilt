@@ -11,7 +11,7 @@ import com.ctre.phoenix6.controls.ColorFlowAnimation;
 import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
-import com.ctre.phoenix6.signals.RGBWColor;
+import com.ctre.phoenix6.signals.RGBWColor; 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CANdleConstants;
 
