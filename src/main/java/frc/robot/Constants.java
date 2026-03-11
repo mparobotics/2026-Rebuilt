@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Auto.LeftNeutralZoneAuto;
+import frc.robot.Auto.RightNeutralZoneAuto;
 
 /** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
@@ -160,6 +162,8 @@ public static final class AutoConstants {
     DriveTestAuto,
     LeftLemonAuto,
     RightLemonAuto,
+    LeftNeutralZoneAuto,
+    RightNeutralZoneAuto,
     ShootEightAuto,
     CenterLemonAuto
   }
@@ -181,6 +185,8 @@ public static final class AutoConstants {
     autoModeChooser.addOption("ShootEightAuto", AutoMode.ShootEightAuto);
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
+    autoModeChooser.addOption("RightNeutralZoneAuto", AutoMode.RightNeutralZoneAuto);
+    autoModeChooser.addOption("LeftNeutralZoneAuto", AutoMode.LeftNeutralZoneAuto);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
