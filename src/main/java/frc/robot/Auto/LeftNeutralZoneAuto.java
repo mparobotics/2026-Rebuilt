@@ -27,6 +27,8 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
   // Note: On this robot, negative power pulls game pieces in (intake).
   private static final double INTAKE_POWER = -1.0;
 
+  private static final double STRAIGHT_HEADING_KP = 4.0;
+
   public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake) {
     this(
       drive,
@@ -66,6 +68,8 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
 
     addCommands(
       new InstantCommand(intake::lowerIntake, intake),
+      Commands.runOnce(() -> drive.drive(0.0, 0.0, 0.0, false), drive),
+      Commands.waitSeconds(0.1),
 
       // 1) Drive backwards 3.6m.
       driveStraightDistanceMeters(drive, backupSpeedMpsClamped, backupDistanceMeters),
@@ -89,13 +93,25 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
 
   private static Command driveStraightDistanceMeters(SwerveSubsystem drive, double speedMps, double distanceMeters) {
     final Pose2d[] startPose = new Pose2d[1];
+    final double[] holdYawRad = new double[1];
     final double timeoutSeconds =
       Math.abs(distanceMeters / Math.max(0.1, Math.abs(speedMps))) + 1.0;
 
     return Commands.sequence(
-      Commands.runOnce(() -> startPose[0] = drive.getPose(), drive),
+      Commands.runOnce(() -> {
+        startPose[0] = drive.getPose();
+        holdYawRad[0] = drive.getYaw().getRadians();
+      }, drive),
       Commands.runEnd(
-        () -> drive.drive(speedMps, 0.0, 0.0, false),
+        () -> {
+          double errorRad = MathUtil.angleModulus(holdYawRad[0] - drive.getYaw().getRadians());
+          double omegaRadiansPerSecond =
+            MathUtil.clamp(
+              errorRad * STRAIGHT_HEADING_KP,
+              -SwerveConstants.maxAngularVelocity,
+              SwerveConstants.maxAngularVelocity);
+          drive.drive(speedMps, 0.0, omegaRadiansPerSecond, false);
+        },
         () -> drive.drive(0.0, 0.0, 0.0, false),
         drive)
         .until(() ->

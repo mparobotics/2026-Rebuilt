@@ -36,6 +36,7 @@ import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DriverStation;
 
 
 public class RobotContainer {
@@ -71,7 +72,6 @@ public class RobotContainer {
   private UsbCamera driverCamera;
   
   public RobotContainer() {
-    AutoConstants.initDashboard();
     startLimelightStreams();
     startDriverCameraStream();
     configureBindings();
@@ -232,6 +232,8 @@ public class RobotContainer {
   
   public Command getAutonomousCommand() {
     AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
+    SmartDashboard.putString("Auto/Selected", selected.name());
+    DriverStation.reportWarning("Auto selected: " + selected.name(), false);
 
     return switch (selected) {
       case None -> Commands.none();
