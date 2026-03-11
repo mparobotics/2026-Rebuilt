@@ -7,143 +7,111 @@ package frc.robot.Auto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
 
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LeftNeutralZoneAuto extends SequentialCommandGroup {
-  // Tune these values to change how far/fast the auto drives.
-  private static final double INITIAL_BACKUP_DISTANCE_METERS = 3.6;
-  // Positive value; the auto will negate it to drive backwards.
-  private static final double INITIAL_BACKUP_SPEED_MPS = 2.0;
-  private static final double FORWARD_DISTANCE_METERS = 4.0;
-  private static final double FORWARD_SPEED_MPS = 2.0;
+  // Tunables (requested).
+  private static final double DRIVE_SPEED_MPS = 3.0;
+  private static final double TURN_P = 4.0;
+  private static final double TURN_TOLERANCE_DEG = 3.0;
+  private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  // Intake: 1.0 = full power
-  // Negative power pulls game pieces in (intake) for Pesto
-  private static final double INTAKE_POWER = -1.0;
+  private static final double BACKWARD_METERS_1 = 3.4;
+  private static final double FORWARD_METERS_1 = 3.0;
+  private static final double FORWARD_METERS_2 = 1.0;
+  private static final double FORWARD_METERS_3 = 3.0;
 
-  private static final double STRAIGHT_HEADING_KP = 4.0;
+  private static final double INTAKE_POWER = 1.0;
 
   public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake) {
-    this(
-      drive,
-      intake,
-      INITIAL_BACKUP_DISTANCE_METERS,
-      INITIAL_BACKUP_SPEED_MPS,
-      FORWARD_DISTANCE_METERS,
-      FORWARD_SPEED_MPS,
-      INTAKE_POWER);
-  }
-
-  public LeftNeutralZoneAuto(
-    SwerveSubsystem drive,
-    IntakeSubsystem intake,
-    double driveDistanceMeters,
-    double driveSpeedMps) {
-    // Preserve the existing overload while letting you set the speed easily:
-    // - driveDistanceMeters controls the initial backup distance
-    // - driveSpeedMps is used for both the backup and forward drives
-    this(drive, intake, driveDistanceMeters, driveSpeedMps, FORWARD_DISTANCE_METERS, driveSpeedMps, INTAKE_POWER);
-  }
-
-  public LeftNeutralZoneAuto(
-    SwerveSubsystem drive,
-    IntakeSubsystem intake,
-    double backupDistanceMeters,
-    double backupSpeedMps,
-    double forwardDistanceMeters,
-    double forwardSpeedMps,
-    double intakePower) {
     addRequirements(drive, intake);
-    final double backupSpeedMpsClamped =
-      -MathUtil.clamp(Math.abs(backupSpeedMps), 0.0, SwerveConstants.maxSpeed);
-    final double forwardSpeedMpsClamped =
-      MathUtil.clamp(Math.abs(forwardSpeedMps), 0.0, SwerveConstants.maxSpeed);
-    final double intakePowerClamped = MathUtil.clamp(intakePower, -1.0, 1.0);
 
     addCommands(
-      new InstantCommand(intake::lowerIntake, intake),
-      Commands.runOnce(() -> drive.drive(0.0, 0.0, 0.0, false), drive),
-      Commands.waitSeconds(0.1),
+      Commands.runOnce(intake::lowerIntake, intake),
 
-      // 1) Drive backwards 3.6m.
-      driveStraightDistanceMeters(drive, backupSpeedMpsClamped, backupDistanceMeters),
+      // 1) Drive backwards 3.4m.
+      driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // 2) Turn 90 degrees left.
       turnRelativeDegrees(drive, 90.0),
 
-      // 3) Start intake while driving forward 4m.
-      Commands.runOnce(() -> intake.setIntakePower(intakePowerClamped), intake),
-      driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, forwardDistanceMeters),
+      // 3) Drive forward 3m while starting intake (intake stays on for the rest of auto).
+      Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+      driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // 4) Turn 90 degrees right with intake still running.
+      // 4) Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // 5) Drive forward 1m (intake still running).
-      driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, 1.0),
+      // 5) Drive forward 1m (intake still on).
+      driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
-      // 6) Turn 90 degrees right (intake still running).
+      // 6) Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // 7) Drive forward 3m (intake still running).
-      driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, 3.0),
+      // 7) Drive forward 3m (intake still on).
+      driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS),
 
-      Commands.runOnce(() -> intake.setIntakePower(0.0), intake)
+      // Stop intake at the end.
+      Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
+      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive)
     );
   }
 
-  private static Command driveStraightDistanceMeters(SwerveSubsystem drive, double speedMps, double distanceMeters) {
-    final Pose2d[] startPose = new Pose2d[1];
-    final double[] holdYawRad = new double[1];
-    final double timeoutSeconds =
-      Math.abs(distanceMeters / Math.max(0.1, Math.abs(speedMps))) + 1.0;
+  private static edu.wpi.first.wpilibj2.command.Command driveDistanceMeters(
+    SwerveSubsystem drive,
+    double distanceMeters,
+    double speedMps) {
+    double clampedSpeedMps = MathUtil.clamp(Math.abs(speedMps), 0.0, SwerveConstants.maxSpeed);
+    double commandedSpeedMps = Math.copySign(clampedSpeedMps, distanceMeters);
+    double distanceAbsMeters = Math.abs(distanceMeters);
+
+    AtomicReference<Pose2d> startPose = new AtomicReference<>(new Pose2d());
 
     return Commands.sequence(
-      Commands.runOnce(() -> {
-        startPose[0] = drive.getPose();
-        holdYawRad[0] = drive.getYaw().getRadians();
-      }, drive),
+      Commands.runOnce(() -> startPose.set(drive.getPose()), drive),
       Commands.runEnd(
-        () -> {
-          double errorRad = MathUtil.angleModulus(holdYawRad[0] - drive.getYaw().getRadians());
-          double omegaRadiansPerSecond =
-            MathUtil.clamp(
-              errorRad * STRAIGHT_HEADING_KP,
-              -SwerveConstants.maxAngularVelocity,
-              SwerveConstants.maxAngularVelocity);
-          drive.drive(speedMps, 0.0, omegaRadiansPerSecond, false);
-        },
-        () -> drive.drive(0.0, 0.0, 0.0, false),
+        () -> drive.drive(commandedSpeedMps, 0, 0, false),
+        () -> drive.drive(0, 0, 0, false),
         drive)
-        .until(() ->
-          drive.getPose().getTranslation().getDistance(startPose[0].getTranslation()) >= distanceMeters)
-        .withTimeout(timeoutSeconds)
+        .until(
+          () ->
+            drive.getPose().getTranslation().getDistance(startPose.get().getTranslation())
+              >= distanceAbsMeters)
+        .withTimeout(distanceAbsMeters / Math.max(0.1, Math.abs(commandedSpeedMps)) + 1.0)
     );
   }
 
-  private static Command turnRelativeDegrees(SwerveSubsystem drive, double degrees) {
+  private static edu.wpi.first.wpilibj2.command.Command turnRelativeDegrees(
+    SwerveSubsystem drive,
+    double deltaDegrees) {
     final double[] startYawRad = new double[1];
-    final double targetDeltaRad = Math.toRadians(degrees);
 
     return Commands.sequence(
       Commands.runOnce(() -> startYawRad[0] = drive.getYaw().getRadians(), drive),
-      Commands.run(() -> {
-        double targetYawRad = startYawRad[0] + targetDeltaRad;
-        double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
-        double omegaRadiansPerSecond =
-          MathUtil.clamp(errorRad * 4.0, -SwerveConstants.maxAngularVelocity, SwerveConstants.maxAngularVelocity);
-        drive.drive(0.0, 0.0, omegaRadiansPerSecond, false);
-      }, drive).until(() -> {
-        double targetYawRad = startYawRad[0] + targetDeltaRad;
-        double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
-        return Math.abs(errorRad) < Math.toRadians(3.0);
-      }),
-      Commands.runOnce(() -> drive.drive(0.0, 0.0, 0.0, false), drive)
+      Commands.runEnd(
+        () -> {
+          double targetYawRad = startYawRad[0] + Math.toRadians(deltaDegrees);
+          double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
+          double omegaRadPerSec =
+            MathUtil.clamp(
+              errorRad * TURN_P,
+              -SwerveConstants.maxAngularVelocity,
+              SwerveConstants.maxAngularVelocity);
+          drive.drive(0, 0, omegaRadPerSec, false);
+        },
+        () -> drive.drive(0, 0, 0, false),
+        drive)
+        .until(() -> {
+          double targetYawRad = startYawRad[0] + Math.toRadians(deltaDegrees);
+          double errorRad = MathUtil.angleModulus(targetYawRad - drive.getYaw().getRadians());
+          return Math.abs(errorRad) < Math.toRadians(TURN_TOLERANCE_DEG);
+        })
+        .withTimeout(TURN_TIMEOUT_SEC)
     );
   }
 }
