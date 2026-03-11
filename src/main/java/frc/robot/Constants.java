@@ -315,7 +315,8 @@ public static final class IntakeConstants {
   // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
   // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
   public static int INTAKE_ID = 19;
-  public static double INTAKE_SPEED = 90; //percent output scaling for intake motor
+  // SparkMax.set(...) expects [-1.0, 1.0] percent output.
+  public static double INTAKE_SPEED = 0.90; // max percent output for intake motor
 
   public static int INTAKE_ARM_ID = 18;
   public static int GEAR_RATIO = 25;

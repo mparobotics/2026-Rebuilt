@@ -19,9 +19,9 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
   // Tune these values to change how far/fast the auto drives.
   private static final double INITIAL_BACKUP_DISTANCE_METERS = 3.6;
   // Positive value; the auto will negate it to drive backwards.
-  private static final double INITIAL_BACKUP_SPEED_MPS = 3.0;
+  private static final double INITIAL_BACKUP_SPEED_MPS = 2.0;
   private static final double FORWARD_DISTANCE_METERS = 4.0;
-  private static final double FORWARD_SPEED_MPS = 3.0;
+  private static final double FORWARD_SPEED_MPS = 2.0;
 
   // Intake: 1.0 = full power, 0.0 = off.
   private static final double INTAKE_POWER = 1.0;
