@@ -23,8 +23,8 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
   private static final double FORWARD_DISTANCE_METERS = 4.0;
   private static final double FORWARD_SPEED_MPS = 2.0;
 
-  // Intake: 1.0 = full power, 0.0 = off.
-  // Note: On this robot, negative power pulls game pieces in (intake).
+  // Intake: 1.0 = full power
+  // Negative power pulls game pieces in (intake) for Pesto
   private static final double INTAKE_POWER = -1.0;
 
   private static final double STRAIGHT_HEADING_KP = 4.0;
@@ -81,11 +81,17 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
       Commands.runOnce(() -> intake.setIntakePower(intakePowerClamped), intake),
       driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, forwardDistanceMeters),
 
-      // 4) Turn 180 degrees with intake still running.
-      turnRelativeDegrees(drive, 180.0),
+      // 4) Turn 90 degrees right with intake still running.
+      turnRelativeDegrees(drive, -90.0),
 
-      // 5) Drive forward 4m again (intake still running).
-      driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, forwardDistanceMeters),
+      // 5) Drive forward 1m (intake still running).
+      driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, 1.0),
+
+      // 6) Turn 90 degrees right (intake still running).
+      turnRelativeDegrees(drive, -90.0),
+
+      // 7) Drive forward 3m (intake still running).
+      driveStraightDistanceMeters(drive, forwardSpeedMpsClamped, 3.0),
 
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake)
     );
