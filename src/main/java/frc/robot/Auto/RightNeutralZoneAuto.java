@@ -46,6 +46,7 @@ public class RightNeutralZoneAuto extends SequentialCommandGroup {
     double backupSpeedMps,
     double forwardDistanceMeters,
     double forwardSpeedMps) {
+    addRequirements(drive, intake);
     final double[] startYawRad = new double[1];
     final Pose2d[] startPose = new Pose2d[1];
     final Pose2d[] startPoseAfterTurn = new Pose2d[1];

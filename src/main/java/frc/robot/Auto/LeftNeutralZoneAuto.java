@@ -56,6 +56,7 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
     double forwardDistanceMeters,
     double forwardSpeedMps,
     double intakePower) {
+    addRequirements(drive, intake);
     final double backupSpeedMpsClamped =
       -MathUtil.clamp(Math.abs(backupSpeedMps), 0.0, SwerveConstants.maxSpeed);
     final double forwardSpeedMpsClamped =
