@@ -7,6 +7,9 @@ package frc.robot.Subsystems;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.VecBuilder;
@@ -120,7 +123,16 @@ public class SwerveSubsystem extends SubsystemBase {
       if (AutoConstants.isRightSideAuto()){
         path = path.mirrorPath();
       }
-      return AutoBuilder.followPath(path);
+      return new FollowPathCommand(path,
+      this::getPose, 
+      this::getChassisSpeeds,
+      (speeds, feedforwards) -> driveFromChassisSpeeds(speeds, isVisionEnabled()),
+      new PPHolonomicDriveController(
+      new PIDConstants(SwerveConstants.driveKP, SwerveConstants.driveKI, SwerveConstants.driveKD),
+      new PIDConstants(SwerveConstants.driveKP, SwerveConstants.driveKI, SwerveConstants.driveKD)), 
+      Constants.AutoConstants.ROBOT_CONFIG,
+      Constants.FieldConstants::isRedAlliance,
+      this);
     }
     catch(Exception e){
       DriverStation.reportError("PATHPLANNER ERROR" + e.getMessage(), e.getStackTrace());
