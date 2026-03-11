@@ -24,7 +24,8 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
   private static final double FORWARD_SPEED_MPS = 2.0;
 
   // Intake: 1.0 = full power, 0.0 = off.
-  private static final double INTAKE_POWER = 1.0;
+  // Note: On this robot, negative power pulls game pieces in (intake).
+  private static final double INTAKE_POWER = -1.0;
 
   public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake) {
     this(
