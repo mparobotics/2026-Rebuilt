@@ -240,7 +240,7 @@ public class RobotContainer {
       case DriveTestAuto -> new DriveTestAuto(m_drive, m_intake, m_shooter);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
-      case LeftNeutralZoneAuto -> new LeftNeutralZoneAuto(m_drive, m_intake);
+      case LeftNeutralZoneAuto -> new LeftNeutralZoneAuto(m_drive, m_intake, m_shooter);
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
 

@@ -8,9 +8,11 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
+import frc.robot.Subsystems.ShooterSubsystem;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,8 +30,8 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
 
   private static final double INTAKE_POWER = -1.0;
 
-  public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake) {
-    addRequirements(drive, intake);
+  public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+    addRequirements(drive, intake, shooter);
 
     addCommands(
       Commands.runOnce(intake::lowerIntake, intake),
@@ -64,7 +66,25 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
       turnRelativeDegrees(drive, 90.0),
 
       // Drive forward (back to the trench)
-      driveDistanceMeters(drive, FORWARD_METERS_4, DRIVE_SPEED_MPS)
+      driveDistanceMeters(drive, FORWARD_METERS_4, DRIVE_SPEED_MPS),
+
+      // Turn 10 degrees left
+      turnRelativeDegrees(drive, 10.0),
+
+      // Bring hood up to HIGH angle.
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+
+      // Start kicker first, then start indexer 1 second later (kicker keeps running).
+      Commands.sequence(
+        Commands.run(() -> {
+          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+          shooter.setIndexerSpeed(0.0);
+        }, shooter).withTimeout(1.0),
+        Commands.run(() -> {
+          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+          shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+        }, shooter)
+      )
     );
   }
 
