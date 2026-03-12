@@ -26,6 +26,7 @@ import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.RightNeutralZoneAuto;
 import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Auto.CenterLemonAuto;
+import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
@@ -237,6 +238,7 @@ public class RobotContainer {
 
     return switch (selected) {
       case None -> Commands.none();
+      case DriveTestAuto -> new DriveTestAuto(m_drive);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto -> new LeftNeutralZoneAuto(m_drive, m_intake);
