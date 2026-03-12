@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.LeftLemonAuto;
 import frc.robot.Auto.LeftNeutralZoneAuto;
 import frc.robot.Auto.RightLemonAuto;
-import frc.robot.Auto.RightNeutralZoneAuto;
 import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Auto.CenterLemonAuto;
 import frc.robot.Auto.DriveTestAuto;
@@ -238,11 +237,10 @@ public class RobotContainer {
 
     return switch (selected) {
       case None -> Commands.none();
-      case DriveTestAuto -> new DriveTestAuto(m_drive);
+      case DriveTestAuto -> new DriveTestAuto(m_drive, m_intake, m_shooter);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto -> new LeftNeutralZoneAuto(m_drive, m_intake);
-      case RightNeutralZoneAuto -> new RightNeutralZoneAuto(m_drive, m_intake);
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
 

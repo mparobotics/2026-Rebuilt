@@ -4,29 +4,46 @@
 
 package frc.robot.Auto;
 
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Constants.ShooterConstants;
+import frc.robot.Subsystems.IntakeSubsystem;
+import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-/*
 public class DriveTestAuto extends SequentialCommandGroup {
-  public DriveTestAuto (SwerveSubsystem drive) {
-        addCommands(
-            new InstantCommand(() -> drive.drive(0.5,0,0, false), drive),
-            Commands.waitSeconds(2),
-            new InstantCommand(() -> drive.drive(0,0,0, false), drive)
-        );
-    }
-}
-*/
+  public DriveTestAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+    addRequirements(drive, intake, shooter);
 
-
-public class DriveTestAuto extends SequentialCommandGroup {
-  public DriveTestAuto (SwerveSubsystem drive){
     addCommands(
-      drive.startAutoAt(3.628, 7.434, 0.864),
+      drive.startAutoAt(3.562, 7.307, 0.864),
       drive.autoDrive("Trench"),
-      drive.autoDrive("Neutral")
+      Commands.deadline(
+        Commands.sequence(
+          drive.autoDrive("Neutral"),
+          drive.autoDrive("Neutral2"),
+          drive.autoDrive("Neutral3")
+        ),
+        Commands.startEnd(
+          () -> intake.setIntakePower(1.0),
+          () -> intake.setIntakePower(0.0),
+          intake)
+      ),
+      drive.autoDrive("Neutral4"),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+      Commands.sequence(
+        // Start kicker first, then start indexer 1 second later (kicker keeps running).
+        Commands.run(() -> {
+          shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
+          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+          shooter.setIndexerSpeed(0.0);
+        }, shooter).withTimeout(1.0),
+        Commands.run(() -> {
+          shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
+          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+          shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+        }, shooter)
+      )
     );
   }
 }
-

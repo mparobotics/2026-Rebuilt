@@ -15,7 +15,6 @@ import frc.robot.Subsystems.IntakeSubsystem;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LeftNeutralZoneAuto extends SequentialCommandGroup {
-  // Tunables (requested).
   private static final double DRIVE_SPEED_MPS = 3.0;
   private static final double TURN_P = 4.0;
   private static final double TURN_TOLERANCE_DEG = 3.0;
@@ -34,26 +33,26 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
     addCommands(
       Commands.runOnce(intake::lowerIntake, intake),
 
-      // 1) Drive backwards 3.4m.
+      // Drive backwards 3.4m.
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // 2) Turn 90 degrees left.
+      // Turn 90 degrees left.
       turnRelativeDegrees(drive, 90.0),
 
-      // 3) Drive forward 3m while starting intake (intake stays on for the rest of auto).
+      // Drive forward 3m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // 4) Turn 90 degrees right (intake still on).
+      // Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // 5) Drive forward 1m (intake still on).
+      // Drive forward 1m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
-      // 6) Turn 90 degrees right (intake still on).
+      // Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // 7) Drive forward 3m (intake still on).
+      // Drive forward 3m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
