@@ -23,8 +23,9 @@ public class DriveTestAuto extends SequentialCommandGroup {
 public class DriveTestAuto extends SequentialCommandGroup {
   public DriveTestAuto (SwerveSubsystem drive){
     addCommands(
-      drive.startAutoAt(1.165, 6.000, 0.000),
-      drive.autoDrive("DriveTestPath")
+      drive.startAutoAt(3.628, 7.434, 0.864),
+      drive.autoDrive("Trench"),
+      drive.autoDrive("Neutral")
     );
   }
 }
