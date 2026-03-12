@@ -18,6 +18,7 @@ public class DriveTestAuto extends SequentialCommandGroup {
     addCommands(
       drive.startAutoAt(3.562, 7.307, 0.864),
       drive.autoDrive("Trench"),
+      drive.autoDrive("Trench2"),
       Commands.deadline(
         Commands.sequence(
           drive.autoDrive("Neutral"),
