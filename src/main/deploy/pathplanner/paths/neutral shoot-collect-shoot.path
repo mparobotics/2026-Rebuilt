@@ -1,0 +1,99 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 4.485489196278777,
+        "y": 7.4315773031442
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 5.537148511517396,
+        "y": 7.365966173408568
+      },
+      "isLocked": true,
+      "linkedName": "shoot from trench"
+    },
+    {
+      "anchor": {
+        "x": 8.049405310298233,
+        "y": 4.534975975695119
+      },
+      "prevControl": {
+        "x": 7.828571642147791,
+        "y": 7.1507009220831925
+      },
+      "nextControl": {
+        "x": 8.153076488128583,
+        "y": 3.3070142779002833
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 6.0221301341107525,
+        "y": 6.914756427071387
+      },
+      "prevControl": {
+        "x": 6.191397302040258,
+        "y": 6.5850783466811
+      },
+      "nextControl": {
+        "x": 5.783021220743653,
+        "y": 7.380463796830787
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 4.485489196278777,
+        "y": 7.4315773031442
+      },
+      "prevControl": {
+        "x": 5.159109481969688,
+        "y": 7.530687502717027
+      },
+      "nextControl": null,
+      "isLocked": true,
+      "linkedName": "shoot from trench"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.7038892663043469,
+      "rotationDegrees": -45.70642597176697
+    },
+    {
+      "waypointRelativePos": 1.1947393002717392,
+      "rotationDegrees": -54.410424883440804
+    },
+    {
+      "waypointRelativePos": 1.7373046874999998,
+      "rotationDegrees": -13.05225925760174
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 5.758852477591232
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 5.758852477591232
+  },
+  "useDefaultConstraints": true
+}

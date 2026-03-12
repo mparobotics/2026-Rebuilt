@@ -61,15 +61,17 @@ public class IntakeSubsystem extends SubsystemBase {
     intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
     intakeArmActive = false;
   }
+  public void runIntake(boolean on) {
+    intakeMotor.set(on ? IntakeConstants.INTAKE_SPEED : 0);
+    intakeOn = on;
+  }
 
   public void toggleIntake() {
     if (!intakeOn) {
-      intakeOn = false;
-      intakeMotor.set(IntakeConstants.INTAKE_SPEED);
+      runIntake(true);
     }
     else {
-      intakeOn = true;
-      intakeMotor.set(0);
+      runIntake(false);
     }
   }
   
