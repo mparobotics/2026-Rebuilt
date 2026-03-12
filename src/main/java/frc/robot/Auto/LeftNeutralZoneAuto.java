@@ -15,7 +15,7 @@ import frc.robot.Subsystems.IntakeSubsystem;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class LeftNeutralZoneAuto extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 3.0;
+  private static final double DRIVE_SPEED_MPS = 1.0;
   private static final double TURN_P = 4.0;
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
@@ -23,9 +23,10 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_1 = 3.4;
   private static final double FORWARD_METERS_1 = 3.0;
   private static final double FORWARD_METERS_2 = 1.0;
-  private static final double FORWARD_METERS_3 = 3.0;
+  private static final double FORWARD_METERS_3 = 3.1;
+  private static final double FORWARD_METERS_4 = 1.0;
 
-  private static final double INTAKE_POWER = 1.0;
+  private static final double INTAKE_POWER = -1.0;
 
   public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake) {
     addRequirements(drive, intake);
@@ -57,7 +58,13 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
 
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
-      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive)
+      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
+
+      // Turn 90 degrees left
+      turnRelativeDegrees(drive, 90.0),
+
+      // Drive forward (back to the trench)
+      driveDistanceMeters(drive, FORWARD_METERS_4, DRIVE_SPEED_MPS)
     );
   }
 
