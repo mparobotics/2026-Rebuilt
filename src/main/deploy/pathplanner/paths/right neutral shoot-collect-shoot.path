@@ -1,0 +1,95 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 4.43720169122091,
+        "y": 0.712005638375341
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 5.475724964488038,
+        "y": 0.5654673295397641
+      },
+      "isLocked": false,
+      "linkedName": "right shoot from trench"
+    },
+    {
+      "anchor": {
+        "x": 7.056801609847887,
+        "y": 0.957824277929916
+      },
+      "prevControl": {
+        "x": 6.759355823488254,
+        "y": 0.6163294118720994
+      },
+      "nextControl": {
+        "x": 7.478092803029704,
+        "y": 1.4415049558367627
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.779191465435606,
+        "y": 3.7318077651515145
+      },
+      "prevControl": {
+        "x": 8.242998283617425,
+        "y": 2.8323768347537874
+      },
+      "nextControl": {
+        "x": 7.477760215083233,
+        "y": 4.316354130852208
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 4.43720169122091,
+        "y": 0.712005638375341
+      },
+      "prevControl": {
+        "x": 7.218933000443077,
+        "y": -0.3004617579078821
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "right shoot from trench"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.3014751233552633,
+      "rotationDegrees": 150.3556780561652
+    },
+    {
+      "waypointRelativePos": 1.179893092105263,
+      "rotationDegrees": 64.90767410246457
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 174.30417285624395
+  },
+  "reversed": false,
+  "folder": "right neutral zone auto",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 174.30417285624395
+  },
+  "useDefaultConstraints": true
+}

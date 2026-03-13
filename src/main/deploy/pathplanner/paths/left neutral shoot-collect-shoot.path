@@ -12,7 +12,7 @@
         "y": 7.365966173408568
       },
       "isLocked": true,
-      "linkedName": "shoot from trench"
+      "linkedName": "left shoot from trench"
     },
     {
       "anchor": {
@@ -67,7 +67,7 @@
     },
     {
       "waypointRelativePos": 1.1947393002717392,
-      "rotationDegrees": -54.410424883440804
+      "rotationDegrees": -54.41042488344081
     },
     {
       "waypointRelativePos": 1.7373046874999998,
@@ -90,7 +90,7 @@
     "rotation": 5.758852477591232
   },
   "reversed": false,
-  "folder": null,
+  "folder": "left neutral zone auto",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 5.758852477591232

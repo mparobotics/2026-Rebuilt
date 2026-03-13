@@ -3,7 +3,9 @@
   "robotLength": 0.9,
   "holonomicMode": true,
   "pathFolders": [
-    "Offset Depot"
+    "right neutral zone auto",
+    "Offset Depot",
+    "left neutral zone auto"
   ],
   "autoFolders": [],
   "defaultMaxVel": 3.0,

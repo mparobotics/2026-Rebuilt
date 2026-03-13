@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.549,
-        "y": 7.2528105434722185
+        "x": 3.53507942904392,
+        "y": 7.604215398356796
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.227361574895296,
-        "y": 7.384670676107516
+        "x": 4.190852897554148,
+        "y": 7.473734680727381
       },
       "isLocked": false,
-      "linkedName": "start auto at trench"
+      "linkedName": null
     },
     {
       "anchor": {
@@ -20,12 +20,12 @@
         "y": 7.4315773031442
       },
       "prevControl": {
-        "x": 3.6251034603009042,
-        "y": 7.263274555316807
+        "x": 3.6649222764700067,
+        "y": 7.59150719612043
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "shoot from trench"
+      "linkedName": null
     }
   ],
   "rotationTargets": [],
@@ -45,7 +45,7 @@
     "rotation": 5.758852477591232
   },
   "reversed": false,
-  "folder": null,
+  "folder": "left neutral zone auto",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0

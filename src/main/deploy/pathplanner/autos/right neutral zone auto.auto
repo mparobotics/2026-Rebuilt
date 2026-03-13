@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "left neutral start-shoot"
+            "pathName": "right neutral start-shoot"
           }
         },
         {
@@ -19,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "left neutral shoot-collect-shoot"
+            "pathName": "right neutral shoot-collect-shoot"
           }
         }
       ]
