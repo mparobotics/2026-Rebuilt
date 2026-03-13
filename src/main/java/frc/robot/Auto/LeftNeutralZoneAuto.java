@@ -5,7 +5,7 @@
 package frc.robot.Auto;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.ShooterConstants;
@@ -15,6 +15,7 @@ import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 
 import java.util.concurrent.atomic.AtomicReference;
+
 
 public class LeftNeutralZoneAuto extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 1.0;
@@ -96,20 +97,37 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
     double commandedSpeedMps = Math.copySign(clampedSpeedMps, distanceMeters);
     double distanceAbsMeters = Math.abs(distanceMeters);
 
-    AtomicReference<Pose2d> startPose = new AtomicReference<>(new Pose2d());
+    AtomicReference<SwerveModulePosition[]> startPositions = new AtomicReference<>();
 
     return Commands.sequence(
-      Commands.runOnce(() -> startPose.set(drive.getPose()), drive),
+      Commands.runOnce(() -> startPositions.set(drive.getPositions()), drive),
       Commands.runEnd(
         () -> drive.drive(commandedSpeedMps, 0, 0, false),
         () -> drive.drive(0, 0, 0, false),
         drive)
         .until(
-          () ->
-            drive.getPose().getTranslation().getDistance(startPose.get().getTranslation())
-              >= distanceAbsMeters)
+          () -> getAverageWheelDeltaMeters(startPositions.get(), drive.getPositions()) >= distanceAbsMeters)
         .withTimeout(distanceAbsMeters / Math.max(0.1, Math.abs(commandedSpeedMps)) + 1.0)
     );
+  }
+
+  private static double getAverageWheelDeltaMeters(
+    SwerveModulePosition[] startPositions,
+    SwerveModulePosition[] currentPositions) {
+    if (startPositions == null || currentPositions == null) {
+      return 0.0;
+    }
+
+    int count = Math.min(startPositions.length, currentPositions.length);
+    if (count <= 0) {
+      return 0.0;
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < count; i++) {
+      sum += Math.abs(currentPositions[i].distanceMeters - startPositions[i].distanceMeters);
+    }
+    return sum / count;
   }
 
   private static edu.wpi.first.wpilibj2.command.Command turnRelativeDegrees(
@@ -138,6 +156,7 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
           return Math.abs(errorRad) < Math.toRadians(TURN_TOLERANCE_DEG);
         })
         .withTimeout(TURN_TIMEOUT_SEC)
+
     );
   }
 }

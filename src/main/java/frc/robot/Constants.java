@@ -129,9 +129,6 @@ public static final class SwerveConstants{
 
   public static ModuleData[] moduleData = {
     new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-    // Module 1 is currently the only module oscillating; flip its angle motor invert so its
-    // steering closed-loop sign matches the encoder direction.
-    // Module 1: also invert drive so +X command drives forward like the others.
     new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
     new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
     new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
