@@ -17,7 +17,7 @@ import frc.robot.Subsystems.ShooterSubsystem;
 import java.util.concurrent.atomic.AtomicReference;
 
 
-public class LeftNeutralZoneAuto extends SequentialCommandGroup {
+public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 1.0;
   private static final double TURN_P = 4.0;
   private static final double TURN_TOLERANCE_DEG = 3.0;
@@ -31,7 +31,7 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
 
   private static final double INTAKE_POWER = -1.0;
 
-  public LeftNeutralZoneAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+  public LeftNeutralZoneAuto1(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
 
     addCommands(
@@ -56,7 +56,7 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
       // Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 3m (intake still on).
+      // Drive forward 3.3m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
@@ -64,7 +64,7 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
       // Turn 90 degrees right
-      turnRelativeDegrees(drive, -100.0),
+      turnRelativeDegrees(drive, -95.0),
 
       // Drive forward (back to the trench)
       driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
@@ -74,6 +74,15 @@ public class LeftNeutralZoneAuto extends SequentialCommandGroup {
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+
+      // Shooter
+      Commands.runOnce(() -> {
+        shooter.runIndexer(false);
+        shooter.runKicker(false);
+      }, shooter),
+      Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
+        .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
+        .withTimeout(2.0),
 
       // Start kicker first, then start indexer 1 second later (kicker keeps running).
       Commands.sequence(

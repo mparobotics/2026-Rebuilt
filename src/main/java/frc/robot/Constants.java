@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Auto.LeftNeutralZoneAuto;
+import frc.robot.Auto.LeftNeutralZoneAuto1;
 
 /** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
@@ -128,10 +128,10 @@ public static final class SwerveConstants{
   ){}
 
   public static ModuleData[] moduleData = {
-    new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-    new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-    new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-    new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+    new ModuleData(6, 5, 7, 39.90, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+    new ModuleData(9, 8, 10, 46.93, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+    new ModuleData(12, 11, 13, 42.09, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+    new ModuleData(15, 14, 16, 7.11, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
   };
   
 }
@@ -158,7 +158,7 @@ public static final class AutoConstants {
     DriveTestAuto,
     LeftLemonAuto,
     RightLemonAuto,
-    LeftNeutralZoneAuto,
+    LeftNeutralZoneAuto1,
     LeftNeutralZoneAuto2,
     RightNeutralZoneAuto,
     ShootEightAuto,
@@ -183,7 +183,7 @@ public static final class AutoConstants {
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("RightNeutralZoneAuto", AutoMode.RightNeutralZoneAuto);
-    autoModeChooser.addOption("LeftNeutralZoneAuto", AutoMode.LeftNeutralZoneAuto);
+    autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
     autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
 
