@@ -159,6 +159,7 @@ public static final class AutoConstants {
     LeftLemonAuto,
     RightLemonAuto,
     LeftNeutralZoneAuto,
+    LeftNeutralZoneAuto2,
     RightNeutralZoneAuto,
     ShootEightAuto,
     CenterLemonAuto
@@ -183,6 +184,7 @@ public static final class AutoConstants {
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("RightNeutralZoneAuto", AutoMode.RightNeutralZoneAuto);
     autoModeChooser.addOption("LeftNeutralZoneAuto", AutoMode.LeftNeutralZoneAuto);
+    autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
