@@ -16,35 +16,8 @@ public class DriveTestAuto extends SequentialCommandGroup {
     addRequirements(drive, intake, shooter);
 
     addCommands(
-      drive.startAutoAt(3.562, 7.307, 0.864),
-      drive.autoDrive("Trench"),
-      drive.autoDrive("Trench2"),
-      Commands.deadline(
-        Commands.sequence(
-          drive.autoDrive("Neutral"),
-          drive.autoDrive("Neutral2"),
-          drive.autoDrive("Neutral3")
-        ),
-        Commands.startEnd(
-          () -> intake.setIntakePower(1.0),
-          () -> intake.setIntakePower(0.0),
-          intake)
-      ),
-      drive.autoDrive("Neutral4"),
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
-      Commands.sequence(
-        // Start kicker first, then start indexer 1 second later (kicker keeps running).
-        Commands.run(() -> {
-          shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
-          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-          shooter.setIndexerSpeed(0.0);
-        }, shooter).withTimeout(1.0),
-        Commands.run(() -> {
-          shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
-          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-          shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
-        }, shooter)
-      )
+      drive.startAutoAt(1.984, 7.199, -90),
+      drive.autoDrive("Path")
     );
   }
 }
