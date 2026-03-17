@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -17,15 +18,22 @@ public class Robot extends TimedRobot {
   private final RobotContainer m_robotContainer;
   private final RobotSimulation m_robotSimulation;
 
+  Thread visionThread;
+
   public Robot() {
     m_robotContainer = new RobotContainer();
     m_robotSimulation = new RobotSimulation(m_robotContainer);
+
+    visionThread = new Thread(() -> {
+      UsbCamera visionCam = CameraServer.startAutomaticCapture();
+      visionCam.setResolution(640, 480);
+    });
+    visionThread.start();
   }
 
   @Override
   public void robotInit() {
     AutoConstants.initDashboard();
-    CameraServer.startAutomaticCapture();
   }
 
   @Override
