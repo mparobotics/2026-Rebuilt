@@ -244,7 +244,7 @@ public class RobotContainer {
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
       case RightNeutralZoneAuto -> new RightNeutralZoneAuto (m_drive, m_intake);
       case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
-      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2(m_drive, m_intake);
+      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2(m_drive, m_intake, m_shooter);
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
 

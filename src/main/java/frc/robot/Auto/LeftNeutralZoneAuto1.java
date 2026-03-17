@@ -23,10 +23,10 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  private static final double BACKWARD_METERS_1 = 3.4;
+  private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 3.0;
   private static final double FORWARD_METERS_1 = 3.0;
-  private static final double FORWARD_METERS_2 = 1.0;
+  private static final double FORWARD_METERS_2 = 1.;
   private static final double FORWARD_METERS_3 = 3.3;
 
   private static final double INTAKE_POWER = -1.0;
@@ -37,7 +37,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
     addCommands(
       Commands.runOnce(intake::lowerIntake, intake),
 
-      // Drive backwards 3.4m.
+      // Drive backwards 3.6m.
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees left.
@@ -50,7 +50,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 1m (intake still on).
+      // Drive forward 1.3m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees right (intake still on).
@@ -66,7 +66,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Turn 90 degrees right
       turnRelativeDegrees(drive, -95.0),
 
-      // Drive forward (back to the trench)
+      // Drive backward (back to the trench)
       driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
       // Turn 10 degrees left
