@@ -163,7 +163,7 @@ public class SwerveSubsystem extends SubsystemBase {
   private void updateOdometryWithVision (String limelightName){
       boolean doRejectUpdate = false;
       
-      //pass raw yaw + rate instead of estimate here
+      //pass raw yaw + rate instead of estimate here for accuracy
       LimelightHelpers.SetRobotOrientation(limelightName, getYaw().getDegrees(),pigeon.getAngularVelocityZWorld().getValueAsDouble(),0,0,0,0);
       LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
 
