@@ -107,11 +107,12 @@ public class SwerveSubsystem extends SubsystemBase {
 
 
   private void configurePathPlanner(){
-    AutoBuilder.configure(this::getPose,
+    AutoBuilder.configure(
+    this::getPose,
     this::resetOdometry,
     this::getChassisSpeeds,
-    (speeds, feedforwards)->driveFromChassisSpeeds(speeds, false),
-    AutoConstants.SWERV_DRIVE_CONTROLLER,
+    (speeds, feedforwards)-> driveFromChassisSpeeds(speeds, false),
+    AutoConstants.SWERVE_DRIVE_CONTROLLER,
     AutoConstants.ROBOT_CONFIG,
     FieldConstants::isRedAlliance,
     this);
@@ -123,7 +124,8 @@ public class SwerveSubsystem extends SubsystemBase {
       if (AutoConstants.isRightSideAuto()){
         path = path.mirrorPath();
       }
-      return new FollowPathCommand(path,
+      return new FollowPathCommand(
+      path,
       this::getPose, 
       this::getChassisSpeeds,
       (speeds, feedforwards) -> driveFromChassisSpeeds(speeds, isVisionEnabled()),
@@ -159,17 +161,27 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   private void updateOdometryWithVision (String limelightName){
-    boolean doRejectUpdate = false;
-      LimelightHelpers.SetRobotOrientation(limelightName, odometry.getEstimatedPosition().getRotation().getDegrees(),0,0,0,0,0);
-      LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
-      if (mt1 == null){
+      boolean doRejectUpdate = false;
+      
+      //pass raw yaw + rate instead of estimate here
+      LimelightHelpers.SetRobotOrientation(limelightName, getYaw().getDegrees(),pigeon.getAngularVelocityZWorld().getValueAsDouble(),0,0,0,0);
+      LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
+
+      if (mt2 == null){
         return;
       }
       if(Math.abs(pigeon.getAngularVelocityZWorld().getValueAsDouble()) > VisionConstants.MAX_VISION_ANGULAR_RATE_DEG_PER_SEC)
       {
         doRejectUpdate = true;
       }
-      if(mt1.tagCount == 0)
+
+      //reject poses that aren't inside the field
+      boolean isInField = mt2.pose.getX() > 0 && mt2.pose.getX() < FieldConstants.FIELD_LENGTH
+                        && mt2.pose.getY() > 0 && mt2.pose.getY() < FieldConstants.FIELD_WIDTH;
+      //reject poses if LL is too far away from tag
+      boolean isCloseEnough = mt2.avgTagDist < 10; //10 is high, check what we think distance should be
+
+      if(mt2.tagCount <= 0 || isInField == false || isCloseEnough == false)
       {
         doRejectUpdate = true;
       }
@@ -181,13 +193,14 @@ public class SwerveSubsystem extends SubsystemBase {
                 VisionConstants.VISION_STD_DEV_Y_METERS,
                 VisionConstants.VISION_STD_DEV_THETA_RADIANS)); // need to measure
         odometry.addVisionMeasurement(
-          mt1.pose,
-          mt1.timestampSeconds);
+          mt2.pose,
+          mt2.timestampSeconds);
       }
 
-      SmartDashboard.putNumber("Vision/" + limelightName + "/TagCount", mt1.tagCount);
-      SmartDashboard.putNumber("Vision/" + limelightName + "/AvgTagDist", mt1.avgTagDist);
-      SmartDashboard.putNumber("Vision/" + limelightName + "/LatencyMs", mt1.latency);
+      SmartDashboard.putBoolean("Is Vision Good", !doRejectUpdate);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/TagCount", mt2.tagCount);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/AvgTagDist", mt2.avgTagDist);
+      SmartDashboard.putNumber("Vision/" + limelightName + "/LatencyMs", mt2.latency);
     }
 
 
@@ -311,6 +324,7 @@ public class SwerveSubsystem extends SubsystemBase {
         }
       }
     }
+    //sends robot pose to network tables
     field.setRobotPose(getPose());
 
     SmartDashboard.putNumber("Pigeon Yaw",  pigeon.getYaw().getValueAsDouble());

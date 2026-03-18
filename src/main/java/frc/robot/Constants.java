@@ -150,7 +150,7 @@ public static final class AutoConstants {
   public static final RobotConfig ROBOT_CONFIG = new RobotConfig (52, 6.8, MODULE_CONFIG,
   SwerveConstants.FRONT_LEFT, SwerveConstants.FRONT_RIGHT, SwerveConstants.BACK_LEFT, SwerveConstants.BACK_RIGHT);
 
-  public static final PPHolonomicDriveController SWERV_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
+  public static final PPHolonomicDriveController SWERVE_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{
@@ -257,8 +257,9 @@ public static final class VisionConstants {
   public static final double MAX_VISION_ANGULAR_RATE_DEG_PER_SEC = 720.0;
 
   /** Standard deviations for vision measurements: (x meters, y meters, theta radians). */
-  public static final double VISION_STD_DEV_X_METERS = 0.7;
-  public static final double VISION_STD_DEV_Y_METERS = 0.7;
+  //Rotation (Radians) should be handled by pigion so deviation is high
+  public static final double VISION_STD_DEV_X_METERS = 0.4;
+  public static final double VISION_STD_DEV_Y_METERS = 0.4;
   public static final double VISION_STD_DEV_THETA_RADIANS = 99999.0;
 
   public static String getLimelightStreamUrl(String limelightName) {
