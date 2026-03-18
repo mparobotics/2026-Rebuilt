@@ -16,7 +16,7 @@ import frc.robot.Tuning.TuningHelper;
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
-  private TuningHelper tuning = new TuningHelper();
+  private TuningHelper tuning;
 
   private final RobotContainer m_robotContainer;
   private final RobotSimulation m_robotSimulation;
@@ -42,7 +42,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    tuning.TuningPeriodic();
   }
 
   @Override
@@ -89,13 +88,20 @@ public class Robot extends TimedRobot {
   public void testInit() {
     // Cancel all commands when entering test mode.
     CommandScheduler.getInstance().cancelAll();
+    tuning = new TuningHelper();
   }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    if (tuning != null) {
+      tuning.TuningPeriodic();
+  }
+}
 
   @Override
-  public void testExit() {}
+  public void testExit() {
+    tuning = null;
+  }
 
   @Override
   public void simulationInit() {
