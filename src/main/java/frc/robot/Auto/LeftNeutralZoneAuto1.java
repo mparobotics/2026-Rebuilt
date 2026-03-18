@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 1.0;
+  private static final double DRIVE_SPEED_MPS = 2;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -29,7 +29,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_2 = 3.0;
   private static final double FORWARD_METERS_1 = 3.0;
   private static final double FORWARD_METERS_2 = 1.;
-  private static final double FORWARD_METERS_3 = 3.4;
+  private static final double FORWARD_METERS_3 = 3.2;
 
   private static final double INTAKE_POWER = -1.0;
 
@@ -71,8 +71,8 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Drive backward (back to the trench)
       driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
-      // Turn 10 degrees left
-      turnRelativeDegrees(drive, 10.0),
+      // Turn 20 degrees left
+      turnRelativeDegrees(drive, 20.0),
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),

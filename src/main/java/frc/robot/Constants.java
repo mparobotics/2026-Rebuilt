@@ -298,7 +298,7 @@ public static final class ShooterConstants {
   // Max travel is 3 rotations = 1080 degrees.
   public static final double HOOD_MIN_ROTATIONS = 0.0;
   public static final double HOOD_MED_ROTATIONS = 20.0;
-  public static final double HOOD_MAX_ROTATIONS = 23.0;
+  public static final double HOOD_MAX_ROTATIONS = 27.0;
 
   // Preset positions.
   public static final double HOOD_ANGLE_LOW = HOOD_MIN_ROTATIONS;
