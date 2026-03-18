@@ -22,11 +22,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.LeftLemonAuto;
 import frc.robot.Auto.LeftNeutralZoneAuto1;
-import frc.robot.Auto.LeftNeutralZoneAuto2;
-import frc.robot.Auto.RightNeutralZoneAuto;
+import frc.robot.Auto.RightNeutralZoneAuto1;
 import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Auto.CenterLemonAuto;
+import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
@@ -37,6 +37,7 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
+import frc.robot.UnusedAuto.LeftNeutralZoneAuto2;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 
@@ -242,11 +243,11 @@ public class RobotContainer {
       case DriveTestAuto -> new DriveTestAuto(m_drive, m_intake, m_shooter);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
-      case RightNeutralZoneAuto -> new RightNeutralZoneAuto (m_drive, m_intake);
+      case RightNeutralZoneAuto1 -> new RightNeutralZoneAuto1 (m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
-      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2(m_drive, m_intake, m_shooter);
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
+      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive, m_intake, m_shooter);
 
       
       default -> Commands.none();

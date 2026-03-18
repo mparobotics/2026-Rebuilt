@@ -4,21 +4,20 @@
 
 package frc.robot.Auto;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.SwerveConstants;
-import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
+import frc.robot.Subsystems.SwerveSubsystem;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-
-public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
+public class CenterToDepotAuto extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 2;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
@@ -26,54 +25,43 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  private static final double BACKWARD_METERS_1 = 3.6;
-  private static final double BACKWARD_METERS_2 = 3.0;
-  private static final double FORWARD_METERS_1 = 3.0;
-  private static final double FORWARD_METERS_2 = 1.;
-  private static final double FORWARD_METERS_3 = 3.2;
+  private static final double BACKWARD_METERS_1 = 1;
+  private static final double FORWARD_METERS_1 = 2;
 
   private static final double INTAKE_POWER = -1.0;
 
-  public LeftNeutralZoneAuto1(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+  public CenterToDepotAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
 
     addCommands(
       Commands.runOnce(intake::lowerIntake, intake),
 
-      // Drive backwards 3.6m.
-      driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
-
-      // Turn 90 degrees left.
-      turnRelativeDegrees(drive, 90.0),
-
-      // Drive forward 3m while starting intake (intake stays on for the rest of auto).
-      Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+      // Drive forwards 2m.
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Turn 90 degrees right (intake still on).
+      // Turn 90 degrees right.
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 1.3m (intake still on).
-      driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
+      // Drive forward 2m
+      driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Turn 90 degrees right (intake still on).
-      turnRelativeDegrees(drive, -90.0),
+      // Turn 90 degrees left (intake on).
+      Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+      turnRelativeDegrees(drive, 90.0),
 
-      // Drive forward 3.4m (intake still on).
-      driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS),
+      // Drive backwards 1m (intake still on).
+      driveDistanceMeters(drive, BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
-      // Turn 90 degrees right
+      // Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive backward (back to the trench)
-      driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+      // Drive backward 1m (intake still on).
+      driveDistanceMeters(drive, BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Turn 20 degrees left
-      turnRelativeDegrees(drive, 20.0),
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
@@ -85,33 +73,18 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       }, shooter),
       Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
-        .withTimeout(1.0),
+        .withTimeout(2.0),
 
-      Commands.parallel(
-        // Start kicker first, then start indexer 1 second later (kicker keeps running).
-        Commands.sequence(
-          Commands.run(() -> {
-            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-            shooter.setIndexerSpeed(0.0);
-          }, shooter).withTimeout(1.0),
-          Commands.run(() -> {
-            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-            shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
-          }, shooter)
-        ),
-
-        // While shooting/indexing, continuously move the intake arm up/down.
-        Commands.sequence(
-            Commands.runOnce(intake::lowerIntake, intake),
-            Commands.waitUntil(() ->
-              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
-                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG),
-            Commands.runOnce(intake::raiseIntake, intake),
-            Commands.waitUntil(() ->
-              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
-                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
-          )
-          .repeatedly()
+      // Start kicker first, then start indexer 1 second later (kicker keeps running).
+      Commands.sequence(
+        Commands.run(() -> {
+          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+          shooter.setIndexerSpeed(0.0);
+        }, shooter).withTimeout(1.0),
+        Commands.run(() -> {
+          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+          shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+        }, shooter)
       )
     );
   }
