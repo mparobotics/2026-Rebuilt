@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 1.0;
+  private static final double DRIVE_HEADING_P = 3.0;
+  private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
@@ -27,7 +29,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_2 = 3.0;
   private static final double FORWARD_METERS_1 = 3.0;
   private static final double FORWARD_METERS_2 = 1.;
-  private static final double FORWARD_METERS_3 = 3.3;
+  private static final double FORWARD_METERS_3 = 3.4;
 
   private static final double INTAKE_POWER = -1.0;
 
@@ -56,7 +58,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Turn 90 degrees right (intake still on).
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 3.3m (intake still on).
+      // Drive forward 3.4m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
@@ -107,11 +109,22 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
     double distanceAbsMeters = Math.abs(distanceMeters);
 
     AtomicReference<SwerveModulePosition[]> startPositions = new AtomicReference<>();
+    final double[] startYawRad = new double[1];
 
     return Commands.sequence(
-      Commands.runOnce(() -> startPositions.set(drive.getPositions()), drive),
+      Commands.runOnce(() -> {
+        startPositions.set(drive.getPositions());
+        startYawRad[0] = drive.getYaw().getRadians();
+      }, drive),
       Commands.runEnd(
-        () -> drive.drive(commandedSpeedMps, 0, 0, false),
+        () -> {
+          double errorRad = MathUtil.angleModulus(startYawRad[0] - drive.getYaw().getRadians());
+          double maxOmegaRadPerSec =
+            Math.min(DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC, SwerveConstants.maxAngularVelocity);
+          double omegaRadPerSec =
+            MathUtil.clamp(errorRad * DRIVE_HEADING_P, -maxOmegaRadPerSec, maxOmegaRadPerSec);
+          drive.drive(commandedSpeedMps, 0, omegaRadPerSec, false);
+        },
         () -> drive.drive(0, 0, 0, false),
         drive)
         .until(
