@@ -119,6 +119,7 @@ public class IntakeSubsystem extends SubsystemBase {
       IntakeConstants.INTAKE_ARM_MIN_DEG, 
       Math.min(IntakeConstants.INTAKE_ARM_MAX_DEG, intakeArmTargetDeg));
     intakeArmController.reset();
+    intakeArm2Controller.reset();
     intakeArmActive = true;
   }
 
@@ -150,33 +151,41 @@ public class IntakeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     double currentDeg = getArmPositionDeg();
+    double currentDeg2 = getArmPositionDeg2();
 
     SmartDashboard.putNumber("IntakeArm/TargetDeg", intakeArmTargetDeg);
     SmartDashboard.putNumber("IntakeArm/PostionDeg", currentDeg);
+    SmartDashboard.putNumber("IntakeArm/PostionDeg2", currentDeg2);
     SmartDashboard.putBoolean("IntakeArm/Active", intakeArmActive);
 
     double rawffOutput = intakeArmFeedforward.calculate(Math.toRadians(currentDeg), 0);
+    double rawffOutput2 = intakeArmFeedforward.calculate(Math.toRadians(currentDeg2), 0);
     //divide ff output(in volts) by battery volts for percent output that motor.set expects
     double ffOutput = rawffOutput/12;
+    double ffOutput2 = rawffOutput2/12;
 
     if (intakeArmActive){
       double pidOutput = intakeArmController.calculate(currentDeg, intakeArmTargetDeg);
+      double pidOutput2 = intakeArm2Controller.calculate(currentDeg2, intakeArmTargetDeg);
       
       double output = pidOutput + ffOutput;
+      double output2 = pidOutput2 + ffOutput2;
 
       output = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output));
+      output2 = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output2));
 
-    if (intakeArmController.atSetpoint()){
+
+    if (intakeArmController.atSetpoint() && intakeArm2Controller.atSetpoint()){
       intakeArmMotor.set(ffOutput);
-      intakeArmMotor2.set(-ffOutput);
+      intakeArmMotor2.set(-ffOutput2);
       intakeArmActive = false;
     } else {
       intakeArmMotor.set(output);
-      intakeArmMotor2.set(-output);
+      intakeArmMotor2.set(-output2);
     }
   } else{
       intakeArmMotor.set(ffOutput);
-      intakeArmMotor2.set(-ffOutput);
+      intakeArmMotor2.set(-ffOutput2);
     }
   }
 }
