@@ -37,7 +37,6 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
-import frc.robot.UnusedAuto.LeftNeutralZoneAuto2;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 
@@ -200,9 +199,9 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.7,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.85,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.7,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.85,
         // rotationSupplier - Rotation speed
         () -> -driveController.getRawAxis(rotationAxis) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
