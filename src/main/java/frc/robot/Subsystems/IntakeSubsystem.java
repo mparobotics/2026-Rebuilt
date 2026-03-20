@@ -168,7 +168,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     if (intakeArmController.atSetpoint()){
       intakeArmMotor.set(ffOutput);
-      intakeArmMotor2.set(ffOutput);
+      intakeArmMotor2.set(-ffOutput);
       intakeArmActive = false;
     } else {
       intakeArmMotor.set(output);
@@ -176,7 +176,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
   } else{
       intakeArmMotor.set(ffOutput);
-      intakeArmMotor2.set(0.0);
+      intakeArmMotor2.set(-ffOutput);
     }
   }
 }
