@@ -22,7 +22,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
   private final SparkMax intakeArmMotor = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
-  private final SparkMax intakeArmMotor2 = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
+  private final SparkMax intakeArmMotor2 = new SparkMax(IntakeConstants.INTAKE_ARM_2_ID, MotorType.kBrushless);
 
   private final RelativeEncoder intakeArmEncoder = intakeArmMotor.getEncoder();
   private final RelativeEncoder intakeArm2Encoder = intakeArmMotor2.getEncoder();

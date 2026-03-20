@@ -318,6 +318,7 @@ public static final class IntakeConstants {
   public static double INTAKE_SPEED = 0.90; // max percent output for intake motor
 
   public static int INTAKE_ARM_ID = 18;
+  public static int INTAKE_ARM_2_ID = 24;
   public static int GEAR_RATIO = 25;
 
   //Intake arm position units are degrees
