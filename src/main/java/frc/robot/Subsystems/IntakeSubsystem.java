@@ -21,14 +21,21 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
   private final SparkMax intakeArmMotor = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
+  private final SparkMax intakeArmMotor2 = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
 
   private final RelativeEncoder intakeArmEncoder = intakeArmMotor.getEncoder();
+  private final RelativeEncoder intakeArm2Encoder = intakeArmMotor2.getEncoder();
 
   private final PIDController intakeArmController = new PIDController(
     IntakeConstants.INTAKE_ARM_kP,
     IntakeConstants.INTAKE_ARM_kI,
     IntakeConstants.INTAKE_ARM_kD);
   
+  private final PIDController intakeArm2Controller = new PIDController(
+    IntakeConstants.INTAKE_ARM_kP,
+    IntakeConstants.INTAKE_ARM_kI,
+    IntakeConstants.INTAKE_ARM_kD);
+
   private double intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
   private boolean intakeArmActive = false;
 
@@ -60,6 +67,14 @@ public class IntakeSubsystem extends SubsystemBase {
     intakeArmController.setTolerance(IntakeConstants.INTAKE_ARM_TOLERANCE_DEG);
     intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
     intakeArmActive = false;
+
+    intakeArmMotor2.configure(intakeArmConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    //On enable, assume the arm starts raised at 90 degrees
+    intakeArm2Encoder.setPosition(IntakeConstants.INTAKE_ARM_RAISED_POSITION);
+    intakeArm2Controller.setTolerance(IntakeConstants.INTAKE_ARM_TOLERANCE_DEG);
+    intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
+    intakeArmActive = false;
+
   }
 
   public void toggleIntake() {
@@ -121,6 +136,10 @@ public class IntakeSubsystem extends SubsystemBase {
     return intakeArmEncoder.getPosition();
   }
 
+    public double getArmPositionDeg2() {
+    return intakeArm2Encoder.getPosition();
+  }
+
   @Override
   public void periodic() {
     double currentDeg = getArmPositionDeg();
@@ -135,12 +154,15 @@ public class IntakeSubsystem extends SubsystemBase {
 
     if (intakeArmController.atSetpoint()){
       intakeArmMotor.set(0.0);
+      intakeArmMotor2.set(0.0);
       intakeArmActive = false;
     } else {
       intakeArmMotor.set(output);
+      intakeArmMotor2.set(-output);
     }
   } else{
       intakeArmMotor.set(0.0);
+      intakeArmMotor2.set(0.0);
     }
   }
 }
