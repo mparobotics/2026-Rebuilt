@@ -334,6 +334,12 @@ public static final class IntakeConstants {
   public static final double INTAKE_ARM_kD = 0.15;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
 
+  //Feedforward constants for intake arm
+  public static final double INTAKE_ARM_kS = 0.0;
+  public static final double INTAKE_ARM_kG = 0.0;
+  public static final double INTAKE_ARM_kV = 0.0;
+  public static final double INTAKE_ARM_kA = 0.0;
+
   //Percent output cap (0..1) for gentler motion
   //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
   public static final double INTAKE_ARM_MAX_OUTPUT = 0.20;

@@ -4,6 +4,7 @@
 
 package frc.robot.Subsystems;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -35,6 +36,12 @@ public class IntakeSubsystem extends SubsystemBase {
     IntakeConstants.INTAKE_ARM_kP,
     IntakeConstants.INTAKE_ARM_kI,
     IntakeConstants.INTAKE_ARM_kD);
+
+    private final ArmFeedforward intakeArmFeedforward = new ArmFeedforward(
+    IntakeConstants.INTAKE_ARM_kS,
+    IntakeConstants.INTAKE_ARM_kG,
+    IntakeConstants.INTAKE_ARM_kV,
+    IntakeConstants.INTAKE_ARM_kA);
 
   private double intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
   private boolean intakeArmActive = false;
@@ -148,20 +155,27 @@ public class IntakeSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("IntakeArm/PostionDeg", currentDeg);
     SmartDashboard.putBoolean("IntakeArm/Active", intakeArmActive);
 
+    double rawffOutput = intakeArmFeedforward.calculate(Math.toRadians(currentDeg), 0);
+    //divide ff output(in volts) by battery volts for percent output that motor.set expects
+    double ffOutput = rawffOutput/12;
+
     if (intakeArmActive){
-      double output = intakeArmController.calculate(currentDeg, intakeArmTargetDeg);
+      double pidOutput = intakeArmController.calculate(currentDeg, intakeArmTargetDeg);
+      
+      double output = pidOutput + ffOutput;
+
       output = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output));
 
     if (intakeArmController.atSetpoint()){
-      intakeArmMotor.set(0.0);
-      intakeArmMotor2.set(0.0);
+      intakeArmMotor.set(ffOutput);
+      intakeArmMotor2.set(ffOutput);
       intakeArmActive = false;
     } else {
       intakeArmMotor.set(output);
       intakeArmMotor2.set(-output);
     }
   } else{
-      intakeArmMotor.set(0.0);
+      intakeArmMotor.set(ffOutput);
       intakeArmMotor2.set(0.0);
     }
   }
