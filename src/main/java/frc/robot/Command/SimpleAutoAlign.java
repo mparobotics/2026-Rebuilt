@@ -11,7 +11,7 @@ public class SimpleAutoAlign extends Command {
     private SwerveSubsystem swerveSubsystem;
 
     //target for how far away robot should be from hub
-    private final double targetDistance = 5; //in meters - temporary need to check
+    private final double targetDistance = 2.1; //in meters - temporary need to check
 
     private final double cameraHeight = 0.5; //need to measure
     private final double aprilTagHeight = 1; //need to measure
