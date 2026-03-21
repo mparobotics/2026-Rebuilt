@@ -55,4 +55,4 @@ Thumbs.db
 .vscode/
 
 # sim files
-.ctre_sim/
+ctre_sim/

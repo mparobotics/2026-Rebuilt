@@ -150,7 +150,7 @@ public static final class AutoConstants {
   public static final RobotConfig ROBOT_CONFIG = new RobotConfig (52, 6.8, MODULE_CONFIG,
   SwerveConstants.FRONT_LEFT, SwerveConstants.FRONT_RIGHT, SwerveConstants.BACK_LEFT, SwerveConstants.BACK_RIGHT);
 
-  public static final PPHolonomicDriveController SWERV_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
+  public static final PPHolonomicDriveController SWERVE_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{
@@ -257,8 +257,9 @@ public static final class VisionConstants {
   public static final double MAX_VISION_ANGULAR_RATE_DEG_PER_SEC = 720.0;
 
   /** Standard deviations for vision measurements: (x meters, y meters, theta radians). */
-  public static final double VISION_STD_DEV_X_METERS = 0.7;
-  public static final double VISION_STD_DEV_Y_METERS = 0.7;
+  //Rotation (Radians) should be handled by pigion so deviation is high
+  public static final double VISION_STD_DEV_X_METERS = 0.4;
+  public static final double VISION_STD_DEV_Y_METERS = 0.4;
   public static final double VISION_STD_DEV_THETA_RADIANS = 99999.0;
 
   public static String getLimelightStreamUrl(String limelightName) {
@@ -317,10 +318,11 @@ public static final class IntakeConstants {
   public static double INTAKE_SPEED = 0.90; // max percent output for intake motor
 
   public static int INTAKE_ARM_ID = 18;
+  public static int INTAKE_ARM_2_ID = 24;
   public static int GEAR_RATIO = 25;
 
   //Intake arm position units are degrees
-  public static final double INTAKE_ARM_MIN_DEG = 20.0;
+  public static final double INTAKE_ARM_MIN_DEG = 25.0;
   public static final double INTAKE_ARM_MAX_DEG = 90.0;
 
   //Preset positions
@@ -328,10 +330,16 @@ public static final class IntakeConstants {
   public static final double INTAKE_ARM_RAISED_POSITION = INTAKE_ARM_MAX_DEG;
 
   //PID constants for intake arm (degrees).
-  public static final double INTAKE_ARM_kP = 6.0;
-  public static final double INTAKE_ARM_kI = 1.5;
-  public static final double INTAKE_ARM_kD = 0.15;
+  public static final double INTAKE_ARM_kP = 9.90;
+  public static final double INTAKE_ARM_kI = 1.60;
+  public static final double INTAKE_ARM_kD = 0.70;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
+
+  //Feedforward constants for intake arm
+  public static final double INTAKE_ARM_kS = 0.0;
+  public static final double INTAKE_ARM_kG = 0.0;
+  public static final double INTAKE_ARM_kV = 0.0;
+  public static final double INTAKE_ARM_kA = 0.0;
 
   //Percent output cap (0..1) for gentler motion
   //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
