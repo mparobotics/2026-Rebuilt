@@ -9,8 +9,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.Tuning.TuningHelper;
-
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -189,4 +187,35 @@ public class IntakeSubsystem extends SubsystemBase {
       intakeArmMotor2.set(ffOutput2);
     }
   }
+
+  /* =========================================================================
+   * Dynamic Tuning Support
+   *
+   * The methods below are used by TuningHelper (via Robot test mode) to read
+   * and update PID and feedforward gains at runtime.  This allows a
+   * human-in-the-loop tuning workflow where an operator adjusts parameters on
+   * the SmartDashboard / Shuffleboard / Elastic while observing arm behaviour.
+   * ======================================================================= */
+
+  public double getArmKP() { return intakeArmController.getP(); }
+  public double getArmKI() { return intakeArmController.getI(); }
+  public double getArmKD() { return intakeArmController.getD(); }
+
+  public double getArmKS() { return intakeArmFeedforward.getKs(); }
+  public double getArmKG() { return intakeArmFeedforward.getKg(); }
+  public double getArmKV() { return intakeArmFeedforward.getKv(); }
+  public double getArmKA() { return intakeArmFeedforward.getKa(); }
+
+  public void setArmPIDGains(double kP, double kI, double kD) {
+    intakeArmController.setPID(kP, kI, kD);
+    intakeArm2Controller.setPID(kP, kI, kD);
+  }
+
+  public void setArmFeedforwardGains(double kS, double kG, double kV, double kA) {
+    intakeArmFeedforward.setKs(kS);
+    intakeArmFeedforward.setKg(kG);
+    intakeArmFeedforward.setKv(kV);
+    intakeArmFeedforward.setKa(kA);
+  }
+
 }

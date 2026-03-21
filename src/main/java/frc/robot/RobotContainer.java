@@ -256,4 +256,8 @@ public class RobotContainer {
   public SwerveSubsystem getDriveSubsystem() {
     return m_drive;
   }
+
+  public IntakeSubsystem getIntakeSubsystem() {
+    return m_intake;
+  }
 }
