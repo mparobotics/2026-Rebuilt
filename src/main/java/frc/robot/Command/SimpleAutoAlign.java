@@ -36,6 +36,20 @@ public class SimpleAutoAlign extends Command {
         return tidInt;
     }
 
+    private boolean isSupportedTag(int tagId) {
+        return tagId == 10 || tagId == 25 || tagId == 11 || tagId == 27 || tagId == 8 || tagId == 24;
+    }
+
+    private double getDesiredAlignmentAngle(int tagId) {
+        if (tagId == 11 || tagId == 27) {
+            return 20.0;
+        }
+        if (tagId == 8 || tagId == 24) {
+            return -20.0;
+        }
+        return 0.0;
+    }
+
     private double getDistanceToTarget() {
         double ty = NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("ty").getDouble(0.0); // vertical angle offset in degrees
         double angleToTargetRadians = Math.toRadians(cameraTilt + ty);
@@ -61,15 +75,17 @@ public class SimpleAutoAlign extends Command {
         double distance = getDistanceToTarget();
         //when i say offset i mean rotation offset
         double offset = getOffsetToTarget();
+        int tagId = getTagId();
 
         //only auto align if distance is valid and can see tag 10
-        if (!canSeeTag() || getTagId() != 10 || distance < 0) {
+        if (!canSeeTag() || !isSupportedTag(tagId) || distance < 0) {
             swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0,0,0), false);
             return;
         }
     
+        double desiredAlignmentAngle = getDesiredAlignmentAngle(tagId);
         double driveSpeed = distanceController.calculate(distance, targetDistance);
-        double rotationSpeed = rotationController.calculate(offset, 0); //zero is facing straight from ll
+        double rotationSpeed = rotationController.calculate(offset, desiredAlignmentAngle);
 
         swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(driveSpeed, 0, rotationSpeed), false);
 
