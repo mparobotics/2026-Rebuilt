@@ -315,7 +315,7 @@ public static final class IntakeConstants {
   // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
   public static int INTAKE_ID = 19;
   // SparkMax.set(...) expects [-1.0, 1.0] percent output.
-  public static double INTAKE_SPEED = 0.90; // max percent output for intake motor
+  public static double INTAKE_SPEED = 0.50; // max percent output for intake motor
 
   public static int INTAKE_ARM_ID = 18;
   public static int INTAKE_ARM_2_ID = 24;
@@ -332,7 +332,7 @@ public static final class IntakeConstants {
   //PID constants for intake arm (degrees).
   public static final double INTAKE_ARM_kP = 9.90;
   public static final double INTAKE_ARM_kI = 1.60;
-  public static final double INTAKE_ARM_kD = 0.70;
+  public static final double INTAKE_ARM_kD = 0.16;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
 
   //Feedforward constants for intake arm
