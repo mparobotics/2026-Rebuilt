@@ -17,8 +17,8 @@ public class SimpleAutoAlign extends Command {
     private final double aprilTagHeight = 1; //need to measure
     private final double cameraTilt = 0.001; //so math does not end up dividing by 0
     
-    private final PIDController distanceController = new PIDController(0,0,0); //tune this
-    private final PIDController rotationController = new PIDController(0,0,0); //tune this
+    private final PIDController distanceController = new PIDController(0.1,0,0); //tune this
+    private final PIDController rotationController = new PIDController(0.01,0,0); //tune this
 
     public SimpleAutoAlign(SwerveSubsystem swerveSubsystem){
         this.swerveSubsystem = swerveSubsystem;
