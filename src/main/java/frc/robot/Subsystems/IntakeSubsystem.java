@@ -9,6 +9,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Tuning.TuningHelper;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -177,15 +178,15 @@ public class IntakeSubsystem extends SubsystemBase {
 
     if (intakeArmController.atSetpoint() && intakeArm2Controller.atSetpoint()){
       intakeArmMotor.set(ffOutput);
-      intakeArmMotor2.set(-ffOutput2);
+      intakeArmMotor2.set(ffOutput2);
       intakeArmActive = false;
     } else {
       intakeArmMotor.set(output);
-      intakeArmMotor2.set(-output2);
+      intakeArmMotor2.set(output2);
     }
   } else{
       intakeArmMotor.set(ffOutput);
-      intakeArmMotor2.set(-ffOutput2);
+      intakeArmMotor2.set(ffOutput2);
     }
   }
 }

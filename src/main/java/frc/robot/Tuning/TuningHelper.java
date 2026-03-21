@@ -7,24 +7,24 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class TuningHelper {
 
     /* PID Tuning Variables */
-    public double tuningkP;
-    public double tuningkI;
-    public double tuningkD;
+    public static double tuningkP;
+    public static double tuningkI;
+    public static double tuningkD;
 
     /* Feedforward Tuning Variables */
-    public double tuningkS;
-    public double tuningkG;
-    public double tuningkV;
-    public double tuningkA;
+    public static double tuningkS;
+    public static double tuningkG;
+    public static double tuningkV;
+    public static double tuningkA;
 
     /* Motor Speed Tuning */
-    public double tuningSpeed;
+    public static double tuningSpeed;
 
     /* Setpoint Tuning */
-    public double tuningSetpoint;
+    public static double tuningSetpoint;
 
     /* tuningDeadband */
-    public double tuningDeadband;
+    public static double tuningDeadband;
 
     public TuningHelper() {
         SmartDashboard.putNumber("Tuning/kP", tuningkP);

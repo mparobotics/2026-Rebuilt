@@ -322,7 +322,7 @@ public static final class IntakeConstants {
   public static int GEAR_RATIO = 25;
 
   //Intake arm position units are degrees
-  public static final double INTAKE_ARM_MIN_DEG = 20.0;
+  public static final double INTAKE_ARM_MIN_DEG = 25.0;
   public static final double INTAKE_ARM_MAX_DEG = 90.0;
 
   //Preset positions
@@ -330,9 +330,9 @@ public static final class IntakeConstants {
   public static final double INTAKE_ARM_RAISED_POSITION = INTAKE_ARM_MAX_DEG;
 
   //PID constants for intake arm (degrees).
-  public static final double INTAKE_ARM_kP = 6.0;
-  public static final double INTAKE_ARM_kI = 1.5;
-  public static final double INTAKE_ARM_kD = 0.15;
+  public static final double INTAKE_ARM_kP = 9.90;
+  public static final double INTAKE_ARM_kI = 1.60;
+  public static final double INTAKE_ARM_kD = 0.70;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
 
   //Feedforward constants for intake arm
