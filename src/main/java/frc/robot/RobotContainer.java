@@ -33,6 +33,7 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.AltAutoAlign;
 import frc.robot.Command.AutoAlign;
+import frc.robot.Command.SimpleAutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
@@ -188,8 +189,10 @@ public class RobotContainer {
     driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
     // Right Trigger = Auto-align to right scoring position
     driveController.axisGreaterThan(Axis.kRightTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, false));
-    // Right Bumper = Alt-Auto-Align
-    driveController.button(Button.kRightBumper.value).whileTrue(new AltAutoAlign(m_drive, m_shooter));
+    // Left Bumper = Alt-Auto-Align
+    driveController.button(Button.kLeftBumper.value).whileTrue(new AltAutoAlign(m_drive, m_shooter));
+    //Right Bumper = Simple Auto Align
+    driveController.button(Button.kRightBumper.value).whileTrue(new SimpleAutoAlign(m_drive));
 
     // Default command runs continuously when no other command requires the subsystem.
     // It automatically pauses when commands like AutoAlign take control, then resumes
