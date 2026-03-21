@@ -8,6 +8,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
@@ -29,9 +30,9 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_2 = 3.0;
   private static final double FORWARD_METERS_1 = 3.0;
   private static final double FORWARD_METERS_2 = 1.;
-  private static final double FORWARD_METERS_3 = 3.2;
+  private static final double FORWARD_METERS_3 = 3.25;
 
-  private static final double INTAKE_POWER = -1.0;
+  private static final double INTAKE_POWER = -0.7;
 
   public RightNeutralZoneAuto1(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
@@ -66,13 +67,13 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
       // Turn 90 degrees left
-      turnRelativeDegrees(drive, 90.0),
+      turnRelativeDegrees(drive, -90.0),
 
       // Drive backward (back to the trench)
-      driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+      driveDistanceMeters(drive,BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
       // Turn 20 degrees right
-      turnRelativeDegrees(drive, -20.0),
+      turnRelativeDegrees(drive,-13.0),
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
@@ -84,18 +85,35 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
       }, shooter),
       Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
-        .withTimeout(2.0),
+        .withTimeout(1.0),
 
-      // Start kicker first, then start indexer 1 second later (kicker keeps running).
-      Commands.sequence(
-        Commands.run(() -> {
-          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-          shooter.setIndexerSpeed(0.0);
-        }, shooter).withTimeout(1.0),
-        Commands.run(() -> {
-          shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-          shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
-        }, shooter)
+      Commands.parallel(
+        // Start kicker first, then start indexer 1 second later (kicker keeps running).
+        Commands.sequence(
+          Commands.run(() -> {
+            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+            shooter.setIndexerSpeed(0.0);
+          }, shooter).withTimeout(1.0),
+          Commands.run(() -> {
+            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+            shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+          }, shooter)
+        ),
+
+        Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+
+        // While shooting/indexing, continuously move the intake arm up/down.
+        Commands.sequence(
+            Commands.runOnce(intake::lowerIntake, intake),
+            Commands.waitUntil(() ->
+              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
+                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG),
+            Commands.runOnce(intake::raiseIntake, intake),
+            Commands.waitUntil(() ->
+              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
+                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
+          )
+          .repeatedly()
       )
     );
   }
