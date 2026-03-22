@@ -53,6 +53,8 @@ public interface TunableProvider {
 - Subsystems implement this to expose their tunable parameters
 - `getSubsystemName()` returns the owning subsystem (e.g., `"Intake"`)
 - Each provider declares its subsystem name once, eliminating duplication across tuners
+- `getTuners()` is called once by the `TuningManager` at construction time —
+  implementations may allocate new objects on each call without performance concerns
 - `RobotContainer` does not implement this interface — it aggregates providers
 
 ---
@@ -112,6 +114,10 @@ public class TuningParameter {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.getter = Objects.requireNonNull(getter, "getter must not be null");
         this.setter = Objects.requireNonNull(setter, "setter must not be null");
+        if (min > max) {
+            throw new IllegalArgumentException(
+                "min (" + min + ") must not be greater than max (" + max + ")");
+        }
         this.min = min;
         this.max = max;
     }
@@ -135,7 +141,9 @@ public class TuningParameter {
 Bounds are optional and default to `Double.NEGATIVE_INFINITY` / `Double.POSITIVE_INFINITY`,
 which makes `MathUtil.clamp()` a no-op when bounds are not specified. This means
 `setValue()` always clamps — the behavior is consistent regardless of whether bounds
-are declared.
+are declared. The 5-arg constructor validates that `min <= max` and throws
+`IllegalArgumentException` if violated, catching misconfiguration at construction
+time rather than producing silent, unpredictable clamping behavior.
 
 The two constructors cover the common cases:
 - **3-arg** (name, getter, setter) — No bounds. Used when any value is safe.
@@ -339,6 +347,13 @@ runs on the main robot loop, all parameter reads and writes are synchronized wit
 control loop. There are no concurrent access concerns — parameters are never updated
 outside this loop.
 
+**Dashboard values take precedence.** The sync is one-directional: when the dashboard
+value differs from the subsystem's current value, the dashboard value is applied to the
+subsystem. If something else modifies a parameter while in test mode (e.g., a command),
+`periodic()` will overwrite that change with the dashboard value on the next cycle.
+This is intentional — during tuning, the dashboard is the single source of truth for
+parameter values.
+
 When test mode is exited, `Robot.testExit()` calls `close()` on the `TuningManager`
 and sets the reference to `null`. This unpublishes all NetworkTables entries and
 ensures the tuning system is fully torn down and does not persist into subsequent
@@ -370,12 +385,17 @@ public class TuningManager implements AutoCloseable {
                 NetworkTable tunerTable = subsystemTable.getSubTable(tuner.name());
 
                 for (TuningParameter param : tuner.parameters()) {
+                    // initialize NetworkTable entry with current parameter value
                     NetworkTableEntry entry = tunerTable.getEntry(param.getName());
-                    entry.setDouble(param.getValue());
+                    double value = param.getValue();
+                    entry.setDouble(value);
                     bindings.add(new TunerBinding(param, entry));
+                    log("Registered: %s = %.4f", entry.getName(), value);
                 }
             }
         }
+
+        log("Initialized with %d tunable parameters", bindings.size());
     }
 
     public void periodic() {
@@ -385,9 +405,12 @@ public class TuningManager implements AutoCloseable {
 
             if (!MathUtil.isNear(currentValue, dashboardValue, VALUE_CHANGE_TOLERANCE)) {
                 binding.param.setValue(dashboardValue);
-                // Write back the applied value — may differ from dashboardValue
-                // due to clamping
-                binding.entry.setDouble(binding.param.getValue());
+                double appliedValue = binding.param.getValue();
+                // Write back the applied value to the NetworkTable in case it is
+                // different from original value due to clamping on bounds
+                binding.entry.setDouble(appliedValue);
+                log("%s changed: %.4f -> %.4f",
+                    binding.entry.getName(), currentValue, appliedValue);
             }
         }
     }
@@ -403,6 +426,12 @@ public class TuningManager implements AutoCloseable {
             binding.entry.unpublish();
         }
         bindings.clear();
+
+        log("Closed — all tuning entries unpublished");
+    }
+
+    private void log(String fmt, Object... args) {
+        System.out.printf("[TuningManager] " + fmt + "%n", args);
     }
 
     private void validateProviders(List<TunableProvider> providers) {
@@ -448,6 +477,9 @@ Key design decisions:
   hierarchy (e.g., `Tuning/Intake/Arm/kP`) rather than flat keys in the root namespace.
 - **Cached entry references** — `NetworkTableEntry` objects are resolved once at construction
   and reused in `periodic()`, avoiding string lookups every cycle.
+- **Dashboard precedence** — `periodic()` implements a one-way sync: the dashboard value
+  always wins when it differs from the subsystem's current value. This makes the dashboard
+  the single source of truth during tuning sessions.
 - **Tolerance-based change guard** — `periodic()` uses `MathUtil.isNear()` to compare the
   dashboard value with the current subsystem value, avoiding floating-point equality pitfalls.
   `param.setValue()` is only called when the values differ beyond `VALUE_CHANGE_TOLERANCE`.
@@ -455,13 +487,22 @@ Key design decisions:
   avoiding redundant writes on every cycle. After `setValue()`, the write-back re-reads the
   value via `getValue()` so the dashboard reflects the actual applied value, which may differ
   from the requested value due to bounds clamping.
+- **Change logging** — Parameter changes are logged to `System.out` with the full
+  parameter path and old/new values (e.g., `[TuningManager] /Tuning/Intake/Arm/kP
+  changed: 0.5000 -> 0.7000`). The path comes from `NetworkTableEntry.getName()`,
+  which returns the full NetworkTables path for the entry. Initialization logs each
+  registered parameter and a summary count. Shutdown logs when entries are unpublished.
+  This provides a complete audit trail of a tuning session without requiring additional
+  tooling.
 - **Clean shutdown** — `close()` calls `unpublish()` on every `NetworkTableEntry` to remove
   the tuning entries from NetworkTables when test mode exits, then clears the binding list.
 - **Hierarchical validation** — `validateProviders()` checks for duplicate names at each level
   of the hierarchy (subsystem, tuner, parameter) and throws `IllegalArgumentException` on
   duplicates. This fails fast at construction time rather than silently producing overlapping
   NetworkTables paths. Validation mirrors the table/subtable structure — rather than
-  constructing composite path strings, it checks at each level independently.
+  constructing composite path strings, it checks at each level independently. The same
+  parameter name may appear in different tuners (e.g., `Intake/Arm/kP` and
+  `Drive/Heading/kP`) — this is intentional, since the full NetworkTables path is unique.
 - **Empty provider skipping** — Providers that return an empty tuner list are skipped entirely,
   preventing empty subsystem tables from appearing in NetworkTables.
 - **AutoCloseable** — Implements `AutoCloseable` to support try-with-resources if desired,
