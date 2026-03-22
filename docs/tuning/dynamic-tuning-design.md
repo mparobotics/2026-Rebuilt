@@ -297,6 +297,10 @@ It acts as the bridge between the `TunableProvider` hierarchy and NetworkTables.
 3. **Read from NetworkTables** — Read updated values as edited by the operator on the dashboard
 4. **Apply changes** — Call the `TuningParameter` setters to update control parameters
 
+Because the `TuningManager` publishes to NetworkTables, any NetworkTables-compatible
+dashboard (Shuffleboard, Elastic, Glass) can display and edit tuning parameters in
+real time. No additional UI integration is required.
+
 #### Lifecycle
 
 The `TuningManager` is created and initialized entirely within `Robot.testInit()`.
@@ -426,20 +430,12 @@ public class Robot extends TimedRobot {
 
 ---
 
-### 4. Extensibility
+### 4. Future Enhancements
 
-Future enhancements may include:
+#### Parameter Metadata
 
-- Metadata on parameters (min, max, units)
-- UI integration (Shuffleboard / Elastic)
-- Persistence of tuning values
-- Real-time updates via NetworkTables
-
----
-
-## Future Extensions (Optional)
-
-### Parameter Metadata
+Add optional metadata to `TuningParameter` such as min/max bounds and units. This
+would allow dashboards to render sliders with appropriate ranges and labels.
 
 ```java id="svqv7p"
 public class TuningParameter {
@@ -451,21 +447,14 @@ public class TuningParameter {
 }
 ```
 
----
+#### Persistence
 
-### Stream-Based API (Advanced)
+Support saving tuned values so they survive redeploys. Options include:
+- WPILib Preferences (backed by NetworkTables persistent storage)
+- JSON export/import (load a file at robot startup)
 
-```java id="5qu82v"
-Stream<Tuner> getTuners();
-```
-
----
-
-### UI Integration
-
-- Group tuners by subsystem
-- Automatically build hierarchical UI trees
-- Sync values via NetworkTables
+For now, developers read the final tuned values from the dashboard and hard-code
+them into constants.
 
 ---
 
