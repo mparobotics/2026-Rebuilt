@@ -53,8 +53,8 @@ public interface TunableProvider {
 - Subsystems implement this to expose their tunable parameters
 - `getSubsystemName()` returns the owning subsystem (e.g., `"Intake"`)
 - Each provider declares its subsystem name once, eliminating duplication across tuners
-- `getTuners()` is called once by the `TuningManager` at construction time —
-  implementations may allocate new objects on each call without performance concerns
+- `getTuners()` is called exactly once per provider by the `TuningManager` at construction
+  time — the result is stored in a local variable and reused for both validation and binding
 - `RobotContainer` does not implement this interface — it aggregates providers
 
 ---
@@ -268,7 +268,7 @@ public class IntakeSubsystem extends SubsystemBase implements TunableProvider {
 ```
 
 The `TuningParameter` getter/setter lambdas bind directly to the subsystem's
-internal state. Three patterns appear in this example:
+internal state. Four patterns appear in this example:
 
 - **Method references with bounds** — PID gains like `kP` and `kD` use simple method
   references (`::getP`, `::setP`) with the 5-arg constructor to declare safe bounds.
@@ -370,21 +370,48 @@ public class TuningManager implements AutoCloseable {
     private boolean closed = false;
 
     public TuningManager(List<TunableProvider> providers) {
-        validateProviders(providers);
-
         NetworkTable rootTable = NetworkTableInstance.getDefault().getTable("Tuning");
 
+        // track seen subsystems for duplicate detection
+        Set<String> seenSubsystems = new HashSet<>();
+
         for (TunableProvider provider : providers) {
-            if (provider.getTuners().isEmpty()) {
+            String subsystemName = provider.getSubsystemName();
+            List<Tuner> tuners = provider.getTuners();
+
+            if (!seenSubsystems.add(subsystemName)) {
+                throw new IllegalArgumentException(
+                    "Duplicate subsystem name: " + subsystemName);
+            }
+
+            if (tuners.isEmpty()) {
                 continue;
             }
 
-            NetworkTable subsystemTable = rootTable.getSubTable(provider.getSubsystemName());
+            NetworkTable subsystemTable = rootTable.getSubTable(subsystemName);
 
-            for (Tuner tuner : provider.getTuners()) {
+            // track seen tuners for duplicate detection
+            Set<String> seenTuners = new HashSet<>();
+
+            for (Tuner tuner : tuners) {
+                if (!seenTuners.add(tuner.name())) {
+                    throw new IllegalArgumentException(
+                        "Duplicate tuner name: " + tuner.name()
+                        + " in subsystem " + subsystemName);
+                }
+
                 NetworkTable tunerTable = subsystemTable.getSubTable(tuner.name());
 
+                // track seen parameters for duplicate detection
+                Set<String> seenParams = new HashSet<>();
+
                 for (TuningParameter param : tuner.parameters()) {
+                    if (!seenParams.add(param.getName())) {
+                        throw new IllegalArgumentException(
+                            "Duplicate parameter name: " + param.getName()
+                            + " in tuner " + subsystemName + "/" + tuner.name());
+                    }
+
                     // initialize NetworkTable entry with current parameter value
                     NetworkTableEntry entry = tunerTable.getEntry(param.getName());
                     double value = param.getValue();
@@ -399,6 +426,11 @@ public class TuningManager implements AutoCloseable {
     }
 
     public void periodic() {
+        if (closed) {
+            log("periodic() called after close() — ignoring");
+            return;
+        }
+
         for (TunerBinding binding : bindings) {
             double currentValue = binding.param.getValue();
             double dashboardValue = binding.entry.getDouble(currentValue);
@@ -434,36 +466,6 @@ public class TuningManager implements AutoCloseable {
         System.out.printf("[TuningManager] " + fmt + "%n", args);
     }
 
-    private void validateProviders(List<TunableProvider> providers) {
-        Set<String> seenSubsystems = new HashSet<>();
-
-        for (TunableProvider provider : providers) {
-            if (!seenSubsystems.add(provider.getSubsystemName())) {
-                throw new IllegalArgumentException(
-                    "Duplicate subsystem name: " + provider.getSubsystemName());
-            }
-
-            Set<String> seenTuners = new HashSet<>();
-            for (Tuner tuner : provider.getTuners()) {
-                if (!seenTuners.add(tuner.name())) {
-                    throw new IllegalArgumentException(
-                        "Duplicate tuner name: " + tuner.name()
-                        + " in subsystem " + provider.getSubsystemName());
-                }
-
-                Set<String> seenParams = new HashSet<>();
-                for (TuningParameter param : tuner.parameters()) {
-                    if (!seenParams.add(param.getName())) {
-                        throw new IllegalArgumentException(
-                            "Duplicate parameter name: " + param.getName()
-                            + " in tuner " + provider.getSubsystemName()
-                            + "/" + tuner.name());
-                    }
-                }
-            }
-        }
-    }
-
     private record TunerBinding(TuningParameter param, NetworkTableEntry entry) {}
 }
 ```
@@ -496,13 +498,16 @@ Key design decisions:
   tooling.
 - **Clean shutdown** — `close()` calls `unpublish()` on every `NetworkTableEntry` to remove
   the tuning entries from NetworkTables when test mode exits, then clears the binding list.
-- **Hierarchical validation** — `validateProviders()` checks for duplicate names at each level
-  of the hierarchy (subsystem, tuner, parameter) and throws `IllegalArgumentException` on
+- **Single-pass construction** — The constructor iterates each provider exactly once, calling
+  `getSubsystemName()` and `getTuners()` once per provider and storing the results in local
+  variables. Validation and NetworkTables binding happen in the same pass, eliminating
+  redundant calls to provider methods.
+- **Inline validation** — Duplicate names are checked at each level of the hierarchy (subsystem,
+  tuner, parameter) as the constructor iterates, throwing `IllegalArgumentException` on
   duplicates. This fails fast at construction time rather than silently producing overlapping
-  NetworkTables paths. Validation mirrors the table/subtable structure — rather than
-  constructing composite path strings, it checks at each level independently. The same
-  parameter name may appear in different tuners (e.g., `Intake/Arm/kP` and
-  `Drive/Heading/kP`) — this is intentional, since the full NetworkTables path is unique.
+  NetworkTables paths. The same parameter name may appear in different tuners (e.g.,
+  `Intake/Arm/kP` and `Drive/Heading/kP`) — this is intentional, since the full
+  NetworkTables path is unique.
 - **Empty provider skipping** — Providers that return an empty tuner list are skipped entirely,
   preventing empty subsystem tables from appearing in NetworkTables.
 - **AutoCloseable** — Implements `AutoCloseable` to support try-with-resources if desired,
