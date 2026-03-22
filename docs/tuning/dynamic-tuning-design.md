@@ -6,7 +6,7 @@ This document describes a lightweight, extensible tuning system for FRC robots.
 The system is designed to be:
 
 - Explicit (no hidden magic)
-- Composable (supports subsystem hierarchies)
+- Composable
 - Extensible (supports future UI and tooling)
 - Library-friendly (usable by other teams)
 
@@ -20,9 +20,6 @@ community. To that end, it uses the package namespace:
 ```
 org.moundsparkacademy.frc.tuning
 ```
-
-The `org.moundsparkacademy.frc` namespace provides a clear home for this and any
-future libraries published by the team.
 
 This follows the reverse-domain naming convention used by prominent FRC libraries:
 
@@ -241,10 +238,12 @@ public class IntakeSubsystem extends SubsystemBase implements TunableProvider {
                     intakeArmFeedforward::setKg),
                 new TuningParameter("kV",
                     intakeArmFeedforward::getKv,
-                    intakeArmFeedforward::setKv),
+                    intakeArmFeedforward::setKv,
+                    0, Double.POSITIVE_INFINITY),
                 new TuningParameter("kA",
                     intakeArmFeedforward::getKa,
-                    intakeArmFeedforward::setKa)
+                    intakeArmFeedforward::setKa,
+                    0, Double.POSITIVE_INFINITY)
             )),
             new Tuner("Rollers", List.of(
                 new TuningParameter("BaseSpeed",
@@ -265,15 +264,20 @@ internal state. Three patterns appear in this example:
 - **Method references with bounds** — PID gains like `kP` and `kD` use simple method
   references (`::getP`, `::setP`) with the 5-arg constructor to declare safe bounds.
   `TuningParameter.setValue()` clamps the value before calling the setter, so the
-  subsystem doesn't need to handle clamping in a wrapper lambda. Bounds constants
-  are defined alongside the initial gain values in `IntakeConstants`.
+  subsystem doesn't need to handle clamping in a wrapper lambda. (The bounds constants
+  like `INTAKE_ARM_kP_MAX` are envisioned additions to `IntakeConstants` — they do not
+  exist in the current codebase.)
 - **Setter with side effects and bounds** — The `kI` setter needs a lambda because
   it calls `reset()` to clear the integral accumulator after setting the gain. The
   lambda receives already-clamped values from `setValue()`, so it only handles the
   side effect — not the bounds logic.
-- **Method references without bounds** — Feedforward gains like `kS` use simple
-  method references (`::getKs`, `::setKs`) with the 3-arg constructor. No bounds
-  are declared because any value is acceptable for these parameters.
+- **Method references without bounds** — Feedforward gains like `kS` and `kG` use
+  simple method references (`::getKs`, `::setKs`) with the 3-arg constructor. Any
+  value is acceptable for these parameters.
+- **One-sided bounds** — Feedforward gains `kV` and `kA` use a lower bound of `0`
+  with `Double.POSITIVE_INFINITY` as the upper bound. WPILib's `ArmFeedforward`
+  throws `IllegalArgumentException` for negative kV or kA, so the lower bound
+  prevents invalid values while leaving the upper end unconstrained.
 
 The subsystem controls what is exposed and how values are applied. The tuning system
 never reaches into subsystem internals.
@@ -486,10 +490,13 @@ public class Robot extends TimedRobot {
 
 ---
 
-### 2. Composition Over Inheritance
+### 2. Flat by Default, Hierarchical if Needed
 
-- Subsystems can contain other subsystems
-- Tuning hierarchy mirrors system architecture
+- `RobotContainer` aggregates `TunableProvider` instances in a flat list
+- Each subsystem owns its tuners and subsystem name
+- No deep nesting is required — FRC robots typically have a single level of subsystems
+- If a subsystem internally holds child `TunableProvider` references, it can aggregate
+  their tuners into its own `getTuners()` method to support hierarchical composition
 
 ---
 
