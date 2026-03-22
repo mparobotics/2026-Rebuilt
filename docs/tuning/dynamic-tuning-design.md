@@ -1,294 +1,232 @@
-# FRC Dynamic PID Tuning Architecture
+# FRC Tuning Library Design (Draft)
 
 ## Overview
 
-This document describes an architecture for **dynamic tuning of control parameters (e.g., PID)** using NetworkTables (Elastic/Shuffleboard), while maintaining:
+This document describes a lightweight, extensible tuning system for FRC robots.
+The system is designed to be:
 
-- Clean separation from production robot code
-- Deterministic updates within the control loop
-- Subsystem ownership of control logic
-- Safe operation (restricted to test mode)
-
----
-
-## Design Goals
-
-1. **Non-invasive to production code**
-   - Subsystems should not depend on NetworkTables or UI tools
-   - No tuning logic embedded in control loops
-
-2. **Explicit ownership**
-   - Subsystems define what is tunable and how updates are applied
-
-3. **Deterministic updates**
-   - All parameter changes occur during the robot control loop (e.g., `testPeriodic`)
-
-4. **Extensibility**
-   - Easy to add new tunable components
-
-5. **Safety**
-   - Tuning enabled only in test mode (or via explicit toggle)
+- Explicit (no hidden magic)
+- Composable (supports subsystem hierarchies)
+- Extensible (supports future UI and tooling)
+- Library-friendly (usable by other teams)
 
 ---
 
 ## Core Concepts
 
-### 1. `Tuner` Interface
+### TunableProvider
 
-A `Tuner` represents a single logical unit of tuning (e.g., "Drive PID", "Arm Controller").
+A `TunableProvider` is any class that exposes tuners.
 
 ```java
+public interface TunableProvider {
+    List<Tuner> getTuners();
+}
+```
+
+- Subsystems implement this to expose their tunable parameters
+- Higher-level components (like RobotContainer) aggregate tuners
+- Encourages compositional design
+
+---
+
+### Tuner
+
+A `Tuner` represents a logical grouping of tunable parameters.
+
+```java id="uk3o1m"
 public interface Tuner {
     String getName();
-
-    Map<String, Double> getValues();
-
-    void setValues(Map<String, Double> values);
+    List<TuningParameter> getParameters();
 }
 ```
 
-#### Responsibilities:
-- Expose current parameter values
-- Accept updated values
-- Apply updates safely (clamping, resetting, etc.)
+- Represents a subsystem or a logical grouping within a subsystem
+- Provides a human-readable name for UI grouping
 
 ---
 
-### 2. Subsystem Integration
+### TuningParameter
 
-Each subsystem defines one or more `Tuner` instances.
+A `TuningParameter` represents a single tunable value.
 
-Example:
+#### Design Goals:
+- Encapsulate getter/setter behavior
+- Avoid stringly-typed maps
+- Support future metadata (min/max, units, etc.)
 
-```java
-public class DriveSubsystem {
+#### Suggested Implementation (Stateless)
 
-    private PIDController pid;
+```java id="p5n6xv"
+import java.util.function.DoubleConsumer;
+import java.util.function.DoubleSupplier;
 
-    public Tuner getDrivePIDTuner() {
-        return new Tuner() {
-            @Override
-            public String getName() {
-                return "Drive PID";
-            }
+public class TuningParameter {
 
-            @Override
-            public Map<String, Double> getValues() {
-                return Map.of(
-                    "kP", pid.getP(),
-                    "kI", pid.getI(),
-                    "kD", pid.getD()
-                );
-            }
+    private final String name;
+    private final DoubleSupplier getter;
+    private final DoubleConsumer setter;
 
-            @Override
-            public void setValues(Map<String, Double> values) {
-                double p = values.get("kP");
-                double i = values.get("kI");
-                double d = values.get("kD");
-
-                // Optional: validation / clamping
-                pid.setPID(p, i, d);
-            }
-        };
-    }
-}
-```
-
-#### Notes:
-- Subsystems retain full control over how parameters are applied
-- No direct exposure of internal controllers
-- No dependency on NetworkTables
-
----
-
-### 3. `RobotContainer` Aggregation
-
-Expose all tuners from subsystems:
-
-```java
-public List<Tuner> getTuners() {
-    return List.of(
-        driveSubsystem.getDrivePIDTuner(),
-        armSubsystem.getArmTuner()
-    );
-}
-```
-
----
-
-### 4. `TuningManager`
-
-Central class responsible for:
-- Creating NetworkTables entries
-- Synchronizing values
-- Applying updates during the control loop
-
-#### Responsibilities:
-
-1. Discover tuners
-2. Create NT entries for each parameter
-3. Read updated values
-4. Apply updates via `Tuner.setValues()`
-
----
-
-### 5. NetworkTables Structure
-
-Suggested hierarchy:
-
-```
-/Tuning/
-    Drive PID/
-        kP
-        kI
-        kD
-    Arm Controller/
-        kP
-        kD
-```
-
----
-
-## TuningManager Example
-
-```java
-public class TuningManager {
-
-    private final List<Tuner> tuners;
-    private final Map<String, Map<String, NetworkTableEntry>> entries = new HashMap<>();
-
-    public TuningManager(List<Tuner> tuners) {
-        this.tuners = tuners;
-        initializeEntries();
+    public TuningParameter(String name, DoubleSupplier getter, DoubleConsumer setter) {
+        this.name = name;
+        this.getter = getter;
+        this.setter = setter;
     }
 
-    private void initializeEntries() {
-        for (Tuner tuner : tuners) {
-            Map<String, Double> values = tuner.getValues();
-            Map<String, NetworkTableEntry> tunerEntries = new HashMap<>();
-
-            for (String key : values.keySet()) {
-                NetworkTableEntry entry = NetworkTableInstance.getDefault()
-                    .getTable("Tuning")
-                    .getSubTable(tuner.getName())
-                    .getEntry(key);
-
-                entry.setDouble(values.get(key));
-                tunerEntries.put(key, entry);
-            }
-
-            entries.put(tuner.getName(), tunerEntries);
-        }
+    public String getName() {
+        return name;
     }
 
-    public void update() {
-        for (Tuner tuner : tuners) {
-            Map<String, NetworkTableEntry> tunerEntries = entries.get(tuner.getName());
-            Map<String, Double> newValues = new HashMap<>();
+    public double getValue() {
+        return getter.getAsDouble();
+    }
 
-            for (Map.Entry<String, NetworkTableEntry> entry : tunerEntries.entrySet()) {
-                newValues.put(entry.getKey(), entry.getValue().getDouble(0.0));
-            }
-
-            tuner.setValues(newValues);
-        }
+    public void setValue(double value) {
+        setter.accept(value);
     }
 }
 ```
 
 ---
 
-## Robot Integration
+## Hierarchical Composition
 
-### In `Robot.testInit()`
+Subsystems can be composed of smaller subsystems.
 
-```java
-tuners = robotContainer.getTuners();
-tuningManager = new TuningManager(tuners);
-```
+### Example
 
-### In `Robot.testPeriodic()`
-
-```java
-tuningManager.update();
-```
+- `RobotContainer` (top-level)
+  - `IntakeSubsystem`
+    - `IntakeArmSubsystem`
+    - `IntakeRollersSubsystem`
 
 ---
 
-## Optional Enhancements
+## Implementation Pattern
 
-### 1. Change Detection
-Only apply updates if values have changed:
+### Subsystem Example
 
-```java
-if (!newValues.equals(previousValues)) {
-    tuner.setValues(newValues);
+```java id="brxrn9"
+public class IntakeSubsystem implements TunableProvider {
+
+    private final IntakeArmSubsystem arm;
+    private final IntakeRollersSubsystem rollers;
+
+    public IntakeSubsystem() {
+        this.arm = new IntakeArmSubsystem();
+        this.rollers = new IntakeRollersSubsystem();
+    }
+
+    @Override
+    public List<Tuner> getTuners() {
+        return List.of(
+            arm.getTuner(),
+            rollers.getTuner()
+        );
+    }
 }
 ```
 
 ---
 
-### 2. Validation / Clamping
-Handled inside `Tuner.setValues()`:
+### RobotContainer Example
 
-```java
-double p = MathUtil.clamp(values.get("kP"), 0.0, 10.0);
-```
+```java id="ye5nhw"
+public class RobotContainer implements TunableProvider {
 
----
+    private final DriveSubsystem drive;
+    private final IntakeSubsystem intake;
 
-### 3. Integral Reset (for PID)
-If `kI` changes:
+    public RobotContainer() {
+        this.drive = new DriveSubsystem();
+        this.intake = new IntakeSubsystem();
+    }
 
-```java
-pid.setI(newI);
-pid.reset();
-```
-
----
-
-### 4. Enable/Disable Toggle
-
-Add a global NT flag:
-
-```
-/Tuning/enabled
-```
-
-```java
-if (!enabled) return;
+    @Override
+    public List<Tuner> getTuners() {
+        return Stream.of(
+            drive.getTuners(),
+            intake.getTuners()
+        )
+        .flatMap(List::stream)
+        .toList();
+    }
+}
 ```
 
 ---
 
 ## Key Design Principles
 
-- **Subsystems own behavior**
-- **Tuning is an external control layer**
-- **No asynchronous updates**
-- **All changes occur inside the control loop**
-- **Avoid hidden side effects**
+### 1. Explicit Over Automatic
+
+- No reflection or hidden discovery
+- All tuners are explicitly defined and aggregated
 
 ---
 
-## Anti-Patterns to Avoid
+### 2. Composition Over Inheritance
 
-- Updating controllers from NT listeners
-- Recreating PID controllers at runtime
-- Letting subsystems depend on NetworkTables
-- Applying updates outside the robot loop
-- Using string-based lookup systems for tuners
+- Subsystems can contain other subsystems
+- Tuning hierarchy mirrors system architecture
+
+---
+
+### 3. Separation of Concerns
+
+- Subsystems define tuners
+- RobotContainer aggregates tuners
+- Tuning system does not depend on subsystem internals
+
+---
+
+### 4. Extensibility
+
+Future enhancements may include:
+
+- Metadata on parameters (min, max, units)
+- UI integration (Shuffleboard / Elastic)
+- Persistence of tuning values
+- Real-time updates via NetworkTables
+
+---
+
+## Future Extensions (Optional)
+
+### Parameter Metadata
+
+```java id="svqv7p"
+public class TuningParameter {
+    private final String name;
+    private final double min;
+    private final double max;
+    private final DoubleSupplier getter;
+    private final DoubleConsumer setter;
+}
+```
+
+---
+
+### Stream-Based API (Advanced)
+
+```java id="5qu82v"
+Stream<Tuner> getTuners();
+```
+
+---
+
+### UI Integration
+
+- Group tuners by subsystem
+- Automatically build hierarchical UI trees
+- Sync values via NetworkTables
 
 ---
 
 ## Summary
 
-This architecture provides:
+- `TunableProvider` defines *capability*
+- `Tuner` defines *grouping*
+- `TuningParameter` defines *individual values*
 
-- Safe, real-time parameter tuning
-- Clean separation of concerns
-- Scalable structure for multiple subsystems
-- Minimal impact on production robot code
-
-It is well-suited for iterative tuning during development and testing while maintaining competition reliability.
+This structure provides a clean, scalable, and extensible foundation for robot tuning systems in FRC.
