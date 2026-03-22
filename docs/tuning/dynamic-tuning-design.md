@@ -43,64 +43,79 @@ for this and any future libraries published by the team.
 
 ### TunableProvider
 
-A `TunableProvider` is any class that exposes tuners.
+A `TunableProvider` is any class that exposes tuners. It declares the subsystem name
+and returns the tuners that belong to it.
 
 ```java
 public interface TunableProvider {
+    String getSubsystemName();
     List<Tuner> getTuners();
 }
 ```
 
 - Subsystems implement this to expose their tunable parameters
-- Higher-level components (like RobotContainer) aggregate tuners
-- Encourages compositional design
+- `getSubsystemName()` returns the owning subsystem (e.g., `"Intake"`)
+- Each provider declares its subsystem name once, eliminating duplication across tuners
+- `RobotContainer` does not implement this interface — it aggregates providers
 
 ---
 
 ### Tuner
 
-A `Tuner` represents a logical grouping of tunable parameters.
+A `Tuner` represents a logical grouping of tunable parameters within a subsystem.
 
-```java id="uk3o1m"
-public interface Tuner {
-    String getSubsystemName();
-    String getName();
-    List<TuningParameter> getParameters();
+```java
+public record Tuner(String name, List<TuningParameter> parameters) {
+    public Tuner {
+        Objects.requireNonNull(name, "name must not be null");
+        parameters = List.copyOf(parameters);
+    }
 }
 ```
 
-- Represents a logical grouping of tunable parameters within a subsystem
-- `getSubsystemName()` returns the owning subsystem (e.g., `"Intake"`)
-- `getName()` returns the tuner name within that subsystem (e.g., `"Arm"`)
-- Together these form a natural namespace for NetworkTables paths (e.g., `Intake/Arm/kP`)
+- `name()` returns the tuner name within its subsystem (e.g., `"Arm"`)
+- The subsystem name is provided by the owning `TunableProvider`, not by the `Tuner`
+- Together, the provider's subsystem name and the tuner name form a natural namespace
+  for NetworkTables paths (e.g., `Intake/Arm/kP`)
+- The compact constructor validates inputs and defensively copies the parameter list
 
 ---
 
 ### TuningParameter
 
-A `TuningParameter` represents a single tunable value.
+A `TuningParameter` represents a single tunable value with optional bounds.
 
 #### Design Goals:
 - Encapsulate getter/setter behavior
 - Avoid stringly-typed maps
-- Support future metadata (min/max, units, etc.)
+- Support optional min/max bounds for safety
+- Support future metadata (units, etc.)
 
-#### Suggested Implementation (Stateless)
+#### Suggested Implementation
 
-```java id="p5n6xv"
+```java
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 
 public class TuningParameter {
 
     private final String name;
+    private final double min;
+    private final double max;
     private final DoubleSupplier getter;
     private final DoubleConsumer setter;
 
     public TuningParameter(String name, DoubleSupplier getter, DoubleConsumer setter) {
+        this(name, getter, setter, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+    }
+
+    public TuningParameter(String name, DoubleSupplier getter, DoubleConsumer setter,
+                           double min, double max) {
         this.name = name;
         this.getter = getter;
         this.setter = setter;
+        this.min = min;
+        this.max = max;
     }
 
     public String getName() {
@@ -112,23 +127,47 @@ public class TuningParameter {
     }
 
     public void setValue(double value) {
-        setter.accept(value);
+        setter.accept(MathUtil.clamp(value, min, max));
     }
 }
 ```
+
+#### Bounds Handling
+
+Bounds are optional and default to `Double.NEGATIVE_INFINITY` / `Double.POSITIVE_INFINITY`,
+which makes `MathUtil.clamp()` a no-op when bounds are not specified. This means
+`setValue()` always clamps — the behavior is consistent regardless of whether bounds
+are declared.
+
+The two constructors cover the common cases:
+- **3-arg** (name, getter, setter) — No bounds. Used when any value is safe.
+- **5-arg** (name, getter, setter, min, max) — Both bounds. Used for parameters
+  like PID gains where out-of-range values could be dangerous.
+
+One-sided bounds are expressed by leaving one side at infinity:
+- **Lower bound only:** `new TuningParameter("kP", getter, setter, 0, Double.POSITIVE_INFINITY)`
+- **Upper bound only:** `new TuningParameter("maxSpeed", getter, setter, Double.NEGATIVE_INFINITY, 4.0)`
+
+Bounds checking is the **subsystem's responsibility** — the subsystem has domain
+knowledge about what values are safe for each parameter. The `TuningParameter`
+enforces the bounds the subsystem declares, but the library never imposes its own.
 
 ---
 
 ## Hierarchical Composition
 
-`RobotContainer` aggregates tuners from all subsystems. Each subsystem may return
-one or more tuners depending on how many tunable components it contains.
+`RobotContainer` aggregates `TunableProvider` instances from all subsystems. Each
+subsystem implements `TunableProvider` and may return one or more tuners depending
+on how many tunable components it contains.
+
+`RobotContainer` itself does not implement `TunableProvider` — it simply collects
+the providers and passes them to the `TuningManager`.
 
 ### Example
 
-- `RobotContainer` (top-level `TunableProvider`)
-  - `DriveSubsystem` — returns tuners for drive control
-  - `IntakeSubsystem` — returns tuners for Arm (PID) and Rollers (speed)
+- `RobotContainer` (aggregates providers)
+  - `DriveSubsystem` implements `TunableProvider` — returns tuners for drive control
+  - `IntakeSubsystem` implements `TunableProvider` — returns tuners for Arm (PID) and Rollers (speed)
 
 ---
 
@@ -153,7 +192,7 @@ This ensures the rollers always spin faster than the ball's ground speed for
 reliable collection, regardless of how fast the robot is driving. (The current
 `IntakeSubsystem` uses a fixed speed constant instead.)
 
-```java id="brxrn9"
+```java
 public class IntakeSubsystem extends SubsystemBase implements TunableProvider {
 
     private final PIDController intakeArmController = new PIDController(
@@ -173,85 +212,68 @@ public class IntakeSubsystem extends SubsystemBase implements TunableProvider {
     // ... constructor, periodic, and other methods omitted ...
 
     @Override
+    public String getSubsystemName() { return "Intake"; }
+
+    @Override
     public List<Tuner> getTuners() {
         return List.of(
-            createArmTuner(),
-            createRollersTuner()
+            new Tuner("Arm", List.of(
+                new TuningParameter("kP",
+                    intakeArmController::getP,
+                    intakeArmController::setP,
+                    0, IntakeConstants.INTAKE_ARM_kP_MAX),
+                new TuningParameter("kI",
+                    intakeArmController::getI,
+                    value -> {
+                        intakeArmController.setI(value);
+                        intakeArmController.reset();
+                    },
+                    0, IntakeConstants.INTAKE_ARM_kI_MAX),
+                new TuningParameter("kD",
+                    intakeArmController::getD,
+                    intakeArmController::setD,
+                    0, IntakeConstants.INTAKE_ARM_kD_MAX),
+                new TuningParameter("kS",
+                    intakeArmFeedforward::getKs,
+                    intakeArmFeedforward::setKs),
+                new TuningParameter("kG",
+                    intakeArmFeedforward::getKg,
+                    intakeArmFeedforward::setKg),
+                new TuningParameter("kV",
+                    intakeArmFeedforward::getKv,
+                    intakeArmFeedforward::setKv),
+                new TuningParameter("kA",
+                    intakeArmFeedforward::getKa,
+                    intakeArmFeedforward::setKa)
+            )),
+            new Tuner("Rollers", List.of(
+                new TuningParameter("BaseSpeed",
+                    () -> rollerBaseSpeed,
+                    value -> rollerBaseSpeed = value),
+                new TuningParameter("SpeedScale",
+                    () -> rollerSpeedScale,
+                    value -> rollerSpeedScale = value)
+            ))
         );
-    }
-
-    private Tuner createArmTuner() {
-        return new Tuner() {
-            @Override
-            public String getSubsystemName() { return "Intake"; }
-
-            @Override
-            public String getName() { return "Arm"; }
-
-            @Override
-            public List<TuningParameter> getParameters() {
-                return List.of(
-                    new TuningParameter("kP",
-                        intakeArmController::getP,
-                        intakeArmController::setP),
-                    new TuningParameter("kI",
-                        intakeArmController::getI,
-                        value -> {
-                            intakeArmController.setI(value);
-                            intakeArmController.reset();
-                        }),
-                    new TuningParameter("kD",
-                        intakeArmController::getD,
-                        intakeArmController::setD),
-                    new TuningParameter("kS",
-                        intakeArmFeedforward::getKs,
-                        intakeArmFeedforward::setKs),
-                    new TuningParameter("kG",
-                        intakeArmFeedforward::getKg,
-                        intakeArmFeedforward::setKg),
-                    new TuningParameter("kV",
-                        intakeArmFeedforward::getKv,
-                        intakeArmFeedforward::setKv),
-                    new TuningParameter("kA",
-                        intakeArmFeedforward::getKa,
-                        intakeArmFeedforward::setKa)
-                );
-            }
-        };
-    }
-
-    private Tuner createRollersTuner() {
-        return new Tuner() {
-            @Override
-            public String getSubsystemName() { return "Intake"; }
-
-            @Override
-            public String getName() { return "Rollers"; }
-
-            @Override
-            public List<TuningParameter> getParameters() {
-                return List.of(
-                    new TuningParameter("BaseSpeed",
-                        () -> rollerBaseSpeed,
-                        value -> rollerBaseSpeed = value),
-                    new TuningParameter("SpeedScale",
-                        () -> rollerSpeedScale,
-                        value -> rollerSpeedScale = value)
-                );
-            }
-        };
     }
 }
 ```
 
-Note how the `TuningParameter` getter/setter lambdas bind directly to the subsystem's
-internal state:
+The `TuningParameter` getter/setter lambdas bind directly to the subsystem's
+internal state. Three patterns appear in this example:
 
-- **PID gains** use method references on `PIDController` (`::getP`, `::setP`).
-  The `kI` setter also calls `reset()` to clear the integral accumulator, preventing
-  a stale accumulator from causing an output spike when the gain changes.
-- **Feedforward gains** use method references on `ArmFeedforward` (`::getKs`, `::setKs`)
-- **Roller parameters** use lambdas that read/write mutable fields (`rollerBaseSpeed`, `rollerSpeedScale`)
+- **Method references with bounds** — PID gains like `kP` and `kD` use simple method
+  references (`::getP`, `::setP`) with the 5-arg constructor to declare safe bounds.
+  `TuningParameter.setValue()` clamps the value before calling the setter, so the
+  subsystem doesn't need to handle clamping in a wrapper lambda. Bounds constants
+  are defined alongside the initial gain values in `IntakeConstants`.
+- **Setter with side effects and bounds** — The `kI` setter needs a lambda because
+  it calls `reset()` to clear the integral accumulator after setting the gain. The
+  lambda receives already-clamped values from `setValue()`, so it only handles the
+  side effect — not the bounds logic.
+- **Method references without bounds** — Feedforward gains like `kS` use simple
+  method references (`::getKs`, `::setKs`) with the 3-arg constructor. No bounds
+  are declared because any value is acceptable for these parameters.
 
 The subsystem controls what is exposed and how values are applied. The tuning system
 never reaches into subsystem internals.
@@ -260,8 +282,11 @@ never reaches into subsystem internals.
 
 ### RobotContainer Example
 
-```java id="ye5nhw"
-public class RobotContainer implements TunableProvider {
+`RobotContainer` does not implement `TunableProvider`. Instead, it exposes a list
+of all tunable subsystems for the `TuningManager` to consume.
+
+```java
+public class RobotContainer {
 
     private final DriveSubsystem drive;
     private final IntakeSubsystem intake;
@@ -271,14 +296,8 @@ public class RobotContainer implements TunableProvider {
         this.intake = new IntakeSubsystem();
     }
 
-    @Override
-    public List<Tuner> getTuners() {
-        return Stream.of(
-            drive.getTuners(),
-            intake.getTuners()
-        )
-        .flatMap(List::stream)
-        .toList();
+    public List<TunableProvider> getTunableSubsystems() {
+        return List.of(drive, intake);
     }
 }
 ```
@@ -292,10 +311,12 @@ It acts as the bridge between the `TunableProvider` hierarchy and NetworkTables.
 
 #### Responsibilities
 
-1. **Discover parameters** — Collect all `Tuner` instances from the `TunableProvider` hierarchy
-2. **Publish to NetworkTables** — Write current parameter values so they appear on the dashboard
-3. **Read from NetworkTables** — Read updated values as edited by the operator on the dashboard
-4. **Apply changes** — Call the `TuningParameter` setters to update control parameters
+1. **Validate structure** — Check for duplicate names at each level of the hierarchy
+2. **Discover parameters** — Collect all `Tuner` instances from the providers
+3. **Publish to NetworkTables** — Write current parameter values so they appear on the dashboard
+4. **Read from NetworkTables** — Read updated values as edited by the operator on the dashboard
+5. **Apply changes** — Call the `TuningParameter` setters to update control parameters
+6. **Clean up** — Unpublish all NetworkTables entries when tuning ends
 
 Because the `TuningManager` publishes to NetworkTables, any NetworkTables-compatible
 dashboard (Shuffleboard, Elastic, Glass) can display and edit tuning parameters in
@@ -314,28 +335,35 @@ control loop. There are no concurrent access concerns — parameters are never u
 outside this loop.
 
 When test mode is exited, `Robot.testExit()` calls `close()` on the `TuningManager`
-and sets the reference to `null`. This ensures the tuning system is fully torn down
-and does not persist into subsequent auto or teleop modes.
+and sets the reference to `null`. This unpublishes all NetworkTables entries and
+ensures the tuning system is fully torn down and does not persist into subsequent
+auto or teleop modes.
 
-#### Suggested Interface
+#### Suggested Implementation
 
 ```java
-public class TuningManager {
+public class TuningManager implements AutoCloseable {
+
+    private static final double VALUE_CHANGE_TOLERANCE = 1e-9;
 
     private final List<TunerBinding> bindings = new ArrayList<>();
 
-    public TuningManager(TunableProvider provider) {
+    public TuningManager(List<TunableProvider> providers) {
+        validateProviders(providers);
+
         NetworkTable rootTable = NetworkTableInstance.getDefault().getTable("Tuning");
 
-        for (Tuner tuner : provider.getTuners()) {
-            NetworkTable tunerTable = rootTable
-                .getSubTable(tuner.getSubsystemName())
-                .getSubTable(tuner.getName());
+        for (TunableProvider provider : providers) {
+            NetworkTable subsystemTable = rootTable.getSubTable(provider.getSubsystemName());
 
-            for (TuningParameter param : tuner.getParameters()) {
-                NetworkTableEntry entry = tunerTable.getEntry(param.getName());
-                entry.setDouble(param.getValue());
-                bindings.add(new TunerBinding(param, entry));
+            for (Tuner tuner : provider.getTuners()) {
+                NetworkTable tunerTable = subsystemTable.getSubTable(tuner.name());
+
+                for (TuningParameter param : tuner.parameters()) {
+                    NetworkTableEntry entry = tunerTable.getEntry(param.getName());
+                    entry.setDouble(param.getValue());
+                    bindings.add(new TunerBinding(param, entry));
+                }
             }
         }
     }
@@ -345,7 +373,7 @@ public class TuningManager {
             double currentValue = binding.param.getValue();
             double dashboardValue = binding.entry.getDouble(currentValue);
 
-            if (dashboardValue != currentValue) {
+            if (!MathUtil.isNear(currentValue, dashboardValue, VALUE_CHANGE_TOLERANCE)) {
                 binding.param.setValue(dashboardValue);
             }
 
@@ -353,8 +381,42 @@ public class TuningManager {
         }
     }
 
+    @Override
     public void close() {
+        for (TunerBinding binding : bindings) {
+            binding.entry.unpublish();
+        }
         bindings.clear();
+    }
+
+    private void validateProviders(List<TunableProvider> providers) {
+        Set<String> seenSubsystems = new HashSet<>();
+
+        for (TunableProvider provider : providers) {
+            if (!seenSubsystems.add(provider.getSubsystemName())) {
+                System.err.println("[TuningManager] Duplicate subsystem name: "
+                    + provider.getSubsystemName());
+            }
+
+            Set<String> seenTuners = new HashSet<>();
+            for (Tuner tuner : provider.getTuners()) {
+                if (!seenTuners.add(tuner.name())) {
+                    System.err.println("[TuningManager] Duplicate tuner name: "
+                        + tuner.name()
+                        + " in subsystem " + provider.getSubsystemName());
+                }
+
+                Set<String> seenParams = new HashSet<>();
+                for (TuningParameter param : tuner.parameters()) {
+                    if (!seenParams.add(param.getName())) {
+                        System.err.println("[TuningManager] Duplicate parameter name: "
+                            + param.getName()
+                            + " in tuner " + provider.getSubsystemName()
+                            + "/" + tuner.name());
+                    }
+                }
+            }
+        }
     }
 
     private record TunerBinding(TuningParameter param, NetworkTableEntry entry) {}
@@ -370,8 +432,17 @@ Key design decisions:
   hierarchy (e.g., `Tuning/Intake/Arm/kP`) rather than flat keys in the root namespace.
 - **Cached entry references** — `NetworkTableEntry` objects are resolved once at construction
   and reused in `periodic()`, avoiding string lookups every cycle.
-- **Change guard** — `periodic()` only calls `param.setValue()` when the dashboard value
-  differs from the current subsystem value.
+- **Tolerance-based change guard** — `periodic()` uses `MathUtil.isNear()` to compare the
+  dashboard value with the current subsystem value, avoiding floating-point equality pitfalls.
+  `param.setValue()` is only called when the values differ beyond `VALUE_CHANGE_TOLERANCE`.
+- **Clean shutdown** — `close()` calls `unpublish()` on every `NetworkTableEntry` to remove
+  the tuning entries from NetworkTables when test mode exits, then clears the binding list.
+- **Hierarchical validation** — `validateProviders()` checks for duplicate names at each level
+  of the hierarchy (subsystem, tuner, parameter) and prints errors to `System.err`. This
+  mirrors the table/subtable structure used by NetworkTables — rather than constructing
+  composite path strings, validation occurs at each level independently.
+- **AutoCloseable** — Implements `AutoCloseable` to support try-with-resources if desired,
+  though the typical usage pattern is explicit `close()` in `testExit()`.
 
 #### Usage in Robot.java
 
@@ -388,7 +459,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void testInit() {
-        tuningManager = new TuningManager(robotContainer);
+        tuningManager = new TuningManager(robotContainer.getTunableSubsystems());
     }
 
     @Override
@@ -424,8 +495,9 @@ public class Robot extends TimedRobot {
 
 ### 3. Separation of Concerns
 
-- Subsystems define tuners
-- RobotContainer aggregates tuners
+- Subsystems define tuners and control bounds checking
+- RobotContainer aggregates providers
+- TuningManager orchestrates NetworkTables sync and validates structure
 - Tuning system does not depend on subsystem internals
 
 ---
@@ -434,18 +506,16 @@ public class Robot extends TimedRobot {
 
 #### Parameter Metadata
 
-Add optional metadata to `TuningParameter` such as min/max bounds and units. This
-would allow dashboards to render sliders with appropriate ranges and labels.
+Add optional metadata to `TuningParameter` such as units. This would allow
+dashboards to render labels with appropriate units (e.g., "rad/s", "volts").
+Min/max bounds are already supported by the current design.
 
-```java id="svqv7p"
-public class TuningParameter {
-    private final String name;
-    private final double min;
-    private final double max;
-    private final DoubleSupplier getter;
-    private final DoubleConsumer setter;
-}
-```
+#### Non-Double Parameter Types
+
+The initial implementation supports only `double` parameters, which covers PID gains,
+feedforward constants, and speed values. Support for additional types (boolean toggles,
+integer values, enum-backed modes) can be added when concrete use cases arise that
+require them.
 
 #### Persistence
 
@@ -460,9 +530,9 @@ them into constants.
 
 ## Summary
 
-- `TunableProvider` defines *capability* — who has tunable parameters
+- `TunableProvider` defines *capability* — who has tunable parameters, including the subsystem name
 - `Tuner` defines *grouping* — a named set of parameters within a subsystem
-- `TuningParameter` defines *individual values* — a single getter/setter pair
-- `TuningManager` defines *orchestration* — syncs parameters with NetworkTables on the control loop
+- `TuningParameter` defines *individual values* — a getter/setter pair with optional bounds
+- `TuningManager` defines *orchestration* — validates structure, syncs parameters with NetworkTables, and cleans up on close
 
 This structure provides a clean, scalable, and extensible foundation for robot tuning systems in FRC.
