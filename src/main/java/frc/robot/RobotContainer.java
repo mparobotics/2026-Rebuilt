@@ -22,11 +22,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.LeftLemonAuto;
 import frc.robot.Auto.LeftNeutralZoneAuto1;
-import frc.robot.Auto.LeftNeutralZoneAuto2;
-import frc.robot.Auto.RightNeutralZoneAuto;
+import frc.robot.Auto.RightNeutralZoneAuto1;
 import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Auto.CenterLemonAuto;
+import frc.robot.Auto.CenterToDepotAuto;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
@@ -202,9 +202,9 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.7,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.85,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.7,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.85,
         // rotationSupplier - Rotation speed
         () -> -driveController.getRawAxis(rotationAxis) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
@@ -245,11 +245,11 @@ public class RobotContainer {
       case DriveTestAuto -> new DriveTestAuto(m_drive, m_intake, m_shooter);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
-      case RightNeutralZoneAuto -> new RightNeutralZoneAuto (m_drive, m_intake);
+      case RightNeutralZoneAuto1 -> new RightNeutralZoneAuto1 (m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
-      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2(m_drive, m_intake, m_shooter);
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
+      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive, m_intake, m_shooter);
 
       
       default -> Commands.none();

@@ -159,10 +159,10 @@ public static final class AutoConstants {
     LeftLemonAuto,
     RightLemonAuto,
     LeftNeutralZoneAuto1,
-    LeftNeutralZoneAuto2,
-    RightNeutralZoneAuto,
+    RightNeutralZoneAuto1,
     ShootEightAuto,
-    CenterLemonAuto
+    CenterLemonAuto,
+    CenterToDepotAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -182,10 +182,10 @@ public static final class AutoConstants {
     autoModeChooser.addOption("ShootEightAuto", AutoMode.ShootEightAuto);
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
-    autoModeChooser.addOption("RightNeutralZoneAuto", AutoMode.RightNeutralZoneAuto);
+    autoModeChooser.addOption("RightNeutralZoneAuto1", AutoMode.RightNeutralZoneAuto1);
     autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
-    autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
+    autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
