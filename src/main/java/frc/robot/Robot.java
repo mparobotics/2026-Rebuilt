@@ -10,13 +10,13 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.AutoConstants;
-import frc.robot.Tuning.TuningHelper;
+import org.moundsparkacademy.frc.tuning.TuningManager;
 
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
-  private TuningHelper tuning = new TuningHelper();
+  private TuningManager tuningManager;
 
   private final RobotContainer m_robotContainer;
   private final RobotSimulation m_robotSimulation;
@@ -42,7 +42,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    tuning.TuningPeriodic();
   }
 
   @Override
@@ -87,15 +86,23 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
-    // Cancel all commands when entering test mode.
     CommandScheduler.getInstance().cancelAll();
+    if (tuningManager != null) {
+      tuningManager.close();
+    }
+    tuningManager = new TuningManager(m_robotContainer.getTunableSubsystems());
   }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    tuningManager.periodic();
+  }
 
   @Override
-  public void testExit() {}
+  public void testExit() {
+    tuningManager.close();
+    tuningManager = null;
+  }
 
   @Override
   public void simulationInit() {

@@ -4,12 +4,16 @@
 
 package frc.robot.Subsystems;
 
+import java.util.List;
+
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IntakeConstants;
-import frc.robot.Tuning.TuningHelper;
+import org.moundsparkacademy.frc.tuning.TunableProvider;
+import org.moundsparkacademy.frc.tuning.Tuner;
+import org.moundsparkacademy.frc.tuning.TuningParameter;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -19,7 +23,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
-public class IntakeSubsystem extends SubsystemBase {
+public class IntakeSubsystem extends SubsystemBase implements TunableProvider {
 
   private final SparkMax intakeMotor = new SparkMax(IntakeConstants.INTAKE_ID, MotorType.kBrushless);
   private final SparkMax intakeArmMotor = new SparkMax(IntakeConstants.INTAKE_ARM_ID, MotorType.kBrushless);
@@ -47,6 +51,7 @@ public class IntakeSubsystem extends SubsystemBase {
   private double intakeArmTargetDeg = IntakeConstants.INTAKE_ARM_RAISED_POSITION;
   private boolean intakeArmActive = false;
 
+  private double intakeSpeed = IntakeConstants.INTAKE_SPEED;
   private boolean intakeOn = false;
   private boolean intakeUp = true;
 
@@ -88,7 +93,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public void toggleIntake() {
     if (!intakeOn) {
       intakeOn = false;
-      intakeMotor.set(IntakeConstants.INTAKE_SPEED);
+      intakeMotor.set(intakeSpeed);
     }
     else {
       intakeOn = true;
@@ -99,7 +104,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public void setIntakePower(double power) {
     double clampedPower = Math.max(-1.0, Math.min(1.0, power));
     intakeOn = Math.abs(clampedPower) > 0.0;
-    intakeMotor.set(clampedPower * IntakeConstants.INTAKE_SPEED);
+    intakeMotor.set(clampedPower * intakeSpeed);
   }
   
 
@@ -147,6 +152,54 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public double getArmPositionDeg2() {
     return intakeArm2Encoder.getPosition();
+  }
+
+  @Override
+  public String getSubsystemName() { return "Intake"; }
+
+  @Override
+  public List<Tuner> getTuners() {
+    return List.of(
+        new Tuner("Arm", List.of(
+            new TuningParameter("kP",
+                intakeArmController::getP,
+                value -> { intakeArmController.setP(value); intakeArm2Controller.setP(value); },
+                0, IntakeConstants.INTAKE_ARM_kP_MAX),
+            new TuningParameter("kI",
+                intakeArmController::getI,
+                value -> {
+                    intakeArmController.setI(value);
+                    intakeArmController.reset();
+                    intakeArm2Controller.setI(value);
+                    intakeArm2Controller.reset();
+                },
+                0, IntakeConstants.INTAKE_ARM_kI_MAX),
+            new TuningParameter("kD",
+                intakeArmController::getD,
+                value -> { intakeArmController.setD(value); intakeArm2Controller.setD(value); },
+                0, IntakeConstants.INTAKE_ARM_kD_MAX),
+            new TuningParameter("kS",
+                intakeArmFeedforward::getKs,
+                intakeArmFeedforward::setKs),
+            new TuningParameter("kG",
+                intakeArmFeedforward::getKg,
+                intakeArmFeedforward::setKg),
+            new TuningParameter("kV",
+                intakeArmFeedforward::getKv,
+                intakeArmFeedforward::setKv,
+                0, Double.POSITIVE_INFINITY),
+            new TuningParameter("kA",
+                intakeArmFeedforward::getKa,
+                intakeArmFeedforward::setKa,
+                0, Double.POSITIVE_INFINITY)
+        )),
+        new Tuner("Rollers", List.of(
+            new TuningParameter("Speed",
+                () -> intakeSpeed,
+                value -> intakeSpeed = value,
+                0, 1.0)
+        ))
+    );
   }
 
   @Override

@@ -335,6 +335,11 @@ public static final class IntakeConstants {
   public static final double INTAKE_ARM_kD = 0.16;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
 
+  // Tuning bounds for intake arm PID gains
+  public static final double INTAKE_ARM_kP_MAX = 30.0;
+  public static final double INTAKE_ARM_kI_MAX = 10.0;
+  public static final double INTAKE_ARM_kD_MAX = 5.0;
+
   //Feedforward constants for intake arm
   public static final double INTAKE_ARM_kS = 0.0;
   public static final double INTAKE_ARM_kG = 0.0;

@@ -38,6 +38,7 @@ import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
+import org.moundsparkacademy.frc.tuning.TunableProvider;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 
@@ -258,5 +259,9 @@ public class RobotContainer {
 
   public SwerveSubsystem getDriveSubsystem() {
     return m_drive;
+  }
+
+  public java.util.List<TunableProvider> getTunableSubsystems() {
+    return java.util.List.of(m_intake, m_shooter);
   }
 }

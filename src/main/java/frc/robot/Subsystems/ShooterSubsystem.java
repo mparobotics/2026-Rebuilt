@@ -3,6 +3,9 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.Subsystems;
+
+import java.util.List;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -14,8 +17,11 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.ShooterConstants;
+import org.moundsparkacademy.frc.tuning.TunableProvider;
+import org.moundsparkacademy.frc.tuning.Tuner;
+import org.moundsparkacademy.frc.tuning.TuningParameter;
 
-public class ShooterSubsystem extends SubsystemBase {
+public class ShooterSubsystem extends SubsystemBase implements TunableProvider {
 
   public boolean isShooterActive = false; //Shooter True
 
@@ -27,6 +33,10 @@ public class ShooterSubsystem extends SubsystemBase {
   private double shooterCmd = 0.0;
   private double kickerCmd = 0.0;
   private double indexerCmd = 0.0;
+
+  private double shooterSpeed = ShooterConstants.SHOOTER_SPEED;
+  private double kickerSpeed = ShooterConstants.KICKER_SPEED;
+  private double indexerSpeed = ShooterConstants.INDEXER_SPEED;
 
   private final PIDController hoodController = new PIDController(
       ShooterConstants.HOOD_KP,
@@ -78,7 +88,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void toggleShooter() {
       if (!isShooterActive) {
         isShooterActive = true;
-        shooterMotor.set(ShooterConstants.SHOOTER_SPEED);
+        shooterMotor.set(shooterSpeed);
       }
       else {
         isShooterActive = false;
@@ -90,7 +100,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void runShooter(boolean shooterOn) {
       if (shooterOn) {
         isShooterActive = true;
-        shooterMotor.set(ShooterConstants.SHOOTER_SPEED);
+        shooterMotor.set(shooterSpeed);
       } else {
         isShooterActive = false;
         shooterMotor.set(0);
@@ -109,7 +119,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
 
     public void runKicker(boolean kickerOn){
-      setKickerSpeed(kickerOn ? ShooterConstants.KICKER_SPEED : 0);
+      setKickerSpeed(kickerOn ? kickerSpeed : 0);
     }
 
     public void setKickerSpeed(double speed) {
@@ -143,7 +153,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void runIndexer(boolean indexerOn) {
-      setIndexerSpeed(indexerOn ? ShooterConstants.INDEXER_SPEED : 0);
+      setIndexerSpeed(indexerOn ? indexerSpeed : 0);
     }
 
     public void setIndexerSpeed(double speed) { 
@@ -152,14 +162,49 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void AutoToggleShoot (boolean AutoShootOn) {
-      setKickerSpeed(AutoShootOn ? 0 : ShooterConstants.KICKER_SPEED);
-      setShooterSpeed(AutoShootOn ? 0 : ShooterConstants.SHOOTER_SPEED);
+      setKickerSpeed(AutoShootOn ? 0 : kickerSpeed);
+      setShooterSpeed(AutoShootOn ? 0 : shooterSpeed);
     }
 
     public void AutoToggleKickIndex (boolean AutoIndexKickOn) {
-      setKickerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.KICKER_SPEED);
-      setIndexerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.SHOOTER_SPEED);
+      setKickerSpeed(AutoIndexKickOn ? 0 : kickerSpeed);
+      // Originally referenced ShooterConstants.SHOOTER_SPEED here, believed to be
+      // a copy-paste error — this line sets the indexer, not the shooter.
+      setIndexerSpeed(AutoIndexKickOn ? 0 : indexerSpeed);
     }
+
+  @Override
+  public String getSubsystemName() { return "Shooter"; }
+
+  @Override
+  public List<Tuner> getTuners() {
+    return List.of(
+        new Tuner("Hood", List.of(
+            new TuningParameter("kP",
+                hoodController::getP,
+                hoodController::setP,
+                0, Double.POSITIVE_INFINITY)
+        )),
+        new Tuner("Shooter", List.of(
+            new TuningParameter("Speed",
+                () -> shooterSpeed,
+                value -> shooterSpeed = value,
+                0, 1.0)
+        )),
+        new Tuner("Kicker", List.of(
+            new TuningParameter("Speed",
+                () -> kickerSpeed,
+                value -> kickerSpeed = value,
+                0, 1.0)
+        )),
+        new Tuner("Indexer", List.of(
+            new TuningParameter("Speed",
+                () -> indexerSpeed,
+                value -> indexerSpeed = value,
+                0, 1.0)
+        ))
+    );
+  }
 
   @Override
   public void periodic() {
