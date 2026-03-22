@@ -338,6 +338,14 @@ internal state. Four patterns appear in this example:
 The subsystem controls what is exposed and how values are applied. The tuning system
 never reaches into subsystem internals.
 
+**Important:** The getter/setter lambdas and method references capture references to
+the subsystem's controller and feedforward objects at the time `getTuners()` is called.
+If a subsystem later replaces one of these objects (e.g., creates a new `PIDController`
+instance), the tuning parameters will silently continue pointing at the old, orphaned
+instance. In practice this is not a concern — FRC subsystems create controllers once
+at construction and never replace them — but subsystem authors should be aware that
+the binding is by reference, not by lookup.
+
 ---
 
 ### RobotContainer Example
@@ -404,10 +412,13 @@ parameter values.
 **Parameter update ordering.** The robot loop is single-threaded and sequential —
 `TuningManager.periodic()` applies all dashboard values within a single `testPeriodic()`
 call before subsystem `periodic()` methods execute. There is no risk of a subsystem
-observing a partially-updated parameter set within a cycle. However, when an operator
-edits multiple related parameters on the dashboard (e.g., `kP` then `kD`), the values
-arrive at different times and may be applied in separate cycles. This is a dashboard UI
-concern, not an architectural one — a future "Apply" button that batches operator edits
+observing a partially-updated parameter set within a cycle. This ordering relies on the
+standard WPILib convention where `CommandScheduler.run()` is called from `robotPeriodic()`,
+which executes after `testPeriodic()` in WPILib's `IterativeRobotBase` loop. Teams that
+follow WPILib's default project structure get this ordering for free. However, when an
+operator edits multiple related parameters on the dashboard (e.g., `kP` then `kD`), the
+values arrive at different times and may be applied in separate cycles. This is a dashboard
+UI concern, not an architectural one — a future "Apply" button that batches operator edits
 and publishes them atomically would eliminate this window entirely.
 
 When test mode is exited, `Robot.testExit()` calls `close()` on the `TuningManager`
@@ -707,6 +718,16 @@ arrive on the dashboard at different times and may be applied in separate cycles
 A dashboard-side "Apply" button that stages edits locally and publishes them to
 NetworkTables atomically would ensure related parameters are always applied together
 in the same cycle.
+
+#### Hierarchical Composition with Name Safety
+
+When a parent subsystem aggregates tuners from child `TunableProvider` instances into
+its own `getTuners()`, the child's `getSubsystemName()` is ignored — only the parent's
+subsystem name forms the NetworkTables path. This means child tuner names must not
+collide with the parent's tuner names, and the parent is responsible for de-conflicting
+(e.g., by prefixing child tuner names). A future version could formalize this pattern
+with a helper that merges child tuners with automatic name prefixing, but for now
+the flat single-level model covers the vast majority of FRC subsystem designs.
 
 #### Logging Verbosity Control
 
