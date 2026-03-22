@@ -130,6 +130,14 @@ public class TuningParameter {
         return name;
     }
 
+    public double getMin() {
+        return min;
+    }
+
+    public double getMax() {
+        return max;
+    }
+
     public double getValue() {
         return getter.getAsDouble();
     }
@@ -391,7 +399,8 @@ public class TuningManager implements AutoCloseable {
             }
 
             if (tuners.isEmpty()) {
-                continue;
+                throw new IllegalArgumentException(
+                    "TunableProvider " + subsystemName + " returned an empty tuner list");
             }
 
             NetworkTable subsystemTable = rootTable.getSubTable(subsystemName);
@@ -514,8 +523,9 @@ Key design decisions:
   NetworkTables paths. The same parameter name may appear in different tuners (e.g.,
   `Intake/Arm/kP` and `Drive/Heading/kP`) — this is intentional, since the full
   NetworkTables path is unique.
-- **Empty provider skipping** — Providers that return an empty tuner list are skipped entirely,
-  preventing empty subsystem tables from appearing in NetworkTables.
+- **Empty provider rejection** — Providers that return an empty tuner list cause an
+  `IllegalArgumentException`. A class that implements `TunableProvider` but has nothing to
+  tune is a configuration error — the interface should not have been implemented.
 - **AutoCloseable** — Implements `AutoCloseable` to support try-with-resources if desired,
   though the typical usage pattern is explicit `close()` in `testExit()`. The `close()` method
   is idempotent — calling it multiple times is safe and has no effect after the first call.
@@ -535,6 +545,9 @@ public class Robot extends TimedRobot {
 
     @Override
     public void testInit() {
+        if (tuningManager != null) {
+            tuningManager.close();
+        }
         tuningManager = new TuningManager(robotContainer.getTunableSubsystems());
     }
 
@@ -587,7 +600,8 @@ public class Robot extends TimedRobot {
 
 Add optional metadata to `TuningParameter` such as units. This would allow
 dashboards to render labels with appropriate units (e.g., "rad/s", "volts").
-Min/max bounds are already supported by the current design.
+Min/max bounds are already exposed via `getMin()` and `getMax()`, so
+dashboards can use them to render sliders or display allowed ranges.
 
 #### Non-Double Parameter Types
 
@@ -611,6 +625,13 @@ The current implementation logs to `System.out`, which is simple and has no exte
 dependencies. Future versions could optionally support `DriverStation.reportWarning()`
 for dashboard-visible log entries, or integrate with WPILib's `DataLogManager` for
 on-roboRIO logging.
+
+#### Periodic Summary Logging
+
+The current `periodic()` method only logs individual parameter changes. A periodic
+summary (e.g., "N parameters synced, M changes applied this cycle") could provide
+a quick at-a-glance overview during tuning sessions without requiring the operator
+to parse individual change lines.
 
 ---
 
