@@ -66,7 +66,8 @@ A `Tuner` represents a logical grouping of tunable parameters within a subsystem
 ```java
 public record Tuner(String name, List<TuningParameter> parameters) {
     public Tuner {
-        Objects.requireNonNull(name, "name must not be null");
+        TuningValidation.requireValidName(name, "Tuner name");
+        Objects.requireNonNull(parameters, "parameters must not be null");
         if (parameters.isEmpty()) {
             throw new IllegalArgumentException("parameters must not be empty");
         }
@@ -79,8 +80,9 @@ public record Tuner(String name, List<TuningParameter> parameters) {
 - The subsystem name is provided by the owning `TunableProvider`, not by the `Tuner`
 - Together, the provider's subsystem name and the tuner name form a natural namespace
   for NetworkTables paths (e.g., `Intake/Arm/kP`)
-- The compact constructor validates that `name` is non-null and `parameters` is non-empty,
-  then defensively copies the parameter list
+- The compact constructor delegates name validation to `TuningValidation.requireValidName()`,
+  which checks for null, blank, and `/` characters. It also validates that `parameters` is
+  non-null and non-empty, then defensively copies the parameter list
 
 ---
 
@@ -115,7 +117,7 @@ public class TuningParameter {
 
     public TuningParameter(String name, DoubleSupplier getter, DoubleConsumer setter,
                            double min, double max) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
+        this.name = TuningValidation.requireValidName(name, "TuningParameter name");
         this.getter = Objects.requireNonNull(getter, "getter must not be null");
         this.setter = Objects.requireNonNull(setter, "setter must not be null");
         if (min > max) {
@@ -169,6 +171,39 @@ One-sided bounds are expressed by leaving one side at infinity:
 Bounds checking is the **subsystem's responsibility** — the subsystem has domain
 knowledge about what values are safe for each parameter. The `TuningParameter`
 enforces the bounds the subsystem declares, but the library never imposes its own.
+
+---
+
+### TuningValidation
+
+A package-level utility that centralizes the name validation rules shared by `Tuner`,
+`TuningParameter`, and `TuningManager`. These three classes each need the same checks
+(null, blank, `/`) but live in separate classes, so the logic is extracted here to
+avoid duplication.
+
+```java
+public final class TuningValidation {
+
+    private TuningValidation() {}
+
+    public static String requireValidName(String name, String label) {
+        Objects.requireNonNull(name, label + " must not be null");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException(label + " must not be blank");
+        }
+        if (name.contains("/")) {
+            throw new IllegalArgumentException(
+                label + " must not contain '/' (causes malformed NetworkTables paths): " + name);
+        }
+        return name;
+    }
+}
+```
+
+- Returns the validated name so callers can use it in field assignments
+  (e.g., `this.name = TuningValidation.requireValidName(name, "TuningParameter name")`)
+- Checks null, blank, and `/` in a single call — any violation throws with the caller-provided
+  `label` for clear error context
 
 ---
 
@@ -366,6 +401,15 @@ subsystem. If something else modifies a parameter while in test mode (e.g., a co
 This is intentional — during tuning, the dashboard is the single source of truth for
 parameter values.
 
+**Parameter update ordering.** The robot loop is single-threaded and sequential —
+`TuningManager.periodic()` applies all dashboard values within a single `testPeriodic()`
+call before subsystem `periodic()` methods execute. There is no risk of a subsystem
+observing a partially-updated parameter set within a cycle. However, when an operator
+edits multiple related parameters on the dashboard (e.g., `kP` then `kD`), the values
+arrive at different times and may be applied in separate cycles. This is a dashboard UI
+concern, not an architectural one — a future "Apply" button that batches operator edits
+and publishes them atomically would eliminate this window entirely.
+
 When test mode is exited, `Robot.testExit()` calls `close()` on the `TuningManager`
 and sets the reference to `null`. This unpublishes all NetworkTables entries and
 ensures the tuning system is fully torn down and does not persist into subsequent
@@ -390,7 +434,9 @@ public class TuningManager implements AutoCloseable {
         Set<String> seenSubsystems = new HashSet<>();
 
         for (TunableProvider provider : providers) {
-            String subsystemName = provider.getSubsystemName();
+            String subsystemName = TuningValidation.requireValidName(
+                provider.getSubsystemName(), "Subsystem name");
+
             List<Tuner> tuners = provider.getTuners();
 
             if (!seenSubsystems.add(subsystemName)) {
@@ -522,10 +568,15 @@ Key design decisions:
   duplicates. This fails fast at construction time rather than silently producing overlapping
   NetworkTables paths. The same parameter name may appear in different tuners (e.g.,
   `Intake/Arm/kP` and `Drive/Heading/kP`) — this is intentional, since the full
-  NetworkTables path is unique.
+  NetworkTables path is unique. All name validation (null, blank, `/`) is delegated to
+  `TuningValidation.requireValidName()`, which is used consistently across `TuningManager`,
+  `Tuner`, and `TuningParameter` to catch invalid names at the earliest possible point.
 - **Empty provider rejection** — Providers that return an empty tuner list cause an
   `IllegalArgumentException`. A class that implements `TunableProvider` but has nothing to
   tune is a configuration error — the interface should not have been implemented.
+- **Empty provider list accepted** — An empty provider list is valid. Teams may wire up the
+  `TuningManager` before any subsystems implement `TunableProvider`, so the constructor
+  accepts zero providers and logs "Initialized with 0 tunable parameters."
 - **AutoCloseable** — Implements `AutoCloseable` to support try-with-resources if desired,
   though the typical usage pattern is explicit `close()` in `testExit()`. The `close()` method
   is idempotent — calling it multiple times is safe and has no effect after the first call.
@@ -610,6 +661,13 @@ feedforward constants, and speed values. Support for additional types (boolean t
 integer values, enum-backed modes) can be added when concrete use cases arise that
 require them.
 
+#### Reset to Defaults
+
+Snapshot initial parameter values at `TuningManager` construction time and expose a
+`resetToDefaults()` method that restores all parameters to their original values.
+This would avoid requiring a full robot program restart to revert parameters during
+a tuning session. The snapshot cost is minimal — one `double` per `TunerBinding`.
+
 #### Persistence
 
 Support saving tuned values so they survive redeploys. Options include:
@@ -618,6 +676,15 @@ Support saving tuned values so they survive redeploys. Options include:
 
 For now, developers read the final tuned values from the dashboard and hard-code
 them into constants.
+
+#### Transport Abstraction
+
+The current `TuningManager` is tightly coupled to NetworkTables, which is pragmatic
+for FRC (NetworkTables is universal). A future version could introduce a
+`TuningBackend` interface that `TuningManager` delegates to, with
+`NetworkTablesTuningBackend` as the default implementation. This would allow teams
+to swap in alternative backends (file-based, custom dashboard protocol) without
+forking the library.
 
 #### Alternative Logging
 
@@ -633,6 +700,21 @@ summary (e.g., "N parameters synced, M changes applied this cycle") could provid
 a quick at-a-glance overview during tuning sessions without requiring the operator
 to parse individual change lines.
 
+#### Batched Apply
+
+When an operator edits multiple related parameters (e.g., `kP` and `kD`), the values
+arrive on the dashboard at different times and may be applied in separate cycles.
+A dashboard-side "Apply" button that stages edits locally and publishes them to
+NetworkTables atomically would ensure related parameters are always applied together
+in the same cycle.
+
+#### Logging Verbosity Control
+
+During active tuning with rapid adjustments, per-change logging can become verbose.
+A configurable verbosity level (or a simple `verbose` boolean on `TuningManager`)
+would let teams control log noise — for example, suppressing individual change lines
+while keeping initialization and shutdown messages.
+
 ---
 
 ## Summary
@@ -640,6 +722,7 @@ to parse individual change lines.
 - `TunableProvider` defines *capability* — who has tunable parameters, including the subsystem name
 - `Tuner` defines *grouping* — a named set of parameters within a subsystem
 - `TuningParameter` defines *individual values* — a getter/setter pair with optional bounds
+- `TuningValidation` defines *name rules* — centralizes null, blank, and `/` checks used by all named components
 - `TuningManager` defines *orchestration* — validates structure, syncs parameters with NetworkTables, and cleans up on close
 
 This structure provides a clean, scalable, and extensible foundation for robot tuning systems in FRC.
