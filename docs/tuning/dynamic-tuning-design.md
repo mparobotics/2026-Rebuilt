@@ -91,6 +91,7 @@ A `TuningParameter` represents a single tunable value with optional bounds.
 #### Suggested Implementation
 
 ```java
+import java.util.Objects;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 
@@ -108,9 +109,9 @@ public class TuningParameter {
 
     public TuningParameter(String name, DoubleSupplier getter, DoubleConsumer setter,
                            double min, double max) {
-        this.name = name;
-        this.getter = getter;
-        this.setter = setter;
+        this.name = Objects.requireNonNull(name, "name must not be null");
+        this.getter = Objects.requireNonNull(getter, "getter must not be null");
+        this.setter = Objects.requireNonNull(setter, "setter must not be null");
         this.min = min;
         this.max = max;
     }
@@ -351,6 +352,7 @@ public class TuningManager implements AutoCloseable {
     private static final double VALUE_CHANGE_TOLERANCE = 1e-9;
 
     private final List<TunerBinding> bindings = new ArrayList<>();
+    private boolean closed = false;
 
     public TuningManager(List<TunableProvider> providers) {
         validateProviders(providers);
@@ -358,6 +360,10 @@ public class TuningManager implements AutoCloseable {
         NetworkTable rootTable = NetworkTableInstance.getDefault().getTable("Tuning");
 
         for (TunableProvider provider : providers) {
+            if (provider.getTuners().isEmpty()) {
+                continue;
+            }
+
             NetworkTable subsystemTable = rootTable.getSubTable(provider.getSubsystemName());
 
             for (Tuner tuner : provider.getTuners()) {
@@ -379,14 +385,20 @@ public class TuningManager implements AutoCloseable {
 
             if (!MathUtil.isNear(currentValue, dashboardValue, VALUE_CHANGE_TOLERANCE)) {
                 binding.param.setValue(dashboardValue);
+                // Write back the applied value — may differ from dashboardValue
+                // due to clamping
+                binding.entry.setDouble(binding.param.getValue());
             }
-
-            binding.entry.setDouble(binding.param.getValue());
         }
     }
 
     @Override
     public void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
+
         for (TunerBinding binding : bindings) {
             binding.entry.unpublish();
         }
@@ -398,23 +410,23 @@ public class TuningManager implements AutoCloseable {
 
         for (TunableProvider provider : providers) {
             if (!seenSubsystems.add(provider.getSubsystemName())) {
-                System.err.println("[TuningManager] Duplicate subsystem name: "
-                    + provider.getSubsystemName());
+                throw new IllegalArgumentException(
+                    "Duplicate subsystem name: " + provider.getSubsystemName());
             }
 
             Set<String> seenTuners = new HashSet<>();
             for (Tuner tuner : provider.getTuners()) {
                 if (!seenTuners.add(tuner.name())) {
-                    System.err.println("[TuningManager] Duplicate tuner name: "
-                        + tuner.name()
+                    throw new IllegalArgumentException(
+                        "Duplicate tuner name: " + tuner.name()
                         + " in subsystem " + provider.getSubsystemName());
                 }
 
                 Set<String> seenParams = new HashSet<>();
                 for (TuningParameter param : tuner.parameters()) {
                     if (!seenParams.add(param.getName())) {
-                        System.err.println("[TuningManager] Duplicate parameter name: "
-                            + param.getName()
+                        throw new IllegalArgumentException(
+                            "Duplicate parameter name: " + param.getName()
                             + " in tuner " + provider.getSubsystemName()
                             + "/" + tuner.name());
                     }
@@ -439,14 +451,22 @@ Key design decisions:
 - **Tolerance-based change guard** — `periodic()` uses `MathUtil.isNear()` to compare the
   dashboard value with the current subsystem value, avoiding floating-point equality pitfalls.
   `param.setValue()` is only called when the values differ beyond `VALUE_CHANGE_TOLERANCE`.
+  The write-back to NetworkTables (`entry.setDouble`) only occurs when a change is detected,
+  avoiding redundant writes on every cycle. After `setValue()`, the write-back re-reads the
+  value via `getValue()` so the dashboard reflects the actual applied value, which may differ
+  from the requested value due to bounds clamping.
 - **Clean shutdown** — `close()` calls `unpublish()` on every `NetworkTableEntry` to remove
   the tuning entries from NetworkTables when test mode exits, then clears the binding list.
 - **Hierarchical validation** — `validateProviders()` checks for duplicate names at each level
-  of the hierarchy (subsystem, tuner, parameter) and prints errors to `System.err`. This
-  mirrors the table/subtable structure used by NetworkTables — rather than constructing
-  composite path strings, validation occurs at each level independently.
+  of the hierarchy (subsystem, tuner, parameter) and throws `IllegalArgumentException` on
+  duplicates. This fails fast at construction time rather than silently producing overlapping
+  NetworkTables paths. Validation mirrors the table/subtable structure — rather than
+  constructing composite path strings, it checks at each level independently.
+- **Empty provider skipping** — Providers that return an empty tuner list are skipped entirely,
+  preventing empty subsystem tables from appearing in NetworkTables.
 - **AutoCloseable** — Implements `AutoCloseable` to support try-with-resources if desired,
-  though the typical usage pattern is explicit `close()` in `testExit()`.
+  though the typical usage pattern is explicit `close()` in `testExit()`. The `close()` method
+  is idempotent — calling it multiple times is safe and has no effect after the first call.
 
 #### Usage in Robot.java
 
