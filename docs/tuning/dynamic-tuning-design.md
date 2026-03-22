@@ -67,6 +67,9 @@ A `Tuner` represents a logical grouping of tunable parameters within a subsystem
 public record Tuner(String name, List<TuningParameter> parameters) {
     public Tuner {
         Objects.requireNonNull(name, "name must not be null");
+        if (parameters.isEmpty()) {
+            throw new IllegalArgumentException("parameters must not be empty");
+        }
         parameters = List.copyOf(parameters);
     }
 }
@@ -76,7 +79,8 @@ public record Tuner(String name, List<TuningParameter> parameters) {
 - The subsystem name is provided by the owning `TunableProvider`, not by the `Tuner`
 - Together, the provider's subsystem name and the tuner name form a natural namespace
   for NetworkTables paths (e.g., `Intake/Arm/kP`)
-- The compact constructor validates inputs and defensively copies the parameter list
+- The compact constructor validates that `name` is non-null and `parameters` is non-empty,
+  then defensively copies the parameter list
 
 ---
 
@@ -357,7 +361,9 @@ parameter values.
 When test mode is exited, `Robot.testExit()` calls `close()` on the `TuningManager`
 and sets the reference to `null`. This unpublishes all NetworkTables entries and
 ensures the tuning system is fully torn down and does not persist into subsequent
-auto or teleop modes.
+auto or teleop modes. Note that the tuned parameter values remain in effect within
+the subsystems — only the NetworkTables entries and the `TuningManager` are removed.
+To revert parameters to their original values, restart the robot program.
 
 #### Suggested Implementation
 
@@ -598,6 +604,13 @@ Support saving tuned values so they survive redeploys. Options include:
 
 For now, developers read the final tuned values from the dashboard and hard-code
 them into constants.
+
+#### Alternative Logging
+
+The current implementation logs to `System.out`, which is simple and has no external
+dependencies. Future versions could optionally support `DriverStation.reportWarning()`
+for dashboard-visible log entries, or integrate with WPILib's `DataLogManager` for
+on-roboRIO logging.
 
 ---
 
