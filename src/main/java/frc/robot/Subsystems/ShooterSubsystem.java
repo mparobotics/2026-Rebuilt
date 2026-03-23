@@ -158,7 +158,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void AutoToggleKickIndex (boolean AutoIndexKickOn) {
       setKickerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.KICKER_SPEED);
-      setIndexerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.SHOOTER_SPEED);
+      setIndexerSpeed(AutoIndexKickOn ? 0 : ShooterConstants.INDEXER_SPEED);
     }
 
   @Override
