@@ -345,7 +345,6 @@ public static final class IntakeConstants {
   //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
   public static final double INTAKE_ARM_MAX_OUTPUT = 0.20;
   public static final double INTAKE_ARM_MIN_OUTPUT = -0.10;
-  public static final double INTAKE_ARM_DOWN_HOLD_OUTPUT = -0.12;
 }
 
 public static final class CANdleConstants {

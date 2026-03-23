@@ -149,11 +149,6 @@ public class IntakeSubsystem extends SubsystemBase {
     return intakeArm2Encoder.getPosition();
   }
 
-  private boolean isIntakeCommandedDown() {
-    return Math.abs(intakeArmTargetDeg - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
-      <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG;
-  }
-
   @Override
   public void periodic() {
     double currentDeg = getArmPositionDeg();
@@ -181,26 +176,17 @@ public class IntakeSubsystem extends SubsystemBase {
       output2 = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output2));
 
 
-    if (intakeArmController.atSetpoint() && intakeArm2Controller.atSetpoint()) {
-      if (isIntakeCommandedDown()) {
-        intakeArmMotor.set(IntakeConstants.INTAKE_ARM_DOWN_HOLD_OUTPUT);
-        intakeArmMotor2.set(IntakeConstants.INTAKE_ARM_DOWN_HOLD_OUTPUT);
-      } else {
-        intakeArmMotor.set(ffOutput);
-        intakeArmMotor2.set(ffOutput2);
-        intakeArmActive = false;
-      }
-      } else {
-        intakeArmMotor.set(output);
-        intakeArmMotor2.set(output2);
-      }
-
-      } else if (isIntakeCommandedDown()) {
-        intakeArmMotor.set(IntakeConstants.INTAKE_ARM_DOWN_HOLD_OUTPUT);
-        intakeArmMotor2.set(IntakeConstants.INTAKE_ARM_DOWN_HOLD_OUTPUT);
-      } else {
-        intakeArmMotor.set(ffOutput);
-        intakeArmMotor2.set(ffOutput2);
+    if (intakeArmController.atSetpoint() && intakeArm2Controller.atSetpoint()){
+      intakeArmMotor.set(ffOutput);
+      intakeArmMotor2.set(ffOutput2);
+      intakeArmActive = false;
+    } else {
+      intakeArmMotor.set(output);
+      intakeArmMotor2.set(output2);
+    }
+  } else{
+      intakeArmMotor.set(ffOutput);
+      intakeArmMotor2.set(ffOutput2);
     }
   }
 }
