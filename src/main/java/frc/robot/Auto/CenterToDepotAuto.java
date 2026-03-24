@@ -92,20 +92,18 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
           }, shooter)
         ),
 
-        Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
-
-        // While shooting/indexing, continuously move the intake arm up/down.
-        Commands.sequence(
-            Commands.runOnce(intake::lowerIntake, intake),
-            Commands.waitUntil(() ->
-              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
-                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG),
-            Commands.runOnce(intake::raiseIntake, intake),
-            Commands.waitUntil(() ->
-              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
-                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
-          )
-          .repeatedly()
+      // While shooting/indexing, continuously move the intake arm up/down.
+      Commands.sequence(
+          Commands.runOnce(intake::lowerIntake, intake),
+          Commands.waitUntil(() ->
+            Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
+              <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG),
+          Commands.runOnce(intake::raiseIntake, intake),
+          Commands.waitUntil(() ->
+            Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
+              <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
+        )
+        .repeatedly()
       )
     );
   }
