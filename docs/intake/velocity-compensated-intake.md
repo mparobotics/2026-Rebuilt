@@ -16,14 +16,39 @@ Team 1678 [designed their Rapid React intake](https://www.frcdesign.org/mechanis
 
 ## Where We Stand Today
 
-With our current settings, the numbers look like this:
+### Assumptions
 
-- `INTAKE_SPEED = 0.50` (max 50% motor output)
-- Auto uses `INTAKE_POWER = -0.5`, so actual motor output = **25%**
-- At 25% output, our roller surface speed is roughly **2.0 m/s**
-- Our auto drives at **2.0 m/s**
+The estimates below depend on the following values:
 
-That's a **1:1 ratio** -- barely matching robot speed, well below the recommended 2x. This likely explains why intake is unreliable while moving.
+1. Auto commands `DRIVE_SPEED_MPS = 2` (`LeftNeutralZoneAuto1`, line 22). We assume the robot actually drives at approximately 2.0 m/s, which is good enough for the rough calculations in this section.
+
+2. Roller surface speed can be estimated from physical parameters:
+   - Gear ratio: 18-tooth motor gear / 24-tooth roller gear = 0.75 reduction
+   - Roller OD: 1.25" base + 2 × ~1/8" silicone sleeve ≈ 1.5" (0.0381 m)
+   - Motor: NEO Vortex (published free speed 6784 RPM). Under load we estimate ~5400 RPM.
+   - Max roller surface speed: `5400 × 0.75 × π × 0.0381 / 60 ≈ 8.1 m/s`
+
+### Current Auto Behavior
+
+The following two constants are used to calculate the intake motor output used in `LeftNeutralZoneAuto1.java`:
+
+The max percent output for the intake motor is specified on line 318 in `Constants.java`:
+
+```java
+INTAKE_SPEED = 0.50;
+```
+
+The intake power requested during auto is specified on line 35 of `LeftNeutralZoneAuto1.java`:
+```java
+INTAKE_POWER = -0.5;  // negative means intake direction (positive would eject)
+```
+
+On lines 50 and 103 in `LeftNeutralZoneAuto1.java`, the auto routine calls `IntakeSubsystem.setIntakePower(double power)` with `power` argument equal to `INTAKE_POWER`.  This sets the motor output to the following:
+```java
+INTAKE_POWER * INTAKE_SPEED = (-0.5) * 0.5 = -0.25
+```
+
+So actual motor output during auto is **25%**, giving a roller surface speed of roughly `8.1 × 0.25 ≈` **2.0 m/s**. Our auto drives at roughly **2.0 m/s** (see assumptions above), so that's approximately a **1:1 ratio** -- barely matching robot speed and well below the recommended 2x. This likely explains why intake is unreliable while moving.
 
 ## A Possible Approach
 
