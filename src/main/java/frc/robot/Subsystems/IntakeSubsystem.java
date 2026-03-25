@@ -172,6 +172,13 @@ public class IntakeSubsystem extends SubsystemBase {
       double output = pidOutput + ffOutput;
       double output2 = pidOutput2 + ffOutput2;
 
+      //NEED TESTING
+      // When commanded down, limit downward power further so the arm settles more gently.
+      if (!intakeUp) {
+        output = Math.max(IntakeConstants.INTAKE_ARM_LOWERING_MIN_OUTPUT, output);
+        output2 = Math.max(IntakeConstants.INTAKE_ARM_LOWERING_MIN_OUTPUT, output2);
+      }
+
       output = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output));
       output2 = Math.max(IntakeConstants.INTAKE_ARM_MIN_OUTPUT, Math.min(IntakeConstants.INTAKE_ARM_MAX_OUTPUT, output2));
 

@@ -87,6 +87,9 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
         .withTimeout(1.0),
 
+      // Keep intake running while the intake arm cycles up/down during shooting.
+      Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+
       Commands.parallel(
         // Start kicker first, then start indexer 1 second later (kicker keeps running).
         Commands.sequence(

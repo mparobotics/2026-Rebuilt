@@ -27,6 +27,7 @@ import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Auto.CenterLemonAuto;
 import frc.robot.Auto.CenterToDepotAuto;
+import frc.robot.Auto.DepotShootingAuto;
 import frc.robot.Auto.DriveTestAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
@@ -250,6 +251,7 @@ public class RobotContainer {
       case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
       case CenterToDepotAuto -> new CenterToDepotAuto(m_drive, m_intake, m_shooter);
+      case DepotShootingAuto -> new DepotShootingAuto(m_drive, m_intake, m_shooter);
 
       
       default -> Commands.none();

@@ -18,7 +18,7 @@ import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-public class CenterToDepotAuto extends SequentialCommandGroup {
+public class DepotShootingAuto extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 2;
   private static final double DRIVE_SPEED_MPS_2 = 0.8;
   private static final double DRIVE_HEADING_P = 3.0;
@@ -27,16 +27,14 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  private static final double BACKWARD_METERS_1 = 1.8;
+  private static final double BACKWARD_METERS_1 = 1;
   private static final double FORWARD_METERS = 1.8;
   private static final double FORWARD_METERS_1 = 2;
   private static final double FORWARD_METERS_2 = 2.7;
-  private static final double FORWARD_METERS_3 = 1;
-  
 
   private static final double INTAKE_POWER = -0.75;
 
-  public CenterToDepotAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+  public DepotShootingAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
 
     addCommands(
@@ -58,14 +56,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       // Drive forward 1.8m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS, DRIVE_SPEED_MPS_2),
 
-      // Out of depot and then back in (2nd in)
       // Drive backward 1m
-      driveDistanceMeters(drive, -FORWARD_METERS_3, DRIVE_SPEED_MPS),
-
-      // Drive forward 1m
-      driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS_2),
-
-      // Drive backward 1.8m
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS_2),
 
       // Stop intake at the end.
@@ -77,7 +68,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
 
 
       // Bring hood up to HIGH angle.
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED), shooter),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
 
       // Shooter
       Commands.runOnce(() -> {

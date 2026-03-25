@@ -162,7 +162,8 @@ public static final class AutoConstants {
     RightNeutralZoneAuto1,
     ShootEightAuto,
     CenterLemonAuto,
-    CenterToDepotAuto
+    CenterToDepotAuto,
+    DepotShootingAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -186,6 +187,7 @@ public static final class AutoConstants {
     autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
     autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
+    autoModeChooser.addOption("DepotShootingAuto", AutoMode.DepotShootingAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
@@ -345,6 +347,8 @@ public static final class IntakeConstants {
   //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
   public static final double INTAKE_ARM_MAX_OUTPUT = 0.20;
   public static final double INTAKE_ARM_MIN_OUTPUT = -0.10;
+  // Additional clamp while lowering so the arm descends more softly.
+  public static final double INTAKE_ARM_LOWERING_MIN_OUTPUT = -0.06;
 }
 
 public static final class CANdleConstants {
