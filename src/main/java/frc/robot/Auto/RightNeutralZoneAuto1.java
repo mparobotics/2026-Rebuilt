@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2;
+  private static final double DRIVE_SPEED_MPS = 2.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -29,10 +29,11 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 3.0;
   private static final double FORWARD_METERS_1 = 3.0;
-  private static final double FORWARD_METERS_2 = 1.;
+  private static final double FORWARD_METERS_2 = 1.0;
   private static final double FORWARD_METERS_3 = 3.25;
+  private static final double FORWARD_METERS_4 = 0.5;
 
-  private static final double INTAKE_POWER = -0.7;
+  private static final double INTAKE_POWER = -1.0;
 
   public RightNeutralZoneAuto1(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
@@ -48,6 +49,13 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
 
       // Drive forward 3m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+
+      driveDistanceMeters(drive, FORWARD_METERS_4, DRIVE_SPEED_MPS),
+
+      // Backs up 0.5m
+      driveDistanceMeters(drive, -FORWARD_METERS_4, DRIVE_SPEED_MPS),
+
+      // Return to the rest of the path, drive forward 3.6m
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees left (intake still on).

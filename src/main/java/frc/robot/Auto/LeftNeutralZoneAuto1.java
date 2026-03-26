@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2;
+  private static final double DRIVE_SPEED_MPS = 2.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -27,10 +27,11 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
   private static final double BACKWARD_METERS_1 = 3.6;
-  private static final double BACKWARD_METERS_2 = 3.0;
+  private static final double BACKWARD_METERS_2 = 3.3;
   private static final double FORWARD_METERS_1 = 3.0;
-  private static final double FORWARD_METERS_2 = 1.;
+  private static final double FORWARD_METERS_2 = 1.0;
   private static final double FORWARD_METERS_3 = 3.2;
+  private static final double FORWARD_METERS_4 = 0.5;
 
   private static final double INTAKE_POWER = -0.5;
 
@@ -46,8 +47,14 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Turn 90 degrees left.
       turnRelativeDegrees(drive, 90.0),
 
-      // Drive forward 3m while starting intake (intake stays on for the rest of auto).
+      // Drive forward 0.5m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+      driveDistanceMeters(drive, FORWARD_METERS_4, DRIVE_SPEED_MPS),
+
+      // Backs up 0.5m
+      driveDistanceMeters(drive, -FORWARD_METERS_4, DRIVE_SPEED_MPS),
+
+      // Return to the rest of the path, drive forward 3.6m
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees right (intake still on).
@@ -103,7 +110,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
           }, shooter)
         ),
 
-        Commands.waitSeconds(2),
+        Commands.waitSeconds(1),
 
         // While shooting/indexing, continuously move the intake arm up/down.
         Commands.sequence(
