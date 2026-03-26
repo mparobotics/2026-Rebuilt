@@ -203,9 +203,9 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.85,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.95,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.85,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.95,
         // rotationSupplier - Rotation speed
         () -> -driveController.getRawAxis(rotationAxis) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)

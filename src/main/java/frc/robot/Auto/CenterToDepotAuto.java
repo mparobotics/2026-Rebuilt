@@ -18,7 +18,7 @@ import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 public class CenterToDepotAuto extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2;
+  private static final double DRIVE_SPEED_MPS = 3.0;
   private static final double DRIVE_SPEED_MPS_2 = 0.8;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
@@ -28,12 +28,12 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
 
   private static final double BACKWARD_METERS_1 = 2.3;
   private static final double FORWARD_METERS = 1.8;
-  private static final double FORWARD_METERS_1 = 2;
+  private static final double FORWARD_METERS_1 = 2.0;
   private static final double FORWARD_METERS_2 = 1.9;
-  private static final double FORWARD_METERS_3 = 1;
+  private static final double FORWARD_METERS_3 = 1.0;
   
 
-  private static final double INTAKE_POWER = -0.75;
+  private static final double INTAKE_POWER = -1.0;
 
   public CenterToDepotAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
