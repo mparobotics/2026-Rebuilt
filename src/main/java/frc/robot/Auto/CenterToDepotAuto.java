@@ -19,14 +19,14 @@ import frc.robot.Subsystems.SwerveSubsystem;
 
 public class CenterToDepotAuto extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 3.0;
-  private static final double DRIVE_SPEED_MPS_2 = 0.8;
+  private static final double DRIVE_SPEED_MPS_2 = 1.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  private static final double BACKWARD_METERS_1 = 2.3;
+  private static final double BACKWARD_METERS_1 = 1.9;
   private static final double FORWARD_METERS = 1.8;
   private static final double FORWARD_METERS_1 = 2.0;
   private static final double FORWARD_METERS_2 = 1.9;
@@ -39,13 +39,13 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
     addRequirements(drive, intake, shooter);
 
     addCommands(
-      Commands.runOnce(intake::lowerIntake, intake),
-
       // Drive forwards 2m.
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees right.
       turnRelativeDegrees(drive, -90.0),
+
+      Commands.runOnce(intake::lowerIntake, intake),
 
       // Drive forward 1.9m
       driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
@@ -57,23 +57,15 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       // Drive forward 1.8m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS, DRIVE_SPEED_MPS_2),
 
-      // Out of depot and then back in (2nd in)
-      // Drive backward 1m
-      driveDistanceMeters(drive, -FORWARD_METERS_3, DRIVE_SPEED_MPS),
-
-      // Drive forward 1m
-      driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS_2),
-
-      // Drive backward 2.3m
-      driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS_2),
+      // Drive backward 1.9m
+      driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
       // Turn 110 degrees right (intake still on).
-      turnRelativeDegrees(drive, -125),
-
+      turnRelativeDegrees(drive, -123),
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED), shooter),

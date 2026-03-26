@@ -134,7 +134,7 @@ public class RobotContainer {
     //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
     driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
     //xLock
-    driveController.button(Button.kB.value).whileTrue(m_drive.xLockCommand());
+    driveController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_drive.xLock()));
 
     // SHOOTER CONTROLLER
     m_shooter.setDefaultCommand(
@@ -203,9 +203,9 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.95,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 1.0,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.95,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 1.0,
         // rotationSupplier - Rotation speed
         () -> -driveController.getRawAxis(rotationAxis) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
