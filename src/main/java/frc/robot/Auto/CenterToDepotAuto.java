@@ -18,7 +18,7 @@ import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 public class CenterToDepotAuto extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2;
+  private static final double DRIVE_SPEED_MPS = 2.5;
   private static final double DRIVE_SPEED_MPS_2 = 0.8;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
@@ -26,10 +26,10 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  private static final double BACKWARD_METERS_1 = 1.8;
+  private static final double BACKWARD_METERS_1 = 2.3;
   private static final double FORWARD_METERS = 1.8;
   private static final double FORWARD_METERS_1 = 2;
-  private static final double FORWARD_METERS_2 = 2.7;
+  private static final double FORWARD_METERS_2 = 1.9;
   private static final double FORWARD_METERS_3 = 1;
   
 
@@ -47,7 +47,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       // Turn 90 degrees right.
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 2.7m
+      // Drive forward 1.9m
       driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees left (intake on).
@@ -64,7 +64,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       // Drive forward 1m
       driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS_2),
 
-      // Drive backward 1.8m
+      // Drive backward 2.3m
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS_2),
 
       // Stop intake at the end.
@@ -72,7 +72,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
       // Turn 110 degrees right (intake still on).
-      turnRelativeDegrees(drive, -129),
+      turnRelativeDegrees(drive, -125),
 
 
       // Bring hood up to HIGH angle.
@@ -86,10 +86,11 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
         .withTimeout(1.0),
-      
+
+
       // Keep intake running while the intake arm cycles up/down during shooting.
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
-
+      
       Commands.parallel(
         // Start kicker first, then start indexer 1 second later (kicker keeps running).
         Commands.sequence(
@@ -102,6 +103,8 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
             shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
           }, shooter)
         ),
+
+      Commands.waitSeconds(2),
 
       // While shooting/indexing, continuously move the intake arm up/down.
       Commands.sequence(
