@@ -29,7 +29,7 @@ public class DepotShootingAuto extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_1 = 1;
   private static final double FORWARD_METERS = 1.8;
   private static final double FORWARD_METERS_1 = 2;
-  private static final double FORWARD_METERS_2 = 2.7;
+  private static final double FORWARD_METERS_2 = 1.9;
 
   private static final double INTAKE_POWER = -0.75;
 
@@ -45,7 +45,7 @@ public class DepotShootingAuto extends SequentialCommandGroup {
       // Turn 90 degrees right.
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 2.7m
+      // Drive forward 1.9m
       driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees left (intake on).
@@ -93,6 +93,8 @@ public class DepotShootingAuto extends SequentialCommandGroup {
             shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
           }, shooter)
         ),
+
+      Commands.waitSeconds(2),
 
       // While shooting/indexing, continuously move the intake arm up/down.
       Commands.sequence(

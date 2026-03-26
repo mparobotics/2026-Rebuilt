@@ -103,6 +103,8 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
           }, shooter)
         ),
 
+        Commands.waitSeconds(2),
+
         // While shooting/indexing, continuously move the intake arm up/down.
         Commands.sequence(
             Commands.runOnce(intake::lowerIntake, intake),
