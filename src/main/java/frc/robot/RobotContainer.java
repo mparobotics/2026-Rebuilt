@@ -134,7 +134,7 @@ public class RobotContainer {
     //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
     driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
     //xLock
-    driveController.button(Button.kB.value).onTrue(new InstantCommand(() -> m_drive.xLock()));
+    driveController.button(Button.kB.value).whileTrue(Commands.run(() -> m_drive.xLock(), m_drive));
 
     // SHOOTER CONTROLLER
     m_shooter.setDefaultCommand(
