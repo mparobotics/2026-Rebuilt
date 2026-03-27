@@ -32,7 +32,7 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double FORWARD_METERS_2 = 1.0;
   private static final double FORWARD_METERS_3 = 3.25;
 
-  private static final double INTAKE_POWER = -1.0;
+  private static final double INTAKE_POWER = -0.75;
 
   public RightNeutralZoneAuto1(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);

@@ -19,7 +19,7 @@ import frc.robot.Subsystems.SwerveSubsystem;
 
 public class DepotShootingAuto extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 3.0;
-  private static final double DRIVE_SPEED_MPS_2 = 0.8;
+  private static final double DRIVE_SPEED_MPS_2 = 1.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
