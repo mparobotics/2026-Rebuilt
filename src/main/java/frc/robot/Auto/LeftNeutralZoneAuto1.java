@@ -27,10 +27,10 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
   private static final double BACKWARD_METERS_1 = 3.6;
-  private static final double BACKWARD_METERS_2 = 3.3;
-  private static final double FORWARD_METERS_1 = 3.0;
-  private static final double FORWARD_METERS_2 = 1.0;
-  private static final double FORWARD_METERS_3 = 3.2;
+  private static final double BACKWARD_METERS_2 = 4.3;
+  private static final double FORWARD_METERS_1 = 2.0;
+  //private static final double FORWARD_METERS_2 = 1.0;
+  //private static final double FORWARD_METERS_3 = 3.2;
 
   private static final double INTAKE_POWER = -0.75;
 
@@ -46,28 +46,19 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Turn 90 degrees left.
       turnRelativeDegrees(drive, 90.0),
 
-      // Drive forward 0.5m while starting intake (intake stays on for the rest of auto).
+      // Drive forward 2m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Turn 90 degrees right (intake still on).
-      turnRelativeDegrees(drive, -90.0),
-
-      // Drive forward 1.3m (intake still on).
-      driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
-
-      // Turn 90 degrees right (intake still on).
-      turnRelativeDegrees(drive, -90.0),
-
-      // Drive forward 3.4m (intake still on).
-      driveDistanceMeters(drive, FORWARD_METERS_3, DRIVE_SPEED_MPS),
+      // Drive forward 2m (intake still on).
+      driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
-      // Turn 90 degrees right
-      turnRelativeDegrees(drive, -90.0),
+      // Turn 90 degrees left
+      turnRelativeDegrees(drive, 90.0),
 
       // Drive backward (back to the trench)
       driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),

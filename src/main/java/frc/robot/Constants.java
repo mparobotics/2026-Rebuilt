@@ -130,7 +130,7 @@ public static final class SwerveConstants{
   public static ModuleData[] moduleData = {
     new ModuleData(6, 5, 7, 39.90, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
     new ModuleData(9, 8, 10, 46.93, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-    new ModuleData(12, 11, 13, 42.09, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+    new ModuleData(12, 11, 13, 31.72, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
     new ModuleData(15, 14, 16, 7.11, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
   };
   
@@ -317,7 +317,7 @@ public static final class IntakeConstants {
   // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
   public static int INTAKE_ID = 19;
   // SparkMax.set(...) expects [-1.0, 1.0] percent output.
-  public static double INTAKE_SPEED = 0.5; // max percent output for intake motor
+  public static double INTAKE_SPEED = 0.75; // max percent output for intake motor
 
   public static int INTAKE_ARM_ID = 18;
   public static int INTAKE_ARM_2_ID = 24;

@@ -29,7 +29,8 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_1 = 1.9;
   private static final double FORWARD_METERS = 1.8;
   private static final double FORWARD_METERS_1 = 2.0;
-  private static final double FORWARD_METERS_2 = 1.8;
+  private static final double FORWARD_METERS_2 = 1.9;
+  private static final double FORWARD_METERS_3 = 1.0;
   
 
   private static final double INTAKE_POWER = -1.0;
@@ -56,7 +57,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       // Drive forward 1.8m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS, DRIVE_SPEED_MPS_2),
 
-      // Drive backward 1.8m
+      // Drive backward 1.9m
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
