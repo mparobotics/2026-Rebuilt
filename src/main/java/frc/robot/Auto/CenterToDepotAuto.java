@@ -18,7 +18,7 @@ import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 public class CenterToDepotAuto extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 3.0;
+  private static final double DRIVE_SPEED_MPS = 2.0;
   private static final double DRIVE_SPEED_MPS_2 = 1.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
@@ -26,9 +26,9 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
   private static final double TURN_TOLERANCE_DEG = 3.0;
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
-  private static final double BACKWARD_METERS_1 = 1.9;
+  private static final double BACKWARD_METERS_1 = 1.7;
   private static final double FORWARD_METERS = 1.8;
-  private static final double FORWARD_METERS_1 = 2.0;
+  private static final double FORWARD_METERS_1 = 1.8;
   private static final double FORWARD_METERS_2 = 1.9;
   private static final double FORWARD_METERS_3 = 1.0;
   
@@ -57,7 +57,7 @@ public class CenterToDepotAuto extends SequentialCommandGroup {
       // Drive forward 1.8m (intake still on).
       driveDistanceMeters(drive, FORWARD_METERS, DRIVE_SPEED_MPS_2),
 
-      // Drive backward 1.9m
+      // Drive backward 1.7m
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
