@@ -16,7 +16,7 @@ public class ShootEightAuto extends SequentialCommandGroup {
   public ShootEightAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     final double[] startYawRad = new double[1];
     addCommands(
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
       Commands.runOnce(() -> {
         shooter.runIndexer(false);
         shooter.runKicker(false);
