@@ -238,22 +238,20 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public Command xLockCommand ( ) {
-    return runOnce(() -> Lockwheels()). repeatedly() ;
+    return run(this::xLock);
   }
 
-    public void xLock()
-  {
-      SwerveModuleState[] moduleStates = new SwerveModuleState[4] ;
-      moduleStates[0] = new SwerveModuleState(0,Rotation2d.fromDegrees(315));
-      moduleStates[1] = new SwerveModuleState(0,Rotation2d.fromDegrees(45));
-      moduleStates[2] = new SwerveModuleState(0,Rotation2d.fromDegrees(225));
-      moduleStates[3] = new SwerveModuleState(0,Rotation2d.fromDegrees(135));
-      System.out.println("***************attempting to x lock");
-      //setModuleStatesStopped(moduleStates);
+  public void xLock(){
+    Rotation2d[] xLockAngles = new Rotation2d [4];
+      xLockAngles[0] = Rotation2d.fromDegrees(225);
+      xLockAngles[1] = Rotation2d.fromDegrees(135);
+      xLockAngles[2] = Rotation2d.fromDegrees(225);
+      xLockAngles[3] = Rotation2d.fromDegrees(135);
 
-          for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(moduleStates[mod.moduleNumber], true); //NEED CONFIRM
-    }
+      for (SwerveModule mod:mSwerveMods){
+        mod.setDesiredState(new SwerveModuleState(0,mod.getState().angle), true);
+        mod.pointInDirection(xLockAngles[mod.moduleNumber].getDegrees());
+      }
   }
 
   public ChassisSpeeds getChassisSpeeds(){

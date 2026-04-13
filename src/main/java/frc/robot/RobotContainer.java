@@ -185,13 +185,6 @@ public class RobotContainer {
     helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED), m_shooter));
     helmsController.a().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
 
-    
-    // Left Trigger = Auto-align to left scoring position
-    driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
-    // Right Trigger = Auto-align to right scoring position
-    driveController.axisGreaterThan(Axis.kRightTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, false));
-    // Left Bumper = Alt-Auto-Align
-    driveController.button(Button.kLeftBumper.value).whileTrue(new AltAutoAlign(m_drive, m_shooter));
     //Right Bumper = Simple Auto Align
     driveController.button(Button.kRightBumper.value).whileTrue(new SimpleAutoAlign(m_drive));
 

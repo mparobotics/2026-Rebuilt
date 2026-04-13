@@ -13,12 +13,12 @@ public class SimpleAutoAlign extends Command {
     //target for how far away robot should be from hub
     private final double targetDistance = 2.1; //in meters - temporary need to check
 
-    private final double cameraHeight = 0.5; //need to measure
-    private final double aprilTagHeight = 1; //need to measure
+    private final double cameraHeight = 0.5;
+    private final double aprilTagHeight = 1;
     private final double cameraTilt = 0.001; //so math does not end up dividing by 0
     
     private final PIDController distanceController = new PIDController(0.1,0,0); //tune this
-    private final PIDController rotationController = new PIDController(0.01,0,0); //tune this
+    private final PIDController rotationController = new PIDController(0.1,0,0); //tune this
 
     public SimpleAutoAlign(SwerveSubsystem swerveSubsystem){
         this.swerveSubsystem = swerveSubsystem;
@@ -37,7 +37,7 @@ public class SimpleAutoAlign extends Command {
     }
 
     private boolean isSupportedTag(int tagId) {
-        return tagId == 10 || tagId == 25 || tagId == 11 || tagId == 27 || tagId == 8 || tagId == 24;
+        return tagId == 10 || tagId == 9 || tagId == 25 || tagId == 11 || tagId == 27 || tagId == 8 || tagId == 24;
     }
 
     private double getDesiredAlignmentAngle(int tagId) {
@@ -87,7 +87,7 @@ public class SimpleAutoAlign extends Command {
         double driveSpeed = distanceController.calculate(distance, targetDistance);
         double rotationSpeed = rotationController.calculate(offset, desiredAlignmentAngle);
 
-        swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(driveSpeed, 0, rotationSpeed), false);
+        swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, driveSpeed, rotationSpeed), false);
 
     }
 
