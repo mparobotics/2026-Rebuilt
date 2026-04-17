@@ -17,8 +17,8 @@ public class SimpleAutoAlign extends Command {
     private final double aprilTagHeight = 1;
     private final double cameraTilt = 0.001; //so math does not end up dividing by 0
     
-    private final PIDController distanceController = new PIDController(0.1,0,0); //tune this
-    private final PIDController rotationController = new PIDController(0.1,0,0); //tune this
+    private final PIDController distanceController = new PIDController(0.05,0,0); //tune this
+    private final PIDController rotationController = new PIDController(0.02,0,2); //tune this
 
     public SimpleAutoAlign(SwerveSubsystem swerveSubsystem){
         this.swerveSubsystem = swerveSubsystem;
@@ -84,10 +84,10 @@ public class SimpleAutoAlign extends Command {
         }
     
         double desiredAlignmentAngle = getDesiredAlignmentAngle(tagId);
-        double driveSpeed = distanceController.calculate(distance, targetDistance);
+        double driveSpeed = distanceController.calculate(targetDistance, distance);
         double rotationSpeed = rotationController.calculate(offset, desiredAlignmentAngle);
 
-        swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, driveSpeed, rotationSpeed), false);
+        swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(driveSpeed, 0, rotationSpeed), false);
 
     }
 
