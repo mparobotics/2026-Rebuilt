@@ -1,5 +1,6 @@
 package frc.robot.Command;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -8,17 +9,36 @@ import frc.robot.Subsystems.SwerveSubsystem;
 
 public class SimpleAutoAlign extends Command {
     
-    private SwerveSubsystem swerveSubsystem;
+    private final SwerveSubsystem swerveSubsystem;
 
-    //target for how far away robot should be from hub
-    private final double targetDistance = 2.1; //in meters - temporary need to check
+    //Target for how far away the robot should be from the hub
+    private static final double TARGET_DISTANCE_METERS = 2.1;
 
-    private final double cameraHeight = 0.5;
-    private final double aprilTagHeight = 1;
-    private final double cameraTilt = 0.001; //so math does not end up dividing by 0
+    //Camera geometry
+    public static final double CAMERA_HEIGHT_METERS = 0.5;
+    public static final double APRIL_TAG_HEIGHT_METERS = 1.0;
+    public static final double CAMERA_TILT_DEG = 0.000001;
+
+    //Distance PID tuning
+    public static final double DISTANCE_KP = 0;
+    public static final double DISTANCE_KI = 0;
+    public static final double DISTANCE_KD = 0;
+
+    //Rotation PID tuning
+    public static final double ROTATION_KP = 0;
+    public static final double ROTATION_KI = 0;
+    public static final double ROTATION_KD = 0;
     
-    private final PIDController distanceController = new PIDController(0.05,0,0); //tune this
-    private final PIDController rotationController = new PIDController(0.02,0,2); //tune this
+    //Tolerance and 
+    public static final double DISTANCE_TOLERANCE_METERS = 0.08;
+    public static final double ROTATION_TOLERANCE_DEG = 1.5;
+    public static final double MAX_FORWARD_SPEED_MPS = 1.25;
+    public static final double MAX_ROTATION_SPEED_RAD_PER_SEC = 2.5;
+
+    private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
+    private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
+    
+
 
     public SimpleAutoAlign(SwerveSubsystem swerveSubsystem){
         this.swerveSubsystem = swerveSubsystem;
@@ -31,9 +51,7 @@ public class SimpleAutoAlign extends Command {
     }
     
     private int getTagId() {
-        double tid = NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tid").getDouble(0.0);
-        int tidInt = (int) tid;
-        return tidInt;
+        return (int) NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tid").getDouble(0.0);
     }
 
     private boolean isSupportedTag(int tagId) {
@@ -52,40 +70,48 @@ public class SimpleAutoAlign extends Command {
 
     private double getDistanceToTarget() {
         double ty = NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("ty").getDouble(0.0); // vertical angle offset in degrees
-        double angleToTargetRadians = Math.toRadians(cameraTilt + ty);
-
-        double distance = (aprilTagHeight - cameraHeight) / Math.tan(angleToTargetRadians);
-        return distance;
+        double angleToTargetRadians = Math.toRadians(CAMERA_TILT_DEG + ty);
+        return (APRIL_TAG_HEIGHT_METERS - CAMERA_HEIGHT_METERS) / Math.tan(angleToTargetRadians);
     }
 
-       private double getOffsetToTarget() {
-        double xDist = NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tx").getDouble(0.0);
-        return xDist;
+    private double getOffsetToTarget() {
+        return NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tx").getDouble(0.0);
     }
 
     @Override
     public void initialize() {
         distanceController.reset();
         rotationController.reset();
+        distanceController.setTolerance(DISTANCE_TOLERANCE_METERS);
+        rotationController.setTolerance(ROTATION_TOLERANCE_DEG);
     }
 
     @Override
     public void execute() {
-
         double distance = getDistanceToTarget();
-        //when i say offset i mean rotation offset
         double offset = getOffsetToTarget();
         int tagId = getTagId();
 
         //only auto align if distance is valid and can see tag 10
-        if (!canSeeTag() || !isSupportedTag(tagId) || distance < 0) {
+        if (!canSeeTag() || !isSupportedTag(tagId) || distance < 0 || Double.isNaN(distance) || Double.isFinite(distance)) {
+
             swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0,0,0), false);
             return;
         }
     
         double desiredAlignmentAngle = getDesiredAlignmentAngle(tagId);
-        double driveSpeed = distanceController.calculate(targetDistance, distance);
+        double driveSpeed = distanceController.calculate(distance, TARGET_DISTANCE_METERS);
         double rotationSpeed = rotationController.calculate(offset, desiredAlignmentAngle);
+
+        if (distanceController.atSetpoint()){
+            driveSpeed = 0.0;
+        }
+        if (rotationController.atSetpoint()){
+            rotationSpeed = 0.0;
+        }
+
+        driveSpeed = MathUtil.clamp(driveSpeed, -MAX_FORWARD_SPEED_MPS, MAX_FORWARD_SPEED_MPS);
+        rotationSpeed = MathUtil.clamp(rotationSpeed, -MAX_ROTATION_SPEED_RAD_PER_SEC, MAX_ROTATION_SPEED_RAD_PER_SEC);
 
         swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(driveSpeed, 0, rotationSpeed), false);
 
