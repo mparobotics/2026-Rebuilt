@@ -20,12 +20,12 @@ public class SimpleAutoAlign extends Command {
     public static final double CAMERA_TILT_DEG = 0.000001;
 
     //Distance PID tuning
-    public static final double DISTANCE_KP = 0;
+    public static final double DISTANCE_KP = 0.05;
     public static final double DISTANCE_KI = 0;
     public static final double DISTANCE_KD = 0;
 
     //Rotation PID tuning
-    public static final double ROTATION_KP = 0;
+    public static final double ROTATION_KP = 0.02;
     public static final double ROTATION_KI = 0;
     public static final double ROTATION_KD = 0;
     
@@ -37,9 +37,9 @@ public class SimpleAutoAlign extends Command {
 
     private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
+
+
     
-
-
     public SimpleAutoAlign(SwerveSubsystem swerveSubsystem){
         this.swerveSubsystem = swerveSubsystem;
         addRequirements(swerveSubsystem);
