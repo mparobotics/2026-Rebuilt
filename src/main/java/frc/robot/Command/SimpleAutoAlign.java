@@ -17,7 +17,7 @@ public class SimpleAutoAlign extends Command {
     //Camera geometry
     public static final double CAMERA_HEIGHT_METERS = 0.5;
     public static final double APRIL_TAG_HEIGHT_METERS = 1.0;
-    public static final double CAMERA_TILT_DEG = 0.000001;
+    public static final double CAMERA_TILT_DEG = 0.0;
 
     //Distance PID tuning
     public static final double DISTANCE_KP = 0.05;
@@ -39,7 +39,7 @@ public class SimpleAutoAlign extends Command {
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
 
 
-    
+
     public SimpleAutoAlign(SwerveSubsystem swerveSubsystem){
         this.swerveSubsystem = swerveSubsystem;
         addRequirements(swerveSubsystem);
@@ -93,7 +93,7 @@ public class SimpleAutoAlign extends Command {
         int tagId = getTagId();
 
         //only auto align if distance is valid and can see tag 10
-        if (!canSeeTag() || !isSupportedTag(tagId) || distance < 0 || Double.isNaN(distance) || Double.isFinite(distance)) {
+        if (!canSeeTag() || !isSupportedTag(tagId) || distance < 0 || !Double.isFinite(distance)) {
 
             swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0,0,0), false);
             return;
