@@ -34,9 +34,15 @@ public class SimpleAutoAlign extends Command {
     public static final double ROTATION_TOLERANCE_DEG = 1.5;
     public static final double MAX_FORWARD_SPEED_MPS = 1.25;
     public static final double MAX_ROTATION_SPEED_RAD_PER_SEC = 2.5;
+    public static final double MIN_DISTANCE_CALC_ANGLE_DEG = 1.0;
+    public static final int SETTLE_CYCLES_REQUIRED = 10;
+    public static final double UNLOCK_DISTANCE_ERROR_METERS = 0.15;
+    public static final double UNLOCK_ROTATION_ERROR_DEG = 3.0;
 
     private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
+    private int settledCycles = 0;
+    private boolean alignmentLocked = false;
 
 
 
@@ -68,14 +74,28 @@ public class SimpleAutoAlign extends Command {
         return 0.0;
     }
 
-    private double getDistanceToTarget() {
-        double ty = NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("ty").getDouble(0.0); // vertical angle offset in degrees
-        double angleToTargetRadians = Math.toRadians(CAMERA_TILT_DEG + ty);
-        return (APRIL_TAG_HEIGHT_METERS - CAMERA_HEIGHT_METERS) / Math.tan(angleToTargetRadians);
+    private double getVerticalOffsetToTarget(){
+        return NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("ty").getDouble(0.0);
     }
-
     private double getOffsetToTarget() {
         return NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tx").getDouble(0.0);
+    }
+
+    private double getDistanceToTargetMeters(double tyDegrees){
+        double angleToTargetDegrees = CAMERA_TILT_DEG + tyDegrees;
+        double tangent = Math.tan(angleToTargetDegrees);
+        if (Math.abs(angleToTargetDegrees)<MIN_DISTANCE_CALC_ANGLE_DEG){
+            return Double.NaN;
+        }
+        double angleToTargetRadians = Math.toRadians(angleToTargetDegrees);
+        if (Math.abs(tangent) < 1e-6){
+            return Double.NaN;
+        }
+        double distanceMeters = (APRIL_TAG_HEIGHT_METERS - CAMERA_HEIGHT_METERS) / tangent;
+        if (!Double.isFinite(distanceMeters) || distanceMeters < 0.0){
+            return Double.NaN;
+        }
+        return distanceMeters;
     }
 
     @Override
@@ -88,26 +108,48 @@ public class SimpleAutoAlign extends Command {
 
     @Override
     public void execute() {
-        double distance = getDistanceToTarget();
         double offset = getOffsetToTarget();
         int tagId = getTagId();
+        settledCycles = 0;
+        alignmentLocked = false;
 
-        //only auto align if distance is valid and can see tag 10
-        if (!canSeeTag() || !isSupportedTag(tagId) || distance < 0 || !Double.isFinite(distance)) {
+        double ty = getVerticalOffsetToTarget();
+        double distance = getDistanceToTargetMeters(ty);
 
+        //only auto align when we have a visible, supported tag
+        if (!canSeeTag() || !isSupportedTag(tagId)){
             swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0,0,0), false);
             return;
         }
     
         double desiredAlignmentAngle = getDesiredAlignmentAngle(tagId);
-        double driveSpeed = distanceController.calculate(distance, TARGET_DISTANCE_METERS);
         double rotationSpeed = rotationController.calculate(offset, desiredAlignmentAngle);
 
-        if (distanceController.atSetpoint()){
-            driveSpeed = 0.0;
+        double rotationError = offset - desiredAlignmentAngle;
+        boolean distanceIsValid = Double.isFinite(distance);
+        double distanceError = distanceIsValid ? distance - TARGET_DISTANCE_METERS : Double.NaN;
+
+        boolean withinRotationTolerance = Math.abs(rotationError) <= ROTATION_TOLERANCE_DEG;
+        boolean withinDistanceTolerance = distanceIsValid && Math.abs(distanceError) <= DISTANCE_TOLERANCE_METERS;
+
+        if (!distanceIsValid || Math.abs(rotationError) > UNLOCK_ROTATION_ERROR_DEG || Math.abs(distanceError) > UNLOCK_DISTANCE_ERROR_METERS){
+            alignmentLocked = false;
         }
-        if (rotationController.atSetpoint()){
+
+        if (settledCycles >= SETTLE_CYCLES_REQUIRED){
+            alignmentLocked = true;
+        }
+        
+        if (alignmentLocked){
+            swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, 0, 0), false);
+            return;
+        }
+        double driveSpeed = 0.0;
+
+        if (withinRotationTolerance){
             rotationSpeed = 0.0;
+        } else if (Math.abs(rotationError)<(ROTATION_TOLERANCE_DEG*2.0)){
+            rotationSpeed*=0.5;
         }
 
         driveSpeed = MathUtil.clamp(driveSpeed, -MAX_FORWARD_SPEED_MPS, MAX_FORWARD_SPEED_MPS);
