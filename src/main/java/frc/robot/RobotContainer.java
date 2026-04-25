@@ -162,23 +162,27 @@ public class RobotContainer {
 
           double kickerSpeed = 0.0;
           double indexerSpeed = 0.0;
+          double hopperSpeed = 0.0;
 
           if (leftBumperPressed) {
             kickerSpeed = -ShooterConstants.KICKER_SPEED;
             indexerSpeed = -ShooterConstants.INDEXER_SPEED;
+            hopperSpeed = -ShooterConstants.HOPPER_SPEED;
           } else if (rightBumperPressed) {
             kickerSpeed = ShooterConstants.KICKER_SPEED;
             indexerSpeed = indexerEnabled ? ShooterConstants.INDEXER_SPEED : 0.0;
+            hopperSpeed = indexerEnabled ? ShooterConstants.HOPPER_SPEED : 0.0;
           }
 
           m_shooter.setKickerSpeed(kickerSpeed);
           m_shooter.setIndexerSpeed(indexerSpeed);
+          m_shooter.setHopperSpeed(hopperSpeed);
    
           lastHelmsRightBumperPressed = rightBumperPressed;
         },
         m_shooter));
 
-          
+
     // Hood controls (helms controller).
     // Y = hood up (2 inches / max travel), B = hood down.
     helmsController.y().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));

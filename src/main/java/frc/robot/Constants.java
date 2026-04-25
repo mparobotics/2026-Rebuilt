@@ -283,11 +283,13 @@ public static final class ShooterConstants {
   public static final int KICKER_ID = 21;
   public static final int HOOD_ID = 20;
   public static final int INDEXER_ID = 23;
+  public static final int HOPPER_ID = 100; //placeholder
 
   // Percent output caps ([-1..1]). Higher = faster spin-up but more current draw.
   public static final double SHOOTER_SPEED = 0.6;
   public static final double KICKER_SPEED = 0.6;
   public static final double INDEXER_SPEED = 0.4; //placeholder
+  public static final double HOPPER_SPEED = 0.5; //placeholder
 
   // Shooter readiness (SparkMax encoder velocity is RPM). Tune on the real robot.
   public static final double SHOOTER_READY_RPM = 3000.0;

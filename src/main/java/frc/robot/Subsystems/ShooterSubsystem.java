@@ -23,10 +23,12 @@ public class ShooterSubsystem extends SubsystemBase {
   private final SparkMax kickerMotor = new SparkMax(ShooterConstants.KICKER_ID, MotorType.kBrushless);
   private final SparkMax hoodMotor = new SparkMax(ShooterConstants.HOOD_ID, MotorType.kBrushless);
   private final SparkMax indexerMotor = new SparkMax(ShooterConstants.INDEXER_ID, MotorType.kBrushless);
+  private final SparkMax hopperMotor = new SparkMax(ShooterConstants.HOPPER_ID, MotorType.kBrushless);
 
   private double shooterCmd = 0.0;
   private double kickerCmd = 0.0;
   private double indexerCmd = 0.0;
+  private double hopperCmd = 0.0;
 
   private final PIDController hoodController = new PIDController(
       ShooterConstants.HOOD_KP,
@@ -65,12 +67,17 @@ public class ShooterSubsystem extends SubsystemBase {
       indexConfig.inverted(true);
       indexConfig.idleMode(IdleMode.kBrake);
 
+    SparkMaxConfig hopperConfig = new SparkMaxConfig();
+      hopperConfig.inverted(false); //need to find out
+      hopperConfig.idleMode(IdleMode.kBrake);
+
     
 
     shooterMotor.configure(shootConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     kickerMotor.configure(feedConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     hoodMotor.configure(hoodConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     indexerMotor.configure(indexConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    hopperMotor.configure(hopperConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     hoodController.setTolerance(ShooterConstants.HOOD_TOLERANCE);
   }
@@ -115,6 +122,11 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setKickerSpeed(double speed) {
       kickerCmd = speed;
       kickerMotor.set(speed);
+    }
+
+    public void setHopperSpeed(double speed) {
+      hopperCmd = speed;
+      hopperMotor.set(speed);
     }
 
     public void setHoodAngle(HoodAngle angle) {
