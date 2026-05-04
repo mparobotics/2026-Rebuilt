@@ -38,6 +38,7 @@ public class SimpleAutoAlign extends Command {
     public static final int SETTLE_CYCLES_REQUIRED = 10;
     public static final double UNLOCK_DISTANCE_ERROR_METERS = 0.15;
     public static final double UNLOCK_ROTATION_ERROR_DEG = 3.0;
+    public static final double DESIRED_DISTANCE_FROM_APRILTAG = 2.0;
 
     private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
@@ -84,6 +85,7 @@ public class SimpleAutoAlign extends Command {
     private double getDistanceToTargetMeters(double tyDegrees){
         double angleToTargetDegrees = CAMERA_TILT_DEG + tyDegrees;
         double tangent = Math.tan(angleToTargetDegrees);
+        double target = TARGET_DISTANCE_METERS;
         if (Math.abs(angleToTargetDegrees)<MIN_DISTANCE_CALC_ANGLE_DEG){
             return Double.NaN;
         }
@@ -144,7 +146,7 @@ public class SimpleAutoAlign extends Command {
             swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, 0, 0), false);
             return;
         }
-        double driveSpeed = 0.0;
+        double driveSpeed = 0.5;
 
         if (withinRotationTolerance){
             rotationSpeed = 0.0;
@@ -155,7 +157,7 @@ public class SimpleAutoAlign extends Command {
         driveSpeed = MathUtil.clamp(driveSpeed, -MAX_FORWARD_SPEED_MPS, MAX_FORWARD_SPEED_MPS);
         rotationSpeed = MathUtil.clamp(rotationSpeed, -MAX_ROTATION_SPEED_RAD_PER_SEC, MAX_ROTATION_SPEED_RAD_PER_SEC);
 
-        swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(driveSpeed, 0, rotationSpeed), false);
+        swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, driveSpeed, rotationSpeed), false);
 
     }
 
