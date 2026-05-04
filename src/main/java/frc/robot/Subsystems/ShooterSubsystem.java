@@ -68,8 +68,8 @@ public class ShooterSubsystem extends SubsystemBase {
       indexConfig.idleMode(IdleMode.kBrake);
 
     SparkMaxConfig hopperConfig = new SparkMaxConfig();
-      hopperConfig.inverted(false); //need to find out
-      hopperConfig.idleMode(IdleMode.kBrake);
+      hopperConfig.inverted(true);
+      hopperConfig.idleMode(IdleMode.kCoast);
 
     
 
