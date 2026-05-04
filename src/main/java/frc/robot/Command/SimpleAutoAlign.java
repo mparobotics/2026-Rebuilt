@@ -162,7 +162,7 @@ public class SimpleAutoAlign extends Command {
         swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, driveSpeed, rotationSpeed), false);
 
         System.out.println("settled cycles: " + settledCycles);
-ri
+
     }
 
     @Override
