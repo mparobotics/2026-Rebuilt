@@ -20,7 +20,7 @@ public class SimpleAutoAlign extends Command {
     public static final double CAMERA_TILT_DEG = 0.0;
 
     //Distance PID tuning
-    public static final double DISTANCE_KP = 0.05;
+    public static final double DISTANCE_KP = 0.02;
     public static final double DISTANCE_KI = 0;
     public static final double DISTANCE_KD = 0;
 
@@ -38,7 +38,6 @@ public class SimpleAutoAlign extends Command {
     public static final int SETTLE_CYCLES_REQUIRED = 10;
     public static final double UNLOCK_DISTANCE_ERROR_METERS = 0.15;
     public static final double UNLOCK_ROTATION_ERROR_DEG = 3.0;
-    public static final double DESIRED_DISTANCE_FROM_APRILTAG = 2.0;
 
     private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
@@ -85,7 +84,6 @@ public class SimpleAutoAlign extends Command {
     private double getDistanceToTargetMeters(double tyDegrees){
         double angleToTargetDegrees = CAMERA_TILT_DEG + tyDegrees;
         double tangent = Math.tan(angleToTargetDegrees);
-        double target = TARGET_DISTANCE_METERS;
         if (Math.abs(angleToTargetDegrees)<MIN_DISTANCE_CALC_ANGLE_DEG){
             return Double.NaN;
         }
@@ -112,7 +110,7 @@ public class SimpleAutoAlign extends Command {
     public void execute() {
         double offset = getOffsetToTarget();
         int tagId = getTagId();
-        settledCycles = 0;
+        settledCycles = 1;
         alignmentLocked = false;
 
         double ty = getVerticalOffsetToTarget();
@@ -154,11 +152,17 @@ public class SimpleAutoAlign extends Command {
             rotationSpeed*=0.5;
         }
 
+        if (withinDistanceTolerance) {
+            driveSpeed = 0;
+        }
+
         driveSpeed = MathUtil.clamp(driveSpeed, -MAX_FORWARD_SPEED_MPS, MAX_FORWARD_SPEED_MPS);
         rotationSpeed = MathUtil.clamp(rotationSpeed, -MAX_ROTATION_SPEED_RAD_PER_SEC, MAX_ROTATION_SPEED_RAD_PER_SEC);
 
         swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, driveSpeed, rotationSpeed), false);
 
+        System.out.println("settled cycles: " + settledCycles);
+ri
     }
 
     @Override
@@ -170,5 +174,7 @@ public class SimpleAutoAlign extends Command {
     public boolean isFinished() {
         return false;
     }
+
+
 
 }

@@ -286,7 +286,7 @@ public static final class ShooterConstants {
   public static final int HOPPER_ID = 43; //placeholder
 
   // Percent output caps ([-1..1]). Higher = faster spin-up but more current draw.
-  public static final double SHOOTER_SPEED = 0.6;
+  public static final double SHOOTER_SPEED = 0.3;
   public static final double KICKER_SPEED = 0.6;
   public static final double INDEXER_SPEED = 0.4; //placeholder
   public static final double HOPPER_SPEED = 0.5; //placeholder
