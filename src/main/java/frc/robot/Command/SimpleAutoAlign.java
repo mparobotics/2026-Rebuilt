@@ -6,6 +6,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.SwerveSubsystem;
 
 public class SimpleAutoAlign extends Command {
@@ -21,7 +22,7 @@ public class SimpleAutoAlign extends Command {
     public static final double CAMERA_TILT_DEG = 0.0;
 
     //Distance PID tuning
-    public static final double DISTANCE_KP = 0.6;
+    public static final double DISTANCE_KP = 2.5;
     public static final double DISTANCE_KI = 0;
     public static final double DISTANCE_KD = 0;
 
@@ -33,14 +34,14 @@ public class SimpleAutoAlign extends Command {
     //Tolerance and 
     public static final double DISTANCE_TOLERANCE_METERS = 0.08;
     public static final double ROTATION_TOLERANCE_DEG = 1.5;
-    public static final double MAX_FORWARD_SPEED_MPS = 0.75;
+    public static final double MAX_FORWARD_SPEED_MPS = SwerveConstants.maxSpeed;
     public static final double MAX_ROTATION_SPEED_RAD_PER_SEC = 2.5;
     public static final double MIN_DISTANCE_CALC_ANGLE_DEG = 1.0;
     public static final int SETTLE_CYCLES_REQUIRED = 10;
     public static final double UNLOCK_DISTANCE_ERROR_METERS = 0.15;
     public static final double UNLOCK_ROTATION_ERROR_DEG = 3.0;
     public static final double DISTANCE_FILTER_ALPHA = 0.25;
-    public static final double MAX_DISTANCE_ACCEL_MPS_PER_SEC = 1.5;
+    public static final double MAX_DISTANCE_ACCEL_MPS_PER_SEC = SwerveConstants.maxSpeed * 4.0;
 
     private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
