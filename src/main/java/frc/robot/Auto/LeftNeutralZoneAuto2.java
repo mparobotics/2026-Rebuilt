@@ -33,6 +33,7 @@ public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
   //private static final double FORWARD_METERS_3 = 3.2;
 
   private static final double INTAKE_POWER = -0.75;
+  private static final double FEED_DURATION_SEC = 3.0;
 
   public LeftNeutralZoneAuto2(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
@@ -78,10 +79,80 @@ public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
         .withTimeout(1.0),
 
+
+      /*Run the intake, kicker, indexer, hopper, and intake arm together for a fixed time, 
+      then stop the feeding mechanisms so another driving path can be added.*/
       // Keep intake running while the intake arm cycles up/down during shooting.
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
 
       Commands.parallel(
+        // Start kicker first, then start indexer 1 second later (kicker keeps running).
+        Commands.sequence(
+          Commands.run(() -> {
+            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+            shooter.setIndexerSpeed(0.0);
+          }, shooter).withTimeout(1.0),
+          Commands.run(() -> {
+            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
+            shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+            shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
+          }, shooter)
+          )
+        ),
+
+      Commands.waitSeconds(1),
+
+      // While feeding, continuously move the intake arm up/down for the fixed feed time.
+      Commands.sequence(
+          Commands.runOnce(intake::lowerIntake, intake),
+          Commands.waitUntil(() ->
+            Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
+              <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG),
+          Commands.runOnce(intake::raiseIntake, intake),
+          Commands.waitUntil(() ->
+            Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
+              <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
+        )
+        .repeatedly()
+        .withTimeout(FEED_DURATION_SEC),
+
+
+
+        
+        //Go to the neutral zone a second time.
+        // Turn 20 degrees right
+        turnRelativeDegrees(drive, -20.0),
+
+        // Drive FORWARD (back to the trench)
+        driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+
+        // Turn 90 degrees right
+        turnRelativeDegrees(drive, -90.0),
+
+        // Drive forwards 3m (intake still on).
+        driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
+        Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
+
+        // Drive backwards 3m (intake still on).
+        driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
+
+        // Stop intake at the end.
+       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
+        Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
+
+        // Turn 90 degrees left
+        turnRelativeDegrees(drive, 90.0),
+
+        // Drive backward (back to the trench)
+        driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+
+        // Turn 20 degrees left
+        turnRelativeDegrees(drive, 20.0),
+
+        // Bring hood up to HIGH angle.
+        Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+
+        Commands.parallel(
         // Start kicker first, then start indexer 1 second later (kicker keeps running).
         Commands.sequence(
           Commands.run(() -> {
@@ -108,14 +179,7 @@ public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
               Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
                 <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
           )
-          .repeatedly(),
-
-
-        //Go to the neutral zone a second time.
-        // Turn 20 degrees right
-        turnRelativeDegrees(drive, -20.0),
-        // Drive FORWARD (back to the trench)
-        driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS)
+          .repeatedly()
 
       )
     );
