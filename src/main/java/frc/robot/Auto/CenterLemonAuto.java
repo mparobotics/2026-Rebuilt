@@ -40,6 +40,7 @@ public class CenterLemonAuto extends SequentialCommandGroup {
           shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
           shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
           shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+          shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
         }, shooter)
 	    )
 	  );

@@ -18,7 +18,7 @@ import frc.robot.Subsystems.ShooterSubsystem;
 import java.util.concurrent.atomic.AtomicReference;
 
 
-public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
+public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
   private static final double DRIVE_SPEED_MPS = 2.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
@@ -28,11 +28,13 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
 
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 4.3;
-  private static final double FORWARD_METERS_1 = 2.0;
+  private static final double FORWARD_METERS_1 = 3.0;
+  //private static final double FORWARD_METERS_2 = 1.0;
+  //private static final double FORWARD_METERS_3 = 3.2;
 
   private static final double INTAKE_POWER = -0.75;
 
-  public RightNeutralZoneAuto1(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+  public LeftNeutralZoneAuto2(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
 
     addCommands(
@@ -41,28 +43,28 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
       // Drive backwards 3.6m.
       driveDistanceMeters(drive, -BACKWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Turn 90 degrees right.
-      turnRelativeDegrees(drive, -90.0),
+      // Turn 90 degrees left.
+      turnRelativeDegrees(drive, 90.0),
 
-      // Drive forward 2m while starting intake (intake stays on for the rest of auto).
+      // Drive forward 3m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Drive back 2m (intake still on).
+      // Drive backwards 3m (intake still on).
       driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
-
-      // Turn 90 degrees left (intake still on).
-      turnRelativeDegrees(drive, 90.0),
 
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
-      // Drive forward (back to the trench)
-      driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+      // Turn 90 degrees left
+      turnRelativeDegrees(drive, 90.0),
 
-      // Turn 13 degrees right
-      turnRelativeDegrees(drive,-13.0),
+      // Drive backward (back to the trench)
+      driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+
+      // Turn 20 degrees left
+      turnRelativeDegrees(drive, 20.0),
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
@@ -75,7 +77,7 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
       Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
         .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
         .withTimeout(1.0),
-      
+
       // Keep intake running while the intake arm cycles up/down during shooting.
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
 
@@ -93,7 +95,7 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
           }, shooter)
         ),
 
-        Commands.waitSeconds(2),
+        Commands.waitSeconds(1),
 
         // While shooting/indexing, continuously move the intake arm up/down.
         Commands.sequence(
