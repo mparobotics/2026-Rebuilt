@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.LeftLemonAuto;
 import frc.robot.Auto.LeftNeutralZoneAuto1;
+import frc.robot.Auto.LeftNeutralZoneAuto2;
 import frc.robot.Auto.RightNeutralZoneAuto1;
 import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.CenterLemonAuto;
@@ -240,12 +241,11 @@ public class RobotContainer {
 
     return switch (selected) {
       case None -> Commands.none();
-      case DriveTestAuto -> new DriveTestAuto(m_drive, m_intake, m_shooter);
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
       case RightNeutralZoneAuto1 -> new RightNeutralZoneAuto1 (m_drive, m_intake, m_shooter);
+      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
-      case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
       case CenterToDepotAuto -> new CenterToDepotAuto(m_drive, m_intake, m_shooter);
       case DepotShootingAuto -> new DepotShootingAuto(m_drive, m_intake, m_shooter);

@@ -155,12 +155,11 @@ public static final class AutoConstants {
 
   public enum AutoMode{
     None,
-    DriveTestAuto,
     LeftLemonAuto,
     RightLemonAuto,
     LeftNeutralZoneAuto1,
+    LeftNeutralZoneAuto2,
     RightNeutralZoneAuto1,
-    ShootEightAuto,
     CenterLemonAuto,
     CenterToDepotAuto,
     DepotShootingAuto
@@ -179,12 +178,11 @@ public static final class AutoConstants {
 
     autoModeChooser.setDefaultOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("None", AutoMode.None);
-    autoModeChooser.addOption("DriveTestAuto", AutoMode.DriveTestAuto);
-    autoModeChooser.addOption("ShootEightAuto", AutoMode.ShootEightAuto);
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("RightNeutralZoneAuto1", AutoMode.RightNeutralZoneAuto1);
     autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
+    autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
     autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
     autoModeChooser.addOption("DepotShootingAuto", AutoMode.DepotShootingAuto);
