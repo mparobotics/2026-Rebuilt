@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2.0;
+  private static final double DRIVE_SPEED_MPS = 3.5;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -108,7 +108,15 @@ public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
               Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
                 <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
           )
-          .repeatedly()
+          .repeatedly(),
+
+
+        //Go to the neutral zone a second time.
+        // Turn 20 degrees right
+        turnRelativeDegrees(drive, -20.0),
+        // Drive FORWARD (back to the trench)
+        driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS)
+
       )
     );
   }
