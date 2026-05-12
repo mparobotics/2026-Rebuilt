@@ -91,7 +91,7 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
           Commands.run(() -> {
             shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
             shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
-            shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
+            //shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
           }, shooter)
         ),
 
