@@ -31,7 +31,7 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
   private static final double FORWARD_METERS_1 = 3.0;
 
   private static final double INTAKE_POWER = -0.75;
-  private static final double FEED_DURATION_SEC = 3.0;
+  private static final double FEED_DURATION_SEC = 5.0;
 
   public RightNeutralZoneAuto2(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
@@ -110,6 +110,10 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
           .repeatedly()
       ).withTimeout(FEED_DURATION_SEC),
 
+      Commands.runOnce(()->shooter.setKickerSpeed(0.0), shooter),
+
+      Commands.runOnce(()->shooter.setIndexerSpeed(0.0), shooter),
+
       Commands.runOnce(()->shooter.setShooterSpeed(0.0), shooter),
 
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
@@ -131,7 +135,11 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       turnRelativeDegrees(drive, 90.0),
 
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
-      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive)
+      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
+
+      driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+      turnRelativeDegrees(drive,-13.0)
+
     );
   }
 
