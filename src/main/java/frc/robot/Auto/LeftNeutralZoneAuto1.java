@@ -27,8 +27,10 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
   private static final double TURN_TIMEOUT_SEC = 2.5;
 
   private static final double BACKWARD_METERS_1 = 3.6;
-  private static final double BACKWARD_METERS_2 = 4.3;
-  private static final double FORWARD_METERS_1 = 2.0;
+  private static final double BACKWARD_METERS_2 = 4.5;
+  private static final double BACKWARD_METERS_3 = 2.6;
+
+  private static final double FORWARD_METERS_1 = 2.5;
   //private static final double FORWARD_METERS_2 = 1.0;
   //private static final double FORWARD_METERS_3 = 3.2;
 
@@ -46,12 +48,12 @@ public class LeftNeutralZoneAuto1 extends SequentialCommandGroup {
       // Turn 90 degrees left.
       turnRelativeDegrees(drive, 90.0),
 
-      // Drive forward 2m while starting intake (intake stays on for the rest of auto).
+      // Drive forward 3m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Drive forward 2m (intake still on).
-      driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
+      // Drive forward 3m (intake still on).
+      driveDistanceMeters(drive, -BACKWARD_METERS_3, DRIVE_SPEED_MPS),
 
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
