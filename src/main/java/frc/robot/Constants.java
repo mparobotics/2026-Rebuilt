@@ -128,10 +128,10 @@ public static final class SwerveConstants{
   ){}
 
   public static ModuleData[] moduleData = {
-    new ModuleData(6, 5, 7, 39.90, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-    new ModuleData(9, 8, 10, 46.93, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-    new ModuleData(12, 11, 13, 31.72, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-    new ModuleData(15, 14, 16, 7.11, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+    new ModuleData(6, 5, 7, 29.88, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+    new ModuleData(9, 31, 10, 42.09, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+    new ModuleData(12, 11, 13, 41.39, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+    new ModuleData(15, 14, 16, 7.82, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
   };
   
 }
