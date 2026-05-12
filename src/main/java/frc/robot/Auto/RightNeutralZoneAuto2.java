@@ -110,6 +110,10 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
           .repeatedly()
       ).withTimeout(FEED_DURATION_SEC),
 
+      Commands.runOnce(()->shooter.setShooterSpeed(0.0), shooter),
+
+      Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
+
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
 
       //Turn 13 degrees left
@@ -120,7 +124,14 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       turnRelativeDegrees(drive,-90),
 
       Commands.runOnce(()-> intake.setIntakePower(INTAKE_POWER), intake),
-      driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS)
+      driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
+
+      driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
+
+      turnRelativeDegrees(drive, 90.0),
+
+      Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
+      Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive)
     );
   }
 
