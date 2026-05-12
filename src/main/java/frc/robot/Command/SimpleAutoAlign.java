@@ -139,21 +139,22 @@ public class SimpleAutoAlign extends Command {
             return;
         }
 
-        double ty = getVerticalOffsetToTarget();
-        double distance = getDistanceToTargetMeters(ty);
-        boolean distanceIsValid = Double.isFinite(distance);
-        double filteredDistance = distanceIsValid ? filterDistanceMeters(distance) : Double.NaN;
+        //double ty = getVerticalOffsetToTarget();
+        //double distance = getDistanceToTargetMeters(ty);
+        //boolean distanceIsValid = Double.isFinite(distance);
+        //double filteredDistance = distanceIsValid ? filterDistanceMeters(distance) : Double.NaN;
     
         double desiredAlignmentAngle = getDesiredAlignmentAngle(tagId);
         double rotationSpeed = rotationController.calculate(offset, desiredAlignmentAngle);
 
         double rotationError = offset - desiredAlignmentAngle;
-        double distanceError = distanceIsValid ? filteredDistance - TARGET_DISTANCE_METERS : Double.NaN;
+        //double distanceError = distanceIsValid ? filteredDistance - TARGET_DISTANCE_METERS : Double.NaN;
 
         boolean withinRotationTolerance = Math.abs(rotationError) <= ROTATION_TOLERANCE_DEG;
-        boolean withinDistanceTolerance = distanceIsValid && Math.abs(distanceError) <= DISTANCE_TOLERANCE_METERS;
+        //boolean withinDistanceTolerance = distanceIsValid && Math.abs(distanceError) <= DISTANCE_TOLERANCE_METERS;
 
-        if (withinRotationTolerance && withinDistanceTolerance){
+        //if (withinRotationTolerance && withinDistanceTolerance){
+        if (withinRotationTolerance){
             settledCycles++;
         } else {
             settledCycles = 0;
@@ -167,13 +168,13 @@ public class SimpleAutoAlign extends Command {
         }
         double driveSpeed = 0.0;
 
-        if (distanceIsValid && Math.abs (rotationError) <= UNLOCK_ROTATION_ERROR_DEG &&! withinDistanceTolerance){
+        /*if (distanceIsValid && Math.abs (rotationError) <= UNLOCK_ROTATION_ERROR_DEG &&! withinDistanceTolerance){
             driveSpeed = distanceController.calculate(0.0, distanceError);
         }
-      
+        */
 
-        driveSpeed = MathUtil.clamp(driveSpeed, -MAX_FORWARD_SPEED_MPS, MAX_FORWARD_SPEED_MPS);
-        driveSpeed = distanceSpeedLimiter.calculate(driveSpeed);
+        //driveSpeed = MathUtil.clamp(driveSpeed, -MAX_FORWARD_SPEED_MPS, MAX_FORWARD_SPEED_MPS);
+        //driveSpeed = distanceSpeedLimiter.calculate(driveSpeed);
         rotationSpeed = MathUtil.clamp(rotationSpeed, -MAX_ROTATION_SPEED_RAD_PER_SEC, MAX_ROTATION_SPEED_RAD_PER_SEC);
 
         swerveSubsystem.driveFromChassisSpeeds(new ChassisSpeeds(0, driveSpeed, rotationSpeed), false);
