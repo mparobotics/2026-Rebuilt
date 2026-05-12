@@ -97,7 +97,6 @@ public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
             shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
             //shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
           }, shooter)
-          )
         ),
 
       Commands.waitSeconds(1),
@@ -113,7 +112,8 @@ public class LeftNeutralZoneAuto2 extends SequentialCommandGroup {
             Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
               <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
         )
-        .withTimeout(FEED_DURATION_SEC),
+        .repeatedly()
+    ).withTimeout(FEED_DURATION_SEC),
 
 
 
