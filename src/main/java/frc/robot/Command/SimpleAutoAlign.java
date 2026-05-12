@@ -34,7 +34,7 @@ public class SimpleAutoAlign extends Command {
     //Tolerance and 
     public static final double DISTANCE_TOLERANCE_METERS = 0.08;
     public static final double ROTATION_TOLERANCE_DEG = 1.5;
-    public static final double MAX_FORWARD_SPEED_MPS = SwerveConstants.maxSpeed;
+    public static final double MAX_FORWARD_SPEED_MPS = 0;
     public static final double MAX_ROTATION_SPEED_RAD_PER_SEC = 2.5;
     public static final double MIN_DISTANCE_CALC_ANGLE_DEG = 1.0;
     public static final int SETTLE_CYCLES_REQUIRED = 10;
