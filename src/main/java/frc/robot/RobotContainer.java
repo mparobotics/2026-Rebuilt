@@ -24,6 +24,7 @@ import frc.robot.Auto.LeftLemonAuto;
 import frc.robot.Auto.LeftNeutralZoneAuto1;
 import frc.robot.Auto.LeftNeutralZoneAuto2;
 import frc.robot.Auto.RightNeutralZoneAuto1;
+import frc.robot.Auto.RightNeutralZoneAuto2;
 import frc.robot.Auto.RightLemonAuto;
 import frc.robot.Auto.CenterLemonAuto;
 import frc.robot.Auto.CenterToDepotAuto;
@@ -244,6 +245,7 @@ public class RobotContainer {
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
       case RightNeutralZoneAuto1 -> new RightNeutralZoneAuto1 (m_drive, m_intake, m_shooter);
+      case RightNeutralZoneAuto2 -> new RightNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
       case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);

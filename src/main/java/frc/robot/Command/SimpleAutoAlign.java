@@ -67,7 +67,7 @@ public class SimpleAutoAlign extends Command {
     }
 
     private boolean isSupportedTag(int tagId) {
-        return tagId == 10 || tagId == 9 || tagId == 25 || tagId == 11 || tagId == 27 || tagId == 8 || tagId == 24;
+        return tagId == 10 || tagId == 11 ||tagId == 26 || tagId == 27 || tagId == 8 || tagId == 24;
     }
 
     private double getDesiredAlignmentAngle(int tagId) {

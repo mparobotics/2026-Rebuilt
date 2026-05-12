@@ -160,6 +160,7 @@ public static final class AutoConstants {
     LeftNeutralZoneAuto1,
     LeftNeutralZoneAuto2,
     RightNeutralZoneAuto1,
+    RightNeutralZoneAuto2,
     CenterLemonAuto,
     CenterToDepotAuto,
     DepotShootingAuto
@@ -181,6 +182,7 @@ public static final class AutoConstants {
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("RightNeutralZoneAuto1", AutoMode.RightNeutralZoneAuto1);
+    autoModeChooser.addOption("RightNeutralZoneAuto2", AutoMode.RightNeutralZoneAuto2);
     autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
     autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
