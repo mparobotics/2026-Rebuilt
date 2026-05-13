@@ -62,11 +62,11 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       // Drive forward (back to the trench)
       driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
-      // Turn 13 degrees right while bringing the hood up to avoid an extra pause.
-      Commands.parallel(
-        turnRelativeDegrees(drive,-13.0),
-        Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter)
-      ),
+      // Turn 13 degrees right
+      turnRelativeDegrees(drive,-13.0),
+
+      // Bring hood up to HIGH angle.
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
 
       // Shooter
       Commands.runOnce(() -> {
@@ -120,11 +120,10 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
 
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
 
-      // Bring the hood down while turning 13 degrees left to avoid an extra pause.
-      Commands.parallel(
-        Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
-        turnRelativeDegrees(drive, 13)
-      ),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
+
+      //Turn 13 degrees left
+      turnRelativeDegrees(drive, 13),
 
       driveDistanceMeters(drive, -BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
@@ -141,14 +140,14 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
       driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+      turnRelativeDegrees(drive,-13.0),
 
 
-      
-      // Turn 13 degrees right while bringing the hood up to avoid an extra pause.
-      Commands.parallel(
-        turnRelativeDegrees(drive,-13.0),
-        Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter)
-      ),
+
+
+
+      // Bring hood up to HIGH angle.
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
 
       // Shooter
       Commands.runOnce(() -> {
