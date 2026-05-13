@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2.0;
+  private static final double DRIVE_SPEED_MPS = 3.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -28,7 +28,7 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
 
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 4.3;
-  private static final double FORWARD_METERS_1 = 2.0;
+  private static final double FORWARD_METERS_1 = 3.0;
 
   private static final double INTAKE_POWER = -0.75;
 
@@ -73,8 +73,7 @@ public class RightNeutralZoneAuto1 extends SequentialCommandGroup {
         shooter.runKicker(false);
       }, shooter),
       Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
-        .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
-        .withTimeout(1.0),
+        .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM),
       
       // Keep intake running while the intake arm cycles up/down during shooting.
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),

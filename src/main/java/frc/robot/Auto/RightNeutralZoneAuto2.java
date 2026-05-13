@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 2.5;
+  private static final double DRIVE_SPEED_MPS = 3.0;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -29,6 +29,7 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 4.3;
   private static final double FORWARD_METERS_1 = 3.0;
+  private static final double FORWARD_METERS_2 = 4.0;
 
   private static final double INTAKE_POWER = -0.75;
   private static final double FEED_DURATION_SEC = 5.0;
@@ -110,8 +111,6 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
           .repeatedly()
       ).withTimeout(FEED_DURATION_SEC),
 
-      Commands.runOnce(intake::lowerIntake, intake),
-
       Commands.runOnce(()->shooter.setKickerSpeed(0.0), shooter),
 
       Commands.runOnce(()->shooter.setIndexerSpeed(0.0), shooter),
@@ -130,9 +129,9 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       turnRelativeDegrees(drive,-90),
 
       Commands.runOnce(()-> intake.setIntakePower(INTAKE_POWER), intake),
-      driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
+      driveDistanceMeters(drive, FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
-      driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
+      driveDistanceMeters(drive, -FORWARD_METERS_2, DRIVE_SPEED_MPS),
 
       turnRelativeDegrees(drive, 90.0),
 
@@ -148,7 +147,7 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
 
       // Bring hood up to HIGH angle.
       Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
-
+      
       // Shooter
       Commands.runOnce(() -> {
         shooter.runIndexer(false);
@@ -188,8 +187,8 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
               Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
                 <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
           )
-          .repeatedly())
-
+          .repeatedly()
+      )
     );
   }
 
