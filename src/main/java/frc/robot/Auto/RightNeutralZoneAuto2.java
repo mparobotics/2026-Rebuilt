@@ -24,7 +24,7 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
   private static final double TURN_TOLERANCE_DEG = 3.0;
-  private static final double TURN_TIMEOUT_SEC = 2.5;
+  private static final double TURN_TIMEOUT_SEC = 1.0;
 
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 4.3;
