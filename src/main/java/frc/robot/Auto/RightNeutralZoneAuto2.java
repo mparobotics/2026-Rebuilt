@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
-  private static final double DRIVE_SPEED_MPS = 3.0;
+  private static final double DRIVE_SPEED_MPS = 2.5;
   private static final double DRIVE_HEADING_P = 3.0;
   private static final double DRIVE_HEADING_MAX_OMEGA_RAD_PER_SEC = 2.0;
   private static final double TURN_P = 4.0;
@@ -32,7 +32,7 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
   private static final double FORWARD_METERS_2 = 4.0;
 
   private static final double INTAKE_POWER = -0.75;
-  private static final double FEED_DURATION_SEC = 5.0;
+  private static final double FEED_DURATION_SEC = 13.0;
 
   public RightNeutralZoneAuto2(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
@@ -63,11 +63,11 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       // Drive forward (back to the trench)
       driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
-      // Turn 13 degrees right
-      turnRelativeDegrees(drive,-13.0),
-
-      // Bring hood up to HIGH angle.
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+      // Turn 13 degrees right & bring shooter hood to HIGH
+      Commands.parallel(
+        turnRelativeDegrees(drive,-13.0),
+        Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter)
+      ),
 
       // Shooter
       Commands.runOnce(() -> {
@@ -111,15 +111,18 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
           .repeatedly()
       ).withTimeout(FEED_DURATION_SEC),
 
-      Commands.runOnce(()->shooter.setKickerSpeed(0.0), shooter),
-
-      Commands.runOnce(()->shooter.setIndexerSpeed(0.0), shooter),
-
-      Commands.runOnce(()->shooter.setShooterSpeed(0.0), shooter),
-
-      Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
-
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
+      Commands.parallel(
+        Commands.runOnce(() -> {
+          intake.lowerIntake();
+          intake.setIntakePower(0.0);
+        }, intake),
+        Commands.runOnce(() -> {
+          shooter.setKickerSpeed(0.0);
+          shooter.setIndexerSpeed(0.0);
+          shooter.setShooterSpeed(0.0);
+          shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW);
+        }, shooter)
+      ),
 
       //Turn 13 degrees left
       turnRelativeDegrees(drive, 13),
@@ -139,55 +142,12 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
 
       driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
-      turnRelativeDegrees(drive,-13.0),
 
 
-
-
-
-      // Bring hood up to HIGH angle.
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
-      
-      // Shooter
-      Commands.runOnce(() -> {
-        shooter.runIndexer(false);
-        shooter.runKicker(false);
-      }, shooter),
-      Commands.run(() -> shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED), shooter)
-        .until(() -> shooter.getShooterVelocityRpm() >= ShooterConstants.SHOOTER_READY_RPM)
-        .withTimeout(1.0),
-      
-      // Keep intake running while the intake arm cycles up/down during shooting.
-      Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
-
+      // Turn 13 degrees right & bring shooter hood to HIGH
       Commands.parallel(
-        // Start kicker first, then start indexer 1 second later (kicker keeps running).
-        Commands.sequence(
-          Commands.run(() -> {
-            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-            shooter.setIndexerSpeed(0.0);
-          }, shooter).withTimeout(1.0),
-          Commands.run(() -> {
-            shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
-            shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
-            //shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
-          }, shooter)
-        ),
-
-        Commands.waitSeconds(2),
-
-        // While shooting/indexing, continuously move the intake arm up/down.
-        Commands.sequence(
-            Commands.runOnce(intake::lowerIntake, intake),
-            Commands.waitUntil(() ->
-              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_LOWERED_POSITION)
-                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG),
-            Commands.runOnce(intake::raiseIntake, intake),
-            Commands.waitUntil(() ->
-              Math.abs(intake.getArmPositionDeg() - IntakeConstants.INTAKE_ARM_RAISED_POSITION)
-                <= IntakeConstants.INTAKE_ARM_TOLERANCE_DEG)
-          )
-          .repeatedly()
+        turnRelativeDegrees(drive,-13.0),
+        Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter)
       )
     );
   }
