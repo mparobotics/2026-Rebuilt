@@ -28,6 +28,7 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
 
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 4.3;
+  private static final double BACKWARD_METERS_3 = 3.2;
   private static final double FORWARD_METERS_1 = 3.0;
   private static final double FORWARD_METERS_2 = 4.0;
 
@@ -46,12 +47,12 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       // Turn 90 degrees right.
       turnRelativeDegrees(drive, -90.0),
 
-      // Drive forward 2m while starting intake (intake stays on for the rest of auto).
+      // Drive forward 3m while starting intake (intake stays on for the rest of auto).
       Commands.runOnce(() -> intake.setIntakePower(INTAKE_POWER), intake),
       driveDistanceMeters(drive, FORWARD_METERS_1, DRIVE_SPEED_MPS),
 
-      // Drive back 2m (intake still on).
-      driveDistanceMeters(drive, -FORWARD_METERS_1, DRIVE_SPEED_MPS),
+      // Drive back 3.2m (intake still on).
+      driveDistanceMeters(drive, -BACKWARD_METERS_3, DRIVE_SPEED_MPS),
 
       // Turn 90 degrees left (intake still on).
       turnRelativeDegrees(drive, 90.0),
