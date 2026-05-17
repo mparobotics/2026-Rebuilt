@@ -28,17 +28,19 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
 
   private static final double BACKWARD_METERS_1 = 3.6;
   private static final double BACKWARD_METERS_2 = 4.3;
-  private static final double BACKWARD_METERS_3 = 3.2;
+  private static final double BACKWARD_METERS_3 = 3.1;
   private static final double FORWARD_METERS_1 = 3.0;
   private static final double FORWARD_METERS_2 = 4.0;
 
   private static final double INTAKE_POWER = -0.75;
-  private static final double FEED_DURATION_SEC = 13.0;
+  private static final double FEED_DURATION_SEC = 10.0;
 
   public RightNeutralZoneAuto2(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     addRequirements(drive, intake, shooter);
 
     addCommands(
+      //Commands.waitSeconds(5.0), //GINGER WAS HERE
+
       Commands.runOnce(intake::lowerIntake, intake),
 
       // Drive backwards 3.6m.
@@ -57,12 +59,12 @@ public class RightNeutralZoneAuto2 extends SequentialCommandGroup {
       // Turn 90 degrees left (intake still on).
       turnRelativeDegrees(drive, 90.0),
 
+      // Drive forward (back to the trench)
+      driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
+
       // Stop intake at the end.
       Commands.runOnce(() -> intake.setIntakePower(0.0), intake),
       Commands.runOnce(() -> drive.drive(0, 0, 0, false), drive),
-
-      // Drive forward (back to the trench)
-      driveDistanceMeters(drive, BACKWARD_METERS_2, DRIVE_SPEED_MPS),
 
       // Turn 13 degrees right & bring shooter hood to HIGH
       Commands.parallel(
