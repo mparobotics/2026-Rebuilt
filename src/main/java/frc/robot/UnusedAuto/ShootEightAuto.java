@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.Auto;
+package frc.robot.UnusedAuto;
 
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -16,7 +16,7 @@ public class ShootEightAuto extends SequentialCommandGroup {
   public ShootEightAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
     final double[] startYawRad = new double[1];
     addCommands(
-      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), shooter),
+      Commands.runOnce(() -> shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), shooter),
       Commands.runOnce(() -> {
         shooter.runIndexer(false);
         shooter.runKicker(false);
@@ -36,6 +36,7 @@ public class ShootEightAuto extends SequentialCommandGroup {
           shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
           shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
           shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+          shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
         }, shooter)
 	    )
 	  );

@@ -97,6 +97,7 @@ public static final class SwerveConstants{
 
   /* Swerve Profiling Values */
   public static final double maxSpeed = 5; // meters per second
+  public static final double PathPlannerMaxSpeed = DCMotor.getNeoVortex(1).withReduction(driveGearRatio).freeSpeedRadPerSec*(wheelDiameter/2);
   public static final double maxAngularVelocity = maxSpeed/driveBaseRadius; //radians per second how fast the robot spin
 
   /* Neutral Modes */
@@ -126,13 +127,10 @@ public static final class SwerveConstants{
   ){}
 
   public static ModuleData[] moduleData = {
-    new ModuleData(6, 5, 7, 31.46, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-    // Module 1 is currently the only module oscillating; flip its angle motor invert so its
-    // steering closed-loop sign matches the encoder direction.
-    // Module 1: also invert drive so +X command drives forward like the others.
-    new ModuleData(9, 8, 10, 49.57, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-    new ModuleData(12, 11, 13, 33.13, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-    new ModuleData(15, 14, 16, 8.52, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+    new ModuleData(6, 5, 7, 34.18, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+    new ModuleData(9, 31, 10, 44.03, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+    new ModuleData(12, 11, 13, 28.21, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+    new ModuleData(15, 14, 16, 8.87, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
   };
   
 }
@@ -142,7 +140,7 @@ public static final class AutoConstants {
   private static boolean dashboardInitialized = false;
 
   public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(SwerveConstants.wheelDiameter/2,
-  SwerveConstants.maxSpeed,
+  SwerveConstants.PathPlannerMaxSpeed,
   1.2,
   DCMotor.getNeoVortex(1).withReduction(SwerveConstants.driveGearRatio),
   SwerveConstants.driveContinuousCurrentLimit,
@@ -151,15 +149,20 @@ public static final class AutoConstants {
   public static final RobotConfig ROBOT_CONFIG = new RobotConfig (52, 6.8, MODULE_CONFIG,
   SwerveConstants.FRONT_LEFT, SwerveConstants.FRONT_RIGHT, SwerveConstants.BACK_LEFT, SwerveConstants.BACK_RIGHT);
 
-  public static final PPHolonomicDriveController SWERV_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
+  public static final PPHolonomicDriveController SWERVE_DRIVE_CONTROLLER = new PPHolonomicDriveController(new PIDConstants(5.0,0.00001,0.0),
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{
     None,
     LeftLemonAuto,
     RightLemonAuto,
-    ShootEightAuto,
-    CenterLemonAuto
+    LeftNeutralZoneAuto1,
+    LeftNeutralZoneAuto2,
+    RightNeutralZoneAuto1,
+    RightNeutralZoneAuto2,
+    CenterLemonAuto,
+    CenterToDepotAuto,
+    DepotShootingAuto
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -175,10 +178,15 @@ public static final class AutoConstants {
 
     autoModeChooser.setDefaultOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
     autoModeChooser.addOption("None", AutoMode.None);
-    autoModeChooser.addOption("ShootEightAuto", AutoMode.ShootEightAuto);
     autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
     autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
+    autoModeChooser.addOption("RightNeutralZoneAuto1", AutoMode.RightNeutralZoneAuto1);
+    autoModeChooser.addOption("RightNeutralZoneAuto2", AutoMode.RightNeutralZoneAuto2);
+    autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
+    autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
     autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
+    autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
+    autoModeChooser.addOption("DepotShootingAuto", AutoMode.DepotShootingAuto);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
@@ -250,8 +258,9 @@ public static final class VisionConstants {
   public static final double MAX_VISION_ANGULAR_RATE_DEG_PER_SEC = 720.0;
 
   /** Standard deviations for vision measurements: (x meters, y meters, theta radians). */
-  public static final double VISION_STD_DEV_X_METERS = 0.7;
-  public static final double VISION_STD_DEV_Y_METERS = 0.7;
+  //Rotation (Radians) should be handled by pigion so deviation is high
+  public static final double VISION_STD_DEV_X_METERS = 0.4;
+  public static final double VISION_STD_DEV_Y_METERS = 0.4;
   public static final double VISION_STD_DEV_THETA_RADIANS = 99999.0;
 
   public static String getLimelightStreamUrl(String limelightName) {
@@ -273,11 +282,13 @@ public static final class ShooterConstants {
   public static final int KICKER_ID = 21;
   public static final int HOOD_ID = 20;
   public static final int INDEXER_ID = 23;
+  public static final int HOPPER_ID = 43; //placeholder
 
   // Percent output caps ([-1..1]). Higher = faster spin-up but more current draw.
   public static final double SHOOTER_SPEED = 0.6;
   public static final double KICKER_SPEED = 0.6;
   public static final double INDEXER_SPEED = 0.4; //placeholder
+  public static final double HOPPER_SPEED = 0.5; //placeholder
 
   // Shooter readiness (SparkMax encoder velocity is RPM). Tune on the real robot.
   public static final double SHOOTER_READY_RPM = 3000.0;
@@ -291,7 +302,7 @@ public static final class ShooterConstants {
   // Max travel is 3 rotations = 1080 degrees.
   public static final double HOOD_MIN_ROTATIONS = 0.0;
   public static final double HOOD_MED_ROTATIONS = 20.0;
-  public static final double HOOD_MAX_ROTATIONS = 36.0;
+  public static final double HOOD_MAX_ROTATIONS = 27.0;
 
   // Preset positions.
   public static final double HOOD_ANGLE_LOW = HOOD_MIN_ROTATIONS;
@@ -306,13 +317,15 @@ public static final class IntakeConstants {
   // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
   // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
   public static int INTAKE_ID = 19;
-  public static double INTAKE_SPEED = 90; //percent output scaling for intake motor
+  // SparkMax.set(...) expects [-1.0, 1.0] percent output.
+  public static double INTAKE_SPEED = 0.80; // max percent output for intake motor
 
   public static int INTAKE_ARM_ID = 18;
+  public static int INTAKE_ARM_2_ID = 24;
   public static int GEAR_RATIO = 25;
 
   //Intake arm position units are degrees
-  public static final double INTAKE_ARM_MIN_DEG = 20.0;
+  public static final double INTAKE_ARM_MIN_DEG = 25.0;
   public static final double INTAKE_ARM_MAX_DEG = 90.0;
 
   //Preset positions
@@ -320,15 +333,23 @@ public static final class IntakeConstants {
   public static final double INTAKE_ARM_RAISED_POSITION = INTAKE_ARM_MAX_DEG;
 
   //PID constants for intake arm (degrees).
-  public static final double INTAKE_ARM_kP = 6.0;
-  public static final double INTAKE_ARM_kI = 1.5;
-  public static final double INTAKE_ARM_kD = 0.15;
+  public static final double INTAKE_ARM_kP = 9.90;
+  public static final double INTAKE_ARM_kI = 1.60;
+  public static final double INTAKE_ARM_kD = 0.16;
   public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
+
+  //Feedforward constants for intake arm
+  public static final double INTAKE_ARM_kS = 0.0;
+  public static final double INTAKE_ARM_kG = 0.0;
+  public static final double INTAKE_ARM_kV = 0.0;
+  public static final double INTAKE_ARM_kA = 0.0;
 
   //Percent output cap (0..1) for gentler motion
   //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
   public static final double INTAKE_ARM_MAX_OUTPUT = 0.20;
   public static final double INTAKE_ARM_MIN_OUTPUT = -0.10;
+  // Additional clamp while lowering so the arm descends more softly.
+  public static final double INTAKE_ARM_LOWERING_MIN_OUTPUT = -0.06;
 }
 
 public static final class CANdleConstants {

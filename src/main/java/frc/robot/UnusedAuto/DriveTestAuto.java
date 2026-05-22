@@ -4,29 +4,18 @@
 
 package frc.robot.UnusedAuto;
 
-
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Subsystems.IntakeSubsystem;
+import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 
-/*
 public class DriveTestAuto extends SequentialCommandGroup {
-  public DriveTestAuto (SwerveSubsystem drive) {
-        addCommands(
-            new InstantCommand(() -> drive.drive(0.5,0,0, false), drive),
-            Commands.waitSeconds(2),
-            new InstantCommand(() -> drive.drive(0,0,0, false), drive)
-        );
-    }
-}
-*/
-  
+  public DriveTestAuto(SwerveSubsystem drive, IntakeSubsystem intake, ShooterSubsystem shooter) {
+    addRequirements(drive, intake, shooter);
 
-
-public class DriveTestAuto extends SequentialCommandGroup {
-  public DriveTestAuto (SwerveSubsystem drive){
     addCommands(
-      drive.startAutoAt(1.165, 6.000, 0.000),
-      drive.autoDrive("DriveTestPath")
+      drive.startAutoAt(1.984, 7.199, -90),
+      drive.autoDrive("Path")
     );
   }
 }

@@ -21,19 +21,24 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.LeftLemonAuto;
+import frc.robot.Auto.LeftNeutralZoneAuto1;
+import frc.robot.Auto.LeftNeutralZoneAuto2;
+import frc.robot.Auto.RightNeutralZoneAuto1;
+import frc.robot.Auto.RightNeutralZoneAuto2;
 import frc.robot.Auto.RightLemonAuto;
-import frc.robot.Auto.ShootEightAuto;
 import frc.robot.Auto.CenterLemonAuto;
+import frc.robot.Auto.CenterToDepotAuto;
+import frc.robot.Auto.DepotShootingAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Command.AltAutoAlign;
-import frc.robot.Command.AutoAlign;
+import frc.robot.Command.SimpleAutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DriverStation;
 
 
 public class RobotContainer {
@@ -45,31 +50,29 @@ public class RobotContainer {
   private final CommandXboxController helmsController = new CommandXboxController(1);
 
   // Left Stick Y = Forward/backward motion
-  private final int translationAxis = XboxController.Axis.kLeftY.value;
+  private final int TRANSLATION_AXIS = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
-  private final int strafeAxis = XboxController.Axis.kLeftX.value;
+  private final int STRAFE_AXIS = XboxController.Axis.kLeftX.value;
   // Right Stick X = Rotation/turning motion
-  private final int rotationAxis = XboxController.Axis.kRightX.value;
+  private final int ROTATION_AXIS = XboxController.Axis.kRightX.value;
   // Left Bumper = Toggle robot-oriented mode (default is field-oriented)
   private final Trigger robotCentric = new Trigger(driveController.leftBumper());
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
-
   // IntakeSubsystem for intake
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
-
   //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
 
   private boolean lastHelmsRightBumperPressed = false;
   private double helmsRightBumperPressTimestampSec = 0.0;
 
+  //Limelight
   private final java.util.Map<String, HttpCamera> limelightCameras = new java.util.HashMap<>();
   private UsbCamera driverCamera;
   
   public RobotContainer() {
-    AutoConstants.initDashboard();
     startLimelightStreams();
     startDriverCameraStream();
     configureBindings();
@@ -127,8 +130,8 @@ public class RobotContainer {
     driveController.button(Button.kBack.value).onTrue(new InstantCommand(()->m_drive.resyncModuleEncoders(), m_drive));
     //Start Button (menu) = save current module offsets (DISABLED ONLY, wheels must be straight)
     driveController.button(Button.kStart.value).onTrue(new InstantCommand(()->m_drive.saveModuleOffsets(), m_drive));
-   
-
+    //xLock
+    driveController.button(Button.kB.value).whileTrue(Commands.run(() -> m_drive.xLock(), m_drive));
 
     // SHOOTER CONTROLLER
     m_shooter.setDefaultCommand(
@@ -156,36 +159,35 @@ public class RobotContainer {
 
           double kickerSpeed = 0.0;
           double indexerSpeed = 0.0;
+          double hopperSpeed = 0.0;
 
           if (leftBumperPressed) {
             kickerSpeed = -ShooterConstants.KICKER_SPEED;
             indexerSpeed = -ShooterConstants.INDEXER_SPEED;
+            hopperSpeed = -ShooterConstants.HOPPER_SPEED;
           } else if (rightBumperPressed) {
             kickerSpeed = ShooterConstants.KICKER_SPEED;
             indexerSpeed = indexerEnabled ? ShooterConstants.INDEXER_SPEED : 0.0;
+            hopperSpeed = indexerEnabled ? ShooterConstants.HOPPER_SPEED : 0.0;
           }
 
           m_shooter.setKickerSpeed(kickerSpeed);
           m_shooter.setIndexerSpeed(indexerSpeed);
+          m_shooter.setHopperSpeed(hopperSpeed);
    
           lastHelmsRightBumperPressed = rightBumperPressed;
         },
         m_shooter));
 
-          
+
     // Hood controls (helms controller).
     // Y = hood up (2 inches / max travel), B = hood down.
     helmsController.y().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
     helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED), m_shooter));
     helmsController.a().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
 
-    
-    // Left Trigger = Auto-align to left scoring position
-    driveController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, true));
-    // Right Trigger = Auto-align to right scoring position
-    driveController.axisGreaterThan(Axis.kRightTrigger.value, 0.1).whileTrue(new AutoAlign(m_drive, false));
-    // Right Bumper = Alt-Auto-Align
-    driveController.button(Button.kRightBumper.value).whileTrue(new AltAutoAlign(m_drive, m_shooter));
+    //Right Bumper = Simple Auto Align
+    driveController.button(Button.kRightBumper.value).whileTrue(new SimpleAutoAlign(m_drive));
 
     // Default command runs continuously when no other command requires the subsystem.
     // It automatically pauses when commands like AutoAlign take control, then resumes
@@ -195,11 +197,11 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 0.7,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(TRANSLATION_AXIS) * 1.0,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 0.7,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(STRAFE_AXIS) * 1.0,
         // rotationSupplier - Rotation speed
-        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        () -> -driveController.getRawAxis(ROTATION_AXIS) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
         () -> robotCentric.getAsBoolean(),
         // isAutoAlignSupplier - Auto-align active flag
@@ -230,13 +232,20 @@ public class RobotContainer {
   
   public Command getAutonomousCommand() {
     AutoConstants.AutoMode selected = AutoConstants.getSelectedAutoMode();
+    SmartDashboard.putString("Auto/Selected", selected.name());
+    DriverStation.reportWarning("Auto selected: " + selected.name(), false);
 
     return switch (selected) {
       case None -> Commands.none();
       case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
       case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
-      case ShootEightAuto -> new ShootEightAuto(m_drive, m_intake, m_shooter);
+      case RightNeutralZoneAuto1 -> new RightNeutralZoneAuto1 (m_drive, m_intake, m_shooter);
+      case RightNeutralZoneAuto2 -> new RightNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
+      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
+      case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
       case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
+      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive, m_intake, m_shooter);
+      case DepotShootingAuto -> new DepotShootingAuto(m_drive, m_intake, m_shooter);
 
       
       default -> Commands.none();

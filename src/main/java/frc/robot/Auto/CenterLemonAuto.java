@@ -4,12 +4,10 @@
 
 package frc.robot.Auto;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Constants.SwerveConstants;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
@@ -42,6 +40,7 @@ public class CenterLemonAuto extends SequentialCommandGroup {
           shooter.setShooterSpeed(ShooterConstants.SHOOTER_SPEED);
           shooter.setKickerSpeed(ShooterConstants.KICKER_SPEED);
           shooter.setIndexerSpeed(ShooterConstants.INDEXER_SPEED);
+          //shooter.setHopperSpeed(ShooterConstants.HOPPER_SPEED);
         }, shooter)
 	    )
 	  );
