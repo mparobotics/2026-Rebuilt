@@ -31,7 +31,7 @@ public class SimpleAutoAlign extends Command {
     public static final double ROTATION_KI = 0;
     public static final double ROTATION_KD = 0;
     
-    //Tolerance and 
+    //Tolerance and things
     public static final double DISTANCE_TOLERANCE_METERS = 0.08;
     public static final double ROTATION_TOLERANCE_DEG = 1.5;
     public static final double MAX_FORWARD_SPEED_MPS = 0;
@@ -43,6 +43,7 @@ public class SimpleAutoAlign extends Command {
     public static final double DISTANCE_FILTER_ALPHA = 0.25;
     public static final double MAX_DISTANCE_ACCEL_MPS_PER_SEC = SwerveConstants.maxSpeed * 4.0;
 
+    //PID Controller and alignment
     private final PIDController distanceController = new PIDController(DISTANCE_KP, DISTANCE_KI, DISTANCE_KD);
     private final PIDController rotationController = new PIDController(ROTATION_KP, ROTATION_KI, ROTATION_KD);
     private int settledCycles = 0;
@@ -57,20 +58,20 @@ public class SimpleAutoAlign extends Command {
         addRequirements(swerveSubsystem);
     }
 
-    private boolean canSeeTag() {
+    private boolean canSeeTag() { //checks if limelight can see tag
         double tv = NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tv").getDouble(0.0);
         return tv > 0;
     }
     
-    private int getTagId() {
+    private int getTagId() { //gets the tag id from network tables
         return (int) NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tid").getDouble(0.0);
     }
 
-    private boolean isSupportedTag(int tagId) {
+    private boolean isSupportedTag(int tagId) { //checks if we want to align to that tag
         return tagId == 10 || tagId == 11 ||tagId == 26 || tagId == 27 || tagId == 8 || tagId == 24;
     }
 
-    private double getDesiredAlignmentAngle(int tagId) {
+    private double getDesiredAlignmentAngle(int tagId) { //for each tag decides what angle the robot should be at in comparison to the tag
         if (tagId == 11 || tagId == 27) {
             return 20.0;
         }
@@ -87,7 +88,7 @@ public class SimpleAutoAlign extends Command {
         return NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tx").getDouble(0.0);
     }
 
-    private double getDistanceToTargetMeters(double tyDegrees){
+    private double getDistanceToTargetMeters(double tyDegrees){ //uses trig to find distance 
         double angleToTargetDegrees = CAMERA_TILT_DEG + tyDegrees;
         if (Math.abs(angleToTargetDegrees)<MIN_DISTANCE_CALC_ANGLE_DEG){
             return Double.NaN;
@@ -103,7 +104,7 @@ public class SimpleAutoAlign extends Command {
         return distanceMeters;
     }
 
-    private double filterDistanceMeters(double distanceMeters){
+    private double filterDistanceMeters(double distanceMeters){ //checks to see if distance if valid
         if (!Double.isFinite(filteredDistanceMeters)){
             filteredDistanceMeters = distanceMeters;
         } else {

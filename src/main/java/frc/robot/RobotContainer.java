@@ -32,15 +32,11 @@ import frc.robot.Auto.DepotShootingAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Command.AltAutoAlign;
-import frc.robot.Command.AutoAlign;
 import frc.robot.Command.SimpleAutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
-import frc.robot.UnusedAuto.DriveTestAuto;
-import frc.robot.UnusedAuto.ShootEightAuto;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 
@@ -54,26 +50,25 @@ public class RobotContainer {
   private final CommandXboxController helmsController = new CommandXboxController(1);
 
   // Left Stick Y = Forward/backward motion
-  private final int translationAxis = XboxController.Axis.kLeftY.value;
+  private final int TRANSLATION_AXIS = XboxController.Axis.kLeftY.value;
   // Left Stick X = Side-to-side motion
-  private final int strafeAxis = XboxController.Axis.kLeftX.value;
+  private final int STRAFE_AXIS = XboxController.Axis.kLeftX.value;
   // Right Stick X = Rotation/turning motion
-  private final int rotationAxis = XboxController.Axis.kRightX.value;
+  private final int ROTATION_AXIS = XboxController.Axis.kRightX.value;
   // Left Bumper = Toggle robot-oriented mode (default is field-oriented)
   private final Trigger robotCentric = new Trigger(driveController.leftBumper());
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
-
   // IntakeSubsystem for intake
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
-
   //ShooterSubsystem for shooter
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
 
   private boolean lastHelmsRightBumperPressed = false;
   private double helmsRightBumperPressTimestampSec = 0.0;
 
+  //Limelight
   private final java.util.Map<String, HttpCamera> limelightCameras = new java.util.HashMap<>();
   private UsbCamera driverCamera;
   
@@ -202,11 +197,11 @@ public class RobotContainer {
         // SwerveSubsystem - The drive subsystem to control
         m_drive,
         // translationSupplier - Forward/backward speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(translationAxis) * 1.0,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(TRANSLATION_AXIS) * 1.0,
         // strafeSupplier - Side-to-side speed
-        () -> -getSpeedMultiplier() * driveController.getRawAxis(strafeAxis) * 1.0,
+        () -> -getSpeedMultiplier() * driveController.getRawAxis(STRAFE_AXIS) * 1.0,
         // rotationSupplier - Rotation speed
-        () -> -driveController.getRawAxis(rotationAxis) * 0.5,
+        () -> -driveController.getRawAxis(ROTATION_AXIS) * 0.5,
         // robotCentricSupplier - Robot-oriented (true) vs field-oriented (false)
         () -> robotCentric.getAsBoolean(),
         // isAutoAlignSupplier - Auto-align active flag
