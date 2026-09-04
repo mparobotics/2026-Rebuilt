@@ -228,15 +228,6 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-  private void Lockwheels () {
-    for(int i = 0; i < mSwerveMods. length; i++){
-      SwerveModule module = mSwerveMods [i];
-      Rotation2d angle = SwerveConstants.swerveKinematics.getModules() [i].getAngle();
-      SwerveModuleState xState = new SwerveModuleState(0, angle);
-      module. setDesiredState(xState, false) ;
-    }
-  }
-
   public Command xLockCommand ( ) {
     return run(this::xLock);
   }

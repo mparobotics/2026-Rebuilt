@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.Command.SimpleAutoAlign;
 import frc.robot.Command.TeleopSwerve;
 import frc.robot.Subsystems.SwerveSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -112,13 +111,6 @@ public class RobotContainer {
     //xLock
     driveController.button(Button.kB.value).whileTrue(Commands.run(() -> m_drive.xLock(), m_drive));
 
-
-
-
-
-    //Right Bumper = Simple Auto Align
-    driveController.button(Button.kRightBumper.value).whileTrue(new SimpleAutoAlign(m_drive));
-
     // Default command runs continuously when no other command requires the subsystem.
     // It automatically pauses when commands like AutoAlign take control, then resumes
     // when they finish.
@@ -139,7 +131,6 @@ public class RobotContainer {
       ));
   };
 
-    
 
   private double getSpeedMultiplier(){
     // getHID() accesses the underlying XboxController to read button states directly.

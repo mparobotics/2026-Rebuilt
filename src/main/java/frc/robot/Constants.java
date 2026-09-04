@@ -153,16 +153,7 @@ public static final class AutoConstants {
   new PIDConstants(5.0, 0.005, 0.001) );
 
   public enum AutoMode{
-    None,
-    LeftLemonAuto,
-    RightLemonAuto,
-    LeftNeutralZoneAuto1,
-    LeftNeutralZoneAuto2,
-    RightNeutralZoneAuto1,
-    RightNeutralZoneAuto2,
-    CenterLemonAuto,
-    CenterToDepotAuto,
-    DepotShootingAuto
+    None
   }
 
   private static SendableChooser<Boolean> sideChooser = new SendableChooser<Boolean>();
@@ -176,17 +167,7 @@ public static final class AutoConstants {
     sideChooser.addOption("RIGHT", true);
     sideChooser.setDefaultOption("LEFT", false);
 
-    autoModeChooser.setDefaultOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
-    autoModeChooser.addOption("None", AutoMode.None);
-    autoModeChooser.addOption("RightLemonAuto", AutoMode.RightLemonAuto);
-    autoModeChooser.addOption("LeftLemonAuto", AutoMode.LeftLemonAuto);
-    autoModeChooser.addOption("RightNeutralZoneAuto1", AutoMode.RightNeutralZoneAuto1);
-    autoModeChooser.addOption("RightNeutralZoneAuto2", AutoMode.RightNeutralZoneAuto2);
-    autoModeChooser.addOption("LeftNeutralZoneAuto1", AutoMode.LeftNeutralZoneAuto1);
-    autoModeChooser.addOption("LeftNeutralZoneAuto2", AutoMode.LeftNeutralZoneAuto2);
-    autoModeChooser.addOption("CenterLemonAuto", AutoMode.CenterLemonAuto);
-    autoModeChooser.addOption("CenterToDepotAuto", AutoMode.CenterToDepotAuto);
-    autoModeChooser.addOption("DepotShootingAuto", AutoMode.DepotShootingAuto);
+    autoModeChooser.setDefaultOption("None", AutoMode.None);
 
     SmartDashboard.putData("Auto Starting Location", sideChooser);
     SmartDashboard.putData("Auto Mode", autoModeChooser);
@@ -195,7 +176,7 @@ public static final class AutoConstants {
   public static AutoMode getSelectedAutoMode(){
     initDashboard();
     AutoMode selection = autoModeChooser.getSelected();
-    return selection != null ? selection : AutoMode.LeftLemonAuto;
+    return selection != null ? selection : AutoMode.None;
   }
   public static boolean isRightSideAuto(){
     initDashboard();
@@ -275,85 +256,5 @@ public static final class VisionConstants {
     }
   }
 }
-
-/* Shooter Constants */
-public static final class ShooterConstants {
-  public static final int SHOOTER_ID = 22;
-  public static final int KICKER_ID = 21;
-  public static final int HOOD_ID = 20;
-  public static final int INDEXER_ID = 23;
-  public static final int HOPPER_ID = 43; //placeholder
-
-  // Percent output caps ([-1..1]). Higher = faster spin-up but more current draw.
-  public static final double SHOOTER_SPEED = 0.6;
-  public static final double KICKER_SPEED = 0.6;
-  public static final double INDEXER_SPEED = 0.4; //placeholder
-  public static final double HOPPER_SPEED = 0.5; //placeholder
-
-  // Shooter readiness (SparkMax encoder velocity is RPM). Tune on the real robot.
-  public static final double SHOOTER_READY_RPM = 3000.0;
-
-  // Electrical limits/compensation.
-  public static final double SHOOTER_VOLTAGE_COMP = 12.0;
-  public static final int SHOOTER_CURRENT_LIMIT_AMPS = 60;
-  public static final int KICKER_CURRENT_LIMIT_AMPS = 60;
-
-  // Hood position units are motor rotations (NEO internal encoder).
-  // Max travel is 3 rotations = 1080 degrees.
-  public static final double HOOD_MIN_ROTATIONS = 0.0;
-  public static final double HOOD_MED_ROTATIONS = 20.0;
-  public static final double HOOD_MAX_ROTATIONS = 27.0;
-
-  // Preset positions.
-  public static final double HOOD_ANGLE_LOW = HOOD_MIN_ROTATIONS;
-  public static final double HOOD_ANGLE_MED = HOOD_MED_ROTATIONS;
-  public static final double HOOD_ANGLE_HIGH = HOOD_MAX_ROTATIONS; // "up" (about 2 inches)
-  public static final double HOOD_KP = 0.1;
-  public static final double HOOD_MAX_OUTPUT = 0.4;
-  public static final double HOOD_TOLERANCE = 0.02;
 }
 
-public static final class IntakeConstants {
-  // Must be unique across *all* CAN devices (SparkMax/SparkFlex/etc).
-  // These were previously colliding with ShooterConstants IDs (60/62) and causing robot init to crash.
-  public static int INTAKE_ID = 19;
-  // SparkMax.set(...) expects [-1.0, 1.0] percent output.
-  public static double INTAKE_SPEED = 0.80; // max percent output for intake motor
-
-  public static int INTAKE_ARM_ID = 18;
-  public static int INTAKE_ARM_2_ID = 24;
-  public static int GEAR_RATIO = 25;
-
-  //Intake arm position units are degrees
-  public static final double INTAKE_ARM_MIN_DEG = 25.0;
-  public static final double INTAKE_ARM_MAX_DEG = 90.0;
-
-  //Preset positions
-  public static final double INTAKE_ARM_LOWERED_POSITION = INTAKE_ARM_MIN_DEG;
-  public static final double INTAKE_ARM_RAISED_POSITION = INTAKE_ARM_MAX_DEG;
-
-  //PID constants for intake arm (degrees).
-  public static final double INTAKE_ARM_kP = 9.90;
-  public static final double INTAKE_ARM_kI = 1.60;
-  public static final double INTAKE_ARM_kD = 0.16;
-  public static final double INTAKE_ARM_TOLERANCE_DEG = 2.0;
-
-  //Feedforward constants for intake arm
-  public static final double INTAKE_ARM_kS = 0.0;
-  public static final double INTAKE_ARM_kG = 0.0;
-  public static final double INTAKE_ARM_kV = 0.0;
-  public static final double INTAKE_ARM_kA = 0.0;
-
-  //Percent output cap (0..1) for gentler motion
-  //duty-cycle / percent output for SparkMax.set(...), which expects a value in [-1.0, 1.0]
-  public static final double INTAKE_ARM_MAX_OUTPUT = 0.20;
-  public static final double INTAKE_ARM_MIN_OUTPUT = -0.10;
-  // Additional clamp while lowering so the arm descends more softly.
-  public static final double INTAKE_ARM_LOWERING_MIN_OUTPUT = -0.06;
-}
-
-public static final class CANdleConstants {
-  public static final int CANDLE_ID = 18; //Placeholder ID
-
-  }
-}
