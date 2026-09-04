@@ -31,7 +31,7 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 // Swerve Constants
 public static final class SwerveConstants{
   public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
-  public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
+  public static final int PIGEON_ID = 23; //CAN ID for Pigeon gyro sensor
   public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
   /* Drivetrain Constants */
@@ -127,10 +127,10 @@ public static final class SwerveConstants{
   ){}
 
   public static ModuleData[] moduleData = {
-    new ModuleData(6, 5, 7, 34.18, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-    new ModuleData(9, 31, 10, 44.03, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-    new ModuleData(12, 11, 13, 28.21, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-    new ModuleData(15, 14, 16, 8.87, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+    new ModuleData(11, 10, 12, 34.18, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
+    new ModuleData(14, 13, 15, 44.03, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
+    new ModuleData(17, 16, 18, 28.21, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
+    new ModuleData(20, 9, 21, 8.87, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
   };
   
 }
