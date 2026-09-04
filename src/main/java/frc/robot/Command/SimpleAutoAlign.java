@@ -13,9 +13,6 @@ public class SimpleAutoAlign extends Command {
     
     private final SwerveSubsystem swerveSubsystem;
 
-    //Target for how far away the robot should be from the hub
-    private static final double TARGET_DISTANCE_METERS = 2.1;
-
     //Camera geometry
     public static final double CAMERA_HEIGHT_METERS = 0.5;
     public static final double APRIL_TAG_HEIGHT_METERS = 1.0;
@@ -81,37 +78,13 @@ public class SimpleAutoAlign extends Command {
         return 0.0;
     }
 
-    private double getVerticalOffsetToTarget(){
-        return NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("ty").getDouble(0.0);
-    }
+
     private double getOffsetToTarget() {
         return NetworkTableInstance.getDefault().getTable("limelight-a").getEntry("tx").getDouble(0.0);
     }
 
-    private double getDistanceToTargetMeters(double tyDegrees){ //uses trig to find distance 
-        double angleToTargetDegrees = CAMERA_TILT_DEG + tyDegrees;
-        if (Math.abs(angleToTargetDegrees)<MIN_DISTANCE_CALC_ANGLE_DEG){
-            return Double.NaN;
-        }
-        double tangent = Math.tan(Math.toRadians(angleToTargetDegrees));
-        if (Math.abs(tangent) < 1e-6){
-            return Double.NaN;
-        }
-        double distanceMeters = (APRIL_TAG_HEIGHT_METERS - CAMERA_HEIGHT_METERS) / tangent;
-        if (!Double.isFinite(distanceMeters) || distanceMeters < 0.0){
-            return Double.NaN;
-        }
-        return distanceMeters;
-    }
 
-    private double filterDistanceMeters(double distanceMeters){ //checks to see if distance if valid
-        if (!Double.isFinite(filteredDistanceMeters)){
-            filteredDistanceMeters = distanceMeters;
-        } else {
-            filteredDistanceMeters += DISTANCE_FILTER_ALPHA * (distanceMeters - filteredDistanceMeters);
-        }
-        return filteredDistanceMeters;
-    }
+
 
     @Override
     public void initialize() {

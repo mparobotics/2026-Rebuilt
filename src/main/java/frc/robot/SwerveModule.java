@@ -163,7 +163,7 @@ public class SwerveModule {
             driveMotor.set(percentOutput);
         }
         else{
-            driveController.setReference(
+            driveController.setSetpoint(
                 desiredState.speedMetersPerSecond, 
                 ControlType.kVelocity,
                 ClosedLoopSlot.kSlot0,
@@ -177,7 +177,7 @@ public class SwerveModule {
         Rotation2d angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.SwerveConstants.maxSpeed * 0.01))
             ? lastAngle : desiredState.angle;
         // Set the angle motor to rotate to the target angle (position control)
-        angleController.setReference(angle.getDegrees(), ControlType.kPosition);
+        angleController.setSetpoint(angle.getDegrees(), ControlType.kPosition);
         // Update lastAngle for next optimization cycle
         lastAngle = angle; 
     }
@@ -189,7 +189,7 @@ public class SwerveModule {
     
 
     public void pointInDirection(double degrees){
-        angleController.setReference(degrees, ControlType.kPosition);
+        angleController.setSetpoint(degrees, ControlType.kPosition);
         lastAngle = Rotation2d.fromDegrees(degrees);
     }
     

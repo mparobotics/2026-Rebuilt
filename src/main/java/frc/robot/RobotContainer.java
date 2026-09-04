@@ -4,38 +4,23 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.XboxController.Axis;
 import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSource.ConnectionStrategy;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Auto.LeftLemonAuto;
-import frc.robot.Auto.LeftNeutralZoneAuto1;
-import frc.robot.Auto.LeftNeutralZoneAuto2;
-import frc.robot.Auto.RightNeutralZoneAuto1;
-import frc.robot.Auto.RightNeutralZoneAuto2;
-import frc.robot.Auto.RightLemonAuto;
-import frc.robot.Auto.CenterLemonAuto;
-import frc.robot.Auto.CenterToDepotAuto;
-import frc.robot.Auto.DepotShootingAuto;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.Command.SimpleAutoAlign;
 import frc.robot.Command.TeleopSwerve;
-import frc.robot.Subsystems.IntakeSubsystem;
-import frc.robot.Subsystems.ShooterSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -60,13 +45,7 @@ public class RobotContainer {
 
   // SwerveSubsystem instance for the drive subsystem
   private final SwerveSubsystem m_drive = new SwerveSubsystem();
-  // IntakeSubsystem for intake
-  private final IntakeSubsystem m_intake = new IntakeSubsystem();
-  //ShooterSubsystem for shooter
-  private final ShooterSubsystem m_shooter = new ShooterSubsystem();
 
-  private boolean lastHelmsRightBumperPressed = false;
-  private double helmsRightBumperPressTimestampSec = 0.0;
 
   //Limelight
   private final java.util.Map<String, HttpCamera> limelightCameras = new java.util.HashMap<>();
@@ -133,58 +112,9 @@ public class RobotContainer {
     //xLock
     driveController.button(Button.kB.value).whileTrue(Commands.run(() -> m_drive.xLock(), m_drive));
 
-    // SHOOTER CONTROLLER
-    m_shooter.setDefaultCommand(
-      Commands.run(
-        () -> {          
-          // Right stick Y controls shooter.
-          // Invert so stick-up (negative on Xbox) produces positive motor output.
-          double shooterAxis = -MathUtil.applyDeadband(
-            helmsController.getRawAxis(Axis.kRightY.value),
-            0.1);
-          
-          m_shooter.setShooterSpeed(shooterAxis * ShooterConstants.SHOOTER_SPEED);
-              
-          // Right bumper runs the indexer and kicker forward while held.
-          // Left bumper runs the indexer and kicker in reverse while held.
-          boolean leftBumperPressed = helmsController.getHID().getLeftBumper();
-          boolean rightBumperPressed = helmsController.getHID().getRightBumper();
-          if (rightBumperPressed && !lastHelmsRightBumperPressed) {
-            helmsRightBumperPressTimestampSec = Timer.getFPGATimestamp();
-          }
-
-          boolean indexerEnabled =
-            rightBumperPressed
-              && (Timer.getFPGATimestamp() - helmsRightBumperPressTimestampSec) >= 1.0;
-
-          double kickerSpeed = 0.0;
-          double indexerSpeed = 0.0;
-          double hopperSpeed = 0.0;
-
-          if (leftBumperPressed) {
-            kickerSpeed = -ShooterConstants.KICKER_SPEED;
-            indexerSpeed = -ShooterConstants.INDEXER_SPEED;
-            hopperSpeed = -ShooterConstants.HOPPER_SPEED;
-          } else if (rightBumperPressed) {
-            kickerSpeed = ShooterConstants.KICKER_SPEED;
-            indexerSpeed = indexerEnabled ? ShooterConstants.INDEXER_SPEED : 0.0;
-            hopperSpeed = indexerEnabled ? ShooterConstants.HOPPER_SPEED : 0.0;
-          }
-
-          m_shooter.setKickerSpeed(kickerSpeed);
-          m_shooter.setIndexerSpeed(indexerSpeed);
-          m_shooter.setHopperSpeed(hopperSpeed);
-   
-          lastHelmsRightBumperPressed = rightBumperPressed;
-        },
-        m_shooter));
 
 
-    // Hood controls (helms controller).
-    // Y = hood up (2 inches / max travel), B = hood down.
-    helmsController.y().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.HIGH), m_shooter));
-    helmsController.b().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.MED), m_shooter));
-    helmsController.a().onTrue(new InstantCommand(() -> m_shooter.setHoodAngle(ShooterSubsystem.HoodAngle.LOW), m_shooter));
+
 
     //Right Bumper = Simple Auto Align
     driveController.button(Button.kRightBumper.value).whileTrue(new SimpleAutoAlign(m_drive));
@@ -207,21 +137,9 @@ public class RobotContainer {
         // isAutoAlignSupplier - Auto-align active flag
         () -> driveController.getRightTriggerAxis() > 0.1
       ));
-
-    //INTAKE
-    m_intake.setDefaultCommand(
-      new RunCommand(
-        () -> m_intake.setIntakePower(MathUtil.applyDeadband(helmsController.getLeftY(), 0.1)),
-        m_intake));
+  };
 
     
-    
-    // Intake arm buttons.
-    // Left Trigger = lower arm, Right Trigger = Raise arm.
-    // Bound on both controllers so it works regardless of which one you're pressing.
-    helmsController.axisGreaterThan(Axis.kRightTrigger.value, 0.1).onTrue(new InstantCommand(() -> m_intake.raiseIntake(), m_intake));
-    helmsController.axisGreaterThan(Axis.kLeftTrigger.value, 0.1).onTrue(new InstantCommand(() -> m_intake.lowerIntake(), m_intake));
-  }
 
   private double getSpeedMultiplier(){
     // getHID() accesses the underlying XboxController to read button states directly.
@@ -237,15 +155,6 @@ public class RobotContainer {
 
     return switch (selected) {
       case None -> Commands.none();
-      case LeftLemonAuto -> new LeftLemonAuto(m_drive, m_intake, m_shooter);
-      case RightLemonAuto -> new RightLemonAuto(m_drive, m_intake, m_shooter);
-      case RightNeutralZoneAuto1 -> new RightNeutralZoneAuto1 (m_drive, m_intake, m_shooter);
-      case RightNeutralZoneAuto2 -> new RightNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
-      case LeftNeutralZoneAuto2 -> new LeftNeutralZoneAuto2 (m_drive, m_intake, m_shooter);
-      case LeftNeutralZoneAuto1 -> new LeftNeutralZoneAuto1(m_drive, m_intake, m_shooter);
-      case CenterLemonAuto -> new CenterLemonAuto(m_drive, m_intake, m_shooter);
-      case CenterToDepotAuto -> new CenterToDepotAuto(m_drive, m_intake, m_shooter);
-      case DepotShootingAuto -> new DepotShootingAuto(m_drive, m_intake, m_shooter);
 
       
       default -> Commands.none();
