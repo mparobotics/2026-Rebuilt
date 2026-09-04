@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.SwerveConstants;
 
 /** Central location for robot-wide constants grouped by subsystem and feature */
 public final class Constants {
@@ -31,12 +32,12 @@ public static final double motorSpeedMultiplier = 0.5; // Used to scale down mot
 // Swerve Constants
 public static final class SwerveConstants{
   public static final double inputDeadband = .1; // Deadzone for joystick inputs to prevent drift
-  public static final int PIGEON_ID = 17; //CAN ID for Pigeon gyro sensor
+  public static final int PIGEON_ID = 23; //CAN ID for Pigeon gyro sensor
   public static final boolean invertPigeon = false; // Whether to invert gyro readings
 
   /* Drivetrain Constants */
-  public static final double halfTrackWidth = Units.inchesToMeters(27/2.0);//to find
-  public static final double halfWheelBase = Units.inchesToMeters(27/2.0);//to find
+  public static final double halfTrackWidth = Units.inchesToMeters(28/2.0);
+  public static final double halfWheelBase = Units.inchesToMeters(28/2.0);
   public static final double wheelDiameter = Units.inchesToMeters(4.0);
   public static final double wheelCircumference = wheelDiameter * Math.PI;
   //halfTrackWidth/halfwheelBase are already "half" distances, so don't divide again.
@@ -49,7 +50,7 @@ public static final class SwerveConstants{
 
   public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1 L2 Mk4 Modules
   //L1 is 8.14:1, L2 is 6.75:1, L3 is 6.12:1, L4 is 5.14:1
-  public static final double angleGearRatio = (21.4 / 1.0); // 21.4:1 MK4i Modules
+  public static final double angleGearRatio = (12.8 / 1.0); // 21.4:1 MK4i Modules
   //SDS Mk4 is 12.8:1,  Mk4i is 21.4:1
 
   public static final SwerveDriveKinematics swerveKinematics =
@@ -126,11 +127,13 @@ public static final class SwerveConstants{
     boolean angleInvert
   ){}
 
+  //re-zero next time so that the wheels line up with the kinematics
+
   public static ModuleData[] moduleData = {
-    new ModuleData(6, 5, 7, 34.18, FRONT_LEFT, driveInvert, angleInvert), //Mod 0 Front left
-    new ModuleData(9, 31, 10, 44.03, FRONT_RIGHT, driveInvert, angleInvert), //Mod 1 Front right
-    new ModuleData(12, 11, 13, 28.21, BACK_RIGHT, driveInvert, angleInvert), //Mod 2 Back right
-    new ModuleData(15, 14, 16, 8.87, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
+    new ModuleData(14, 13, 15,209.00, FRONT_LEFT, driveInvert, angleInvert), //Mod 1 Front left
+    new ModuleData(17, 16, 18, 224.29, FRONT_RIGHT, driveInvert, angleInvert), //Mod 2 Front right
+    new ModuleData(11, 10, 12, 139.48, BACK_RIGHT, driveInvert, angleInvert), //Mod 0 Back right
+    new ModuleData(20, 19, 21, 70.04, BACK_LEFT, driveInvert, angleInvert) //Mod 3 Back left
   };
   
 }
